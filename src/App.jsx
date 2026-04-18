@@ -21,7 +21,14 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [isPWA, setIsPWA] = useState(false);
+
   useEffect(() => {
+    // Detectar si la app está instalada y ejecutándose de forma nativa (PWA mode)
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      setIsPWA(true);
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -50,7 +57,7 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={!session ? <Landing /> : <Navigate to="/dashboard" />} 
+            element={!session ? (isPWA ? <Navigate to="/login" /> : <Landing />) : <Navigate to="/dashboard" />} 
           />
           <Route 
             path="/login" 
