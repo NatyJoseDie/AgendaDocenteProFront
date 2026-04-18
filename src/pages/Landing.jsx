@@ -90,7 +90,7 @@ export default function Landing() {
           <div className="nav-logo">
              <div className="img-logo-brand" style={{ display: 'flex', alignItems: 'center' }}>
                <img 
-                 src="/logo_3d_final.png" 
+                 src="/logo_agenda_3d_final.png" 
                  alt="Logo Agenda Docente 3D" 
                  style={{ 
                    height: '52px', /* Mucho más grande y visible que el anterior */
@@ -405,7 +405,7 @@ export default function Landing() {
                {/* LOGO & INFO */}
                <div className="footer-col brand-col">
                   <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                     <img src="/logo_3d_final.png" alt="Logo Agenda Docente 3D" style={{ height: '65px', width: 'auto', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.2))' }} />
+                     <img src="/logo_agenda_3d_final.png" alt="Logo Agenda Docente 3D" style={{ height: '65px', width: 'auto', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.2))' }} />
                      Agenda Docente
                   </div>
                   <p className="f-description">

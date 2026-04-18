@@ -504,9 +504,8 @@ h3 {
   opacity: 0.5;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE MÓVIL Y TABLET */
 @media (max-width: 1024px) {
-
   .feature-container-flex,
   .feature-section-elite.reverse .feature-container-flex {
     flex-direction: column;
@@ -528,6 +527,80 @@ h3 {
 
   .feature-section-elite {
     padding: 6rem 0;
+  }
+
+  /* NUEVO: Fix Grids Duros para Tablet */
+  .container-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    min-height: auto;
+  }
+
+  .hero-desc {
+    margin: 0 auto 2rem;
+  }
+
+  .trust-badges {
+    margin: 2rem auto 0;
+  }
+
+  .btn-hero-main {
+    margin: 0 auto;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .features-grid-alt {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 2.5rem;
+  }
+
+  .f-social-row {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .nav-links {
+    display: none; /* Ocultar para simplificar vista móvil */
+  }
+
+  .navbar-pro .container-wide {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .section-title-alt {
+    font-size: 2.5rem;
+  }
+
+  .final-banner h2 {
+    font-size: 2.5rem;
+  }
+
+  .pricing-grid-elite {
+    grid-template-columns: 1fr;
   }
 }
 
