@@ -118,7 +118,7 @@ h3 {
 
 /* HERO SECTION - ADN DARK AGENDA */
 .hero-pro { 
-  padding: 8rem 0; 
+  padding: 4rem 0; /* Reducido de 8rem a 4rem para quitar espacio en blanco arriba */
   background-color: var(--background); 
   background-image: none; /* Quitamos todo gradiente para igualar al 100% fondo e imagen */
   position: relative;
@@ -153,9 +153,9 @@ h3 {
   font-size: 4.5rem;
   line-height: 1.2;
   font-weight: 400;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem; /* Reducido de 2rem */
   letter-spacing: -1px;
-  min-height: 350px;
+  min-height: 180px; /* Reducido drásticamente de 350px para eliminar el salto de altura */
   /* Espacio extra para que no pise el botón */
   display: block;
 }
@@ -164,7 +164,7 @@ h3 {
   font-size: 1.35rem;
   color: var(--text-muted);
   max-width: 600px;
-  margin-bottom: 4rem;
+  margin-bottom: 2.5rem; /* Reducido de 4rem para arrimar el botón hacia arriba */
 }
 
 .chalk-cursor {
