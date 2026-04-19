@@ -455,19 +455,16 @@ export default function Landing() {
                {/* LOGO & INFO */}
                 <div className="footer-col brand-col">
                    <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <div style={{ 
-                         width: '65px', 
-                         height: '65px', 
-                         borderRadius: '50%', 
-                         backgroundColor: 'white', 
-                         display: 'flex', 
-                         alignItems: 'center', 
-                         justifyContent: 'center',
-                         overflow: 'hidden',
-                         boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
-                      }}>
-                         <img src="/logo_agenda_3d_final.png" alt="Logo" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
-                      </div>
+                      <img 
+                        src="/logo_agenda_3d_final.png" 
+                        alt="Logo" 
+                        style={{ 
+                          height: '65px', 
+                          width: 'auto', 
+                          mixBlendMode: 'screen', /* Este truco elimina el fondo oscuro pixelado */
+                          filter: 'brightness(1.1) contrast(1.1)' 
+                        }} 
+                      />
                       Agenda Docente
                    </div>
                   <p className="f-description">
