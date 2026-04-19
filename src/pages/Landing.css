@@ -57,6 +57,17 @@ h3 {
   padding: 0 5%;
 }
 
+/* SECCIÓN VIDEO EXPLICATIVO */
+.video-pro {
+  padding: 3rem 0; /* Reducido de 6rem */
+  background-color: white;
+}
+
+/* SECCIÓN PRICING ELITE */
+.pricing-section-elite {
+  padding: 4rem 0; /* Reducido de 8rem */
+}
+
 /* NAVBAR LIMPIO */
 .navbar-pro {
   padding: 1.2rem 0;
@@ -118,7 +129,7 @@ h3 {
 
 /* HERO SECTION - ADN DARK AGENDA */
 .hero-pro { 
-  padding: 4rem 0; /* Reducido de 8rem a 4rem para quitar espacio en blanco arriba */
+  padding: 1rem 0 4rem 0; /* Casi sin espacio arriba (1rem) para pegar el contenido a la nav */
   background-color: var(--background); 
   background-image: none; /* Quitamos todo gradiente para igualar al 100% fondo e imagen */
   position: relative;
@@ -133,7 +144,8 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 4rem;
-  align-items: center;
+  align-items: flex-start; /* CAMBIO CLAVE: Alineamos todo arriba para quitar el hueco */
+  padding-top: 2rem;
 }
 
 .badge-promo {
@@ -155,7 +167,7 @@ h3 {
   font-weight: 400;
   margin-bottom: 1.5rem; /* Reducido de 2rem */
   letter-spacing: -1px;
-  min-height: 180px; /* Reducido drásticamente de 350px para eliminar el salto de altura */
+  min-height: 120px; /* Reducido al mínimo para que el botón suba más todavía */
   /* Espacio extra para que no pise el botón */
   display: block;
 }
@@ -349,15 +361,34 @@ h3 {
 }
 
 .feat-icon-animated {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
+  font-size: 2.2rem;
+  width: 70px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-soft);
-  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  /* EFECTO 3D GLASS */
+  box-shadow: 
+    0 10px 20px rgba(0,0,0,0.1),
+    inset 0 -5px 10px rgba(0,0,0,0.05),
+    inset 0 5px 10px rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,255,255,0.5);
+  position: relative;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feat-icon-animated::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 30%;
+  height: 20%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  filter: blur(5px);
 }
 
 .feat-item-alt:hover .feat-icon-animated {
@@ -606,7 +637,7 @@ h3 {
 
 /* PRICING SECTION ELITE - MODO OSCURO PARA QUE BRILLE EL LED */
 .pricing-section-elite {
-  padding: 10rem 0;
+  padding: 4rem 0 8rem 0; /* Reducido el superior de 10rem a 4rem */
   background: #020617;
   /* Azul profundo casi negro */
   width: 100%;
