@@ -456,12 +456,14 @@ export default function Landing() {
                 <div className="footer-col brand-col">
                    <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                       <img 
-                        src="/logo_agenda_3d_final.png" 
+                        src="/logo_3d_final.png" 
                         alt="Logo" 
                         style={{ 
                           height: '65px', 
-                          width: 'auto', 
-                          mixBlendMode: 'screen', /* Este truco elimina el fondo oscuro pixelado */
+                          width: '65px', 
+                          objectFit: 'contain',
+                          borderRadius: '50%', /* Forzamos redondeo */
+                          clipPath: 'circle(48%)', /* Recortamos los bordes pixelados físicamente */
                           filter: 'brightness(1.1) contrast(1.1)' 
                         }} 
                       />
