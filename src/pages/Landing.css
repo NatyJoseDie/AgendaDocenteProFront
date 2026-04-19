@@ -1158,7 +1158,7 @@ h3 {
 .contact-card-elite {
   background: #f5f3ff;
   /* El lila de la marca */
-  padding: 6rem;
+  padding: 3rem 4rem; /* Reducido de 6rem para quitar el aire arriba */
   border-radius: 48px;
   box-shadow: 0 30px 60px rgba(139, 92, 246, 0.1);
   border: 2px solid var(--primary);
