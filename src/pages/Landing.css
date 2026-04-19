@@ -1037,7 +1037,7 @@ h3 {
 
 /* FAQ ESTILO EMPRETIENDA - ACORDEÓN */
 .faq-pro {
-  padding: 8rem 0;
+  padding: 3rem 0; /* Reducido de 8rem */
   background: #f8fafc;
   /* Gris ultra claro para que resalten los bloques blancos */
 }
@@ -1150,7 +1150,7 @@ h3 {
 
 /* CONTACT SECTION - ESTILO CAPSULA ELITE */
 .contact-pro {
-  padding: 10rem 0;
+  padding: 3rem 0; /* Reducido de 10rem */
   background: #f8fafc;
   /* Fondo suave para que la card resalte */
 }

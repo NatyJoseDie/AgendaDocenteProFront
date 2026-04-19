@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import './Landing.css';
 import FeatureSection from '../components/FeatureSection';
 
@@ -81,6 +82,27 @@ export default function Landing() {
       a: "¡Para nada! Si sabés usar WhatsApp o Facebook, sabés usar nuestra Agenda. Es súper intuitiva y está pensada para el aula real."
     }
   ];
+
+  const [contactData, setContactData] = useState({ nombre: '', email: '', mensaje: '' });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setSending(true);
+    const { error } = await supabase
+      .from('contact_messages')
+      .insert([contactData]);
+    
+    setSending(false);
+    if (!error) {
+      setSent(true);
+      setContactData({ nombre: '', email: '', mensaje: '' });
+      setTimeout(() => setSent(false), 5000);
+    } else {
+      alert("Error al enviar: " + error.message);
+    }
+  };
 
   return (
     <div className="landing-wrapper">
@@ -380,18 +402,46 @@ export default function Landing() {
 
               {/* DERECHA: FORMULARIO */}
               <div className="contact-form-panel">
-                 <form className="form-elite">
-                    <div className="form-group-elite">
-                       <input type="text" placeholder="Tu nombre" required />
+                 {sent ? (
+                    <div className="sent-success animate-fade-in" style={{ background: 'white', padding: '2rem', borderRadius: '15px', textAlign: 'center' }}>
+                       <span style={{ fontSize: '3rem' }}>✅</span>
+                       <h3 style={{ color: 'var(--primary)', marginTop: '1rem' }}>¡Mensaje enviado con éxito!</h3>
+                       <p>Natalia se pondrá en contacto pronto.</p>
                     </div>
-                    <div className="form-group-elite">
-                       <input type="email" placeholder="Tu email" required />
-                    </div>
-                    <div className="form-group-elite">
-                       <textarea placeholder="Tu mensaje" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" className="btn-send-elite">Enviar mensaje</button>
-                 </form>
+                 ) : (
+                    <form className="form-elite" onSubmit={handleContactSubmit}>
+                       <div className="form-group-elite">
+                          <input 
+                            type="text" 
+                            placeholder="Tu nombre" 
+                            required 
+                            value={contactData.nombre}
+                            onChange={(e) => setContactData({...contactData, nombre: e.target.value})}
+                          />
+                       </div>
+                       <div className="form-group-elite">
+                          <input 
+                            type="email" 
+                            placeholder="Tu email" 
+                            required 
+                            value={contactData.email}
+                            onChange={(e) => setContactData({...contactData, email: e.target.value})}
+                          />
+                       </div>
+                       <div className="form-group-elite">
+                          <textarea 
+                            placeholder="Tu mensaje" 
+                            rows="5" 
+                            required
+                            value={contactData.mensaje}
+                            onChange={(e) => setContactData({...contactData, mensaje: e.target.value})}
+                          ></textarea>
+                       </div>
+                       <button type="submit" className="btn-send-elite" disabled={sending}>
+                          {sending ? 'Enviando...' : 'Enviar mensaje'}
+                       </button>
+                    </form>
+                 )}
               </div>
             </div>
           </div>
@@ -403,11 +453,23 @@ export default function Landing() {
          <div className="container-main">
             <div className="footer-grid">
                {/* LOGO & INFO */}
-               <div className="footer-col brand-col">
-                  <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                     <img src="/logo_agenda_3d_final.png" alt="Logo Agenda Docente 3D" style={{ height: '65px', width: 'auto', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.2))' }} />
-                     Agenda Docente
-                  </div>
+                <div className="footer-col brand-col">
+                   <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <div style={{ 
+                         width: '65px', 
+                         height: '65px', 
+                         borderRadius: '50%', 
+                         backgroundColor: 'white', 
+                         display: 'flex', 
+                         alignItems: 'center', 
+                         justifyContent: 'center',
+                         overflow: 'hidden',
+                         boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                      }}>
+                         <img src="/logo_agenda_3d_final.png" alt="Logo" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
+                      </div>
+                      Agenda Docente
+                   </div>
                   <p className="f-description">
                     Simplificando la gestión pedagógica de miles de docentes argentinos. 
                     Organización, dictado por voz y reportes en segundos.
