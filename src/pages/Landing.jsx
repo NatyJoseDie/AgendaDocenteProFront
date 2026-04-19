@@ -198,7 +198,9 @@ export default function Landing() {
 
           <div className="features-grid-alt">
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">🏠</div>
+              <div className="feat-icon-animated">
+                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/home-dynamic-color.png" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <div className="feat-text-alt">
                 <h4>Tu panel administrador</h4>
                 <p>Donde vas a llevar el control total de tus escuelas, cursos y horarios semanales.</p>
@@ -206,7 +208,9 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">🎙️</div>
+              <div className="feat-icon-animated">
+                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/mic-dynamic-color.png" alt="Voz" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <div className="feat-text-alt">
                 <h4>Asistencia por Voz</h4>
                 <p>Pasar lista nunca fue tan fácil. Dictale los nombres a la app y cargá el presente al instante.</p>
@@ -214,7 +218,9 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">📊</div>
+              <div className="feat-icon-animated">
+                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/chart-dynamic-color.png" alt="Notas" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <div className="feat-text-alt">
                 <h4>Notas y Trayectorias</h4>
                 <p>Cálculo automático de TEA/TED. Visualizá el progreso pedagógico sin usar la calculadora.</p>
@@ -222,7 +228,9 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">📄</div>
+              <div className="feat-icon-animated">
+                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/file-text-dynamic-color.png" alt="PDF" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <div className="feat-text-alt">
                 <h4>Generador de PDFs</h4>
                 <p>Exportá planillas de asistencia, notas y planes de clase listos para entregar en secretaría.</p>
@@ -230,7 +238,9 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">📱</div>
+              <div className="feat-icon-animated">
+                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/mobile-dynamic-color.png" alt="Celular" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <div className="feat-text-alt">
                 <h4>App en tu Celular</h4>
                 <p><span className="badge-featured">¡Destacado!</span> Podés instalar la Agenda en tu pantalla de inicio y usarla como una app nativa.</p>
@@ -238,7 +248,9 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">💬</div>
+              <div className="feat-icon-animated">
+                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/chat-bubble-dynamic-color.png" alt="Contactos" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <div className="feat-text-alt">
                 <h4>Agenda de Contactos</h4>
                 <p>Vinculación directa con WhatsApp para comunicarte con familias y colegas en un clic.</p>
