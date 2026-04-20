@@ -207,8 +207,8 @@ export default function Landing() {
 
           <div className="features-grid-alt">
             <div className="feat-item-alt">
-              <div className="feat-icon-saas" style={{ background: 'transparent', border: 'none', backdropFilter: 'none' }}>
-                <img src="https://img.icons8.com/isometric/100/home.png" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-saas-3d">
+                <img src="https://img.icons8.com/bubbles/100/home.png" alt="Admin" />
               </div>
               <div className="feat-text-alt">
                 <h4>Tu panel administrador</h4>
@@ -217,8 +217,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas">
-                <Mic size={28} />
+              <div className="feat-icon-saas-3d">
+                <img src="https://img.icons8.com/bubbles/100/microphone.png" alt="Voz" />
               </div>
               <div className="feat-text-alt">
                 <h4>Asistencia por Voz</h4>
@@ -227,8 +227,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas">
-                <BarChart3 size={28} />
+              <div className="feat-icon-saas-3d">
+                <img src="https://img.icons8.com/bubbles/100/chart-line.png" alt="Notas" />
               </div>
               <div className="feat-text-alt">
                 <h4>Notas y Trayectorias</h4>
@@ -237,8 +237,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas">
-                <FileText size={28} />
+              <div className="feat-icon-saas-3d">
+                <img src="https://img.icons8.com/bubbles/100/export-pdf.png" alt="PDF" />
               </div>
               <div className="feat-text-alt">
                 <h4>Generador de PDFs</h4>
@@ -247,8 +247,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas highlight">
-                <Smartphone size={28} />
+              <div className="feat-icon-saas-3d highlight">
+                <img src="https://img.icons8.com/bubbles/100/iphone.png" alt="Celular" />
               </div>
               <div className="feat-text-alt">
                 <h4>App en tu Celular</h4>
@@ -257,8 +257,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas">
-                <Users size={28} />
+              <div className="feat-icon-saas-3d">
+                <img src="https://img.icons8.com/bubbles/100/conference-call.png" alt="Contactos" />
               </div>
               <div className="feat-text-alt">
                 <h4>Agenda de Contactos</h4>

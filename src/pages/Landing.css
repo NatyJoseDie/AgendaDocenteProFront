@@ -360,41 +360,32 @@ h3 {
   align-items: flex-start;
 }
 
-/* ESTILO SAAS PREMIUM: MINIMALISTA Y MONOCROMO */
-.feat-icon-saas {
-  width: 65px;
-  height: 65px;
-  border-radius: 20px;
+/* ESTILO 3D REAL (BUBBLE/CLAY) */
+.feat-icon-saas-3d {
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.08); /* Violeta muy suave y transparente */
-  color: var(--primary); /* El violeta fuerte de la marca */
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  transition: all 0.4s ease;
-  backdrop-filter: blur(8px); /* Efecto Glass */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.feat-icon-saas svg {
-  stroke-width: 2px;
-  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.2));
+.feat-icon-saas-3d img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* El truco maestro: Volver los iconos 3D de color violeta de la marca */
+  filter: sepia(1) saturate(5) hue-rotate(220deg); 
+  drop-shadow: 0 10px 15px rgba(139, 92, 246, 0.3);
 }
 
-.feat-icon-saas:hover {
-  background: var(--primary);
-  color: white;
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+.feat-icon-saas-3d:hover {
+  transform: translateY(-10px) scale(1.2) rotate(5deg);
 }
 
-.feat-icon-saas.highlight {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
-}
-
-.feat-icon-saas.highlight svg {
-  filter: none;
+.feat-icon-saas-3d.highlight {
+  filter: brightness(1.1);
+  transform: scale(1.1);
 }
 
 .feat-item-alt:hover .feat-icon-animated {
