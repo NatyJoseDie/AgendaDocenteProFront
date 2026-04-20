@@ -380,8 +380,22 @@ h3 {
 }
 
 .feat-icon-clay svg {
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-  stroke-width: 2.2px;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.15)); /* Sombra para que el icono flote */
+  stroke-width: 2.8px; /* Más gruesos para que parezcan objetos sólidos */
+  transition: all 0.3s ease;
+}
+
+/* EFECTO DE RELLENO SUAVE (FROSTED GLASS LOOK) */
+.feat-icon-clay::after {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  background: currentColor;
+  opacity: 0.15;
+  filter: blur(15px);
+  border-radius: 50%;
+  z-index: 0;
 }
 
 /* VARIANTES DE COLOR CLAY3D ACORDE A LA MARCA */
