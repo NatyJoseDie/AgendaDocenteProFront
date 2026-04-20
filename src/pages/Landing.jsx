@@ -207,8 +207,8 @@ export default function Landing() {
 
           <div className="features-grid-alt">
             <div className="feat-item-alt">
-              <div className="feat-icon-saas">
-                <LayoutDashboard size={28} />
+              <div className="feat-icon-saas" style={{ background: 'transparent', border: 'none', backdropFilter: 'none' }}>
+                <img src="https://img.icons8.com/isometric/100/home.png" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <div className="feat-text-alt">
                 <h4>Tu panel administrador</h4>
