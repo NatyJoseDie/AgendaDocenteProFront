@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import './Landing.css';
+import { 
+  LayoutDashboard, 
+  Mic, 
+  BarChart3, 
+  FileText, 
+  Smartphone, 
+  Users,
+  CheckCircle2
+} from 'lucide-react';
 import FeatureSection from '../components/FeatureSection';
 
 const FaqItem = ({ q, a }) => {
@@ -198,8 +203,8 @@ export default function Landing() {
 
           <div className="features-grid-alt">
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">
-                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/home-dynamic-color.png" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-clay purple">
+                <LayoutDashboard size={32} />
               </div>
               <div className="feat-text-alt">
                 <h4>Tu panel administrador</h4>
@@ -208,8 +213,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">
-                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/mic-dynamic-color.png" alt="Voz" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-clay blue">
+                <Mic size={32} />
               </div>
               <div className="feat-text-alt">
                 <h4>Asistencia por Voz</h4>
@@ -218,8 +223,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">
-                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/chart-dynamic-color.png" alt="Notas" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-clay pink">
+                <BarChart3 size={32} />
               </div>
               <div className="feat-text-alt">
                 <h4>Notas y Trayectorias</h4>
@@ -228,8 +233,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">
-                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/file-text-dynamic-color.png" alt="PDF" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-clay orange">
+                <FileText size={32} />
               </div>
               <div className="feat-text-alt">
                 <h4>Generador de PDFs</h4>
@@ -238,8 +243,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">
-                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/mobile-dynamic-color.png" alt="Celular" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-clay main">
+                <Smartphone size={32} />
               </div>
               <div className="feat-text-alt">
                 <h4>App en tu Celular</h4>
@@ -248,8 +253,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-animated">
-                <img src="https://raw.githubusercontent.com/vijayverma86/3dicons/master/png/color/chat-bubble-dynamic-color.png" alt="Contactos" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <div className="feat-icon-clay violet">
+                <Users size={32} />
               </div>
               <div className="feat-text-alt">
                 <h4>Agenda de Contactos</h4>
