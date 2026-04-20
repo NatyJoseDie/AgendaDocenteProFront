@@ -9,7 +9,19 @@ import {
   FileText, 
   Smartphone, 
   Users,
-  CheckCircle2
+  CheckCircle2,
+  Zap,
+  Gift,
+  Home,
+  TrendingUp,
+  Rocket,
+  PhoneCall,
+  MessageCircle,
+  Crown,
+  Infinity,
+  Cloud,
+  ShieldCheck,
+  Star
 } from 'lucide-react';
 import FeatureSection from '../components/FeatureSection';
 
@@ -346,32 +358,32 @@ export default function Landing() {
           <div className="pricing-grid-elite">
             {/* PLAN FREE - EL GANCHO LED */}
             <div className="pricing-card-elite free-led">
-              <span className="offer-badge-led">🎁 REGALO: 30 DÍAS FULL</span>
+              <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> REGALO: 30 DÍAS FULL</span>
               <div className="card-header-elite">
                 <h3>Plan Gratuito</h3>
                 <div className="price-tag-elite">$0 <span>/ siempre</span></div>
               </div>
               <ul className="feats-list-elite">
-                <li><span>⚡</span> Todas las funciones DESBLOQUEADAS</li>
-                <li><span>🎁</span> 5 Escuelas/Cursos (30 días de REGALO)</li>
-                <li><span>🏠</span> Luego máximo de 2 Escuelas</li>
-                <li><span>📈</span> Seguimiento Pedagógico Completo</li>
+                <li><Zap size={18} className="icon-price" /> Todas las funciones DESBLOQUEADAS</li>
+                <li><Gift size={18} className="icon-price" /> 5 Escuelas/Cursos (30 días de REGALO)</li>
+                <li><Home size={18} className="icon-price" /> Luego máximo de 2 Escuelas</li>
+                <li><TrendingUp size={18} className="icon-price" /> Seguimiento Pedagógico Completo</li>
               </ul>
               <Link to="/login" className="btn-card-elite secondary">Probar ahora gratis</Link>
             </div>
 
             {/* PLAN PRO - EL RECOMENDADO */}
             <div className="pricing-card-elite featured-pro">
-              <span className="featured-badge-elite">⭐ EL MÁS ELEGIDO</span>
+              <span className="featured-badge-elite"><Star size={14} style={{ marginRight: '5px' }} /> EL MÁS ELEGIDO</span>
               <div className="card-header-elite">
                 <h3>Plan Profesional</h3>
                 <div className="price-tag-elite">$10.000 <span>/ año</span></div>
               </div>
               <ul className="feats-list-elite">
-                <li><span>🚀</span> Hasta 10 Escuelas / Cursos</li>
-                <li><span>📊</span> Calificaciones e Intensificación</li>
-                <li><span>📞</span> Libro de Temas y Contactos</li>
-                <li><span>💬</span> Soporte por WhatsApp</li>
+                <li><Rocket size={18} className="icon-price" /> Hasta 10 Escuelas / Cursos</li>
+                <li><BarChart3 size={18} className="icon-price" /> Calificaciones e Intensificación</li>
+                <li><PhoneCall size={18} className="icon-price" /> Libro de Temas y Contactos</li>
+                <li><MessageCircle size={18} className="icon-price" /> Soporte por WhatsApp</li>
               </ul>
               <Link to="/login" className="btn-card-elite primary">Mejorar a PRO</Link>
             </div>
@@ -383,10 +395,10 @@ export default function Landing() {
                 <div className="price-tag-elite">$15.000 <span>/ año</span></div>
               </div>
               <ul className="feats-list-elite">
-                <li><span>👑</span> TODO ILIMITADO - NIVEL ELITE</li>
-                <li><span>♾️</span> Sin límite de Escuelas o Cursos</li>
-                <li><span>☁️</span> Backups automáticos en la nube</li>
-                <li><span>🛡️</span> Soporte Prioritario VIP 24/7</li>
+                <li><Crown size={18} className="icon-price" /> TODO ILIMITADO - NIVEL ELITE</li>
+                <li><Infinity size={18} className="icon-price" /> Sin límite de Escuelas o Cursos</li>
+                <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
+                <li><ShieldCheck size={18} className="icon-price" /> Soporte Prioritario VIP 24/7</li>
               </ul>
               <Link to="/login" className="btn-card-elite secondary-outline">Ser Premium</Link>
             </div>

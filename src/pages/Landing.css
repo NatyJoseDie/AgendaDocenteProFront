@@ -762,12 +762,21 @@ h3 {
 }
 
 .feats-list-elite li {
-  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: 15px;
-  font-size: 1.05rem;
-  color: #e2e8f0;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.icon-price {
+  color: var(--secondary); /* Color acento para los planes */
+  flex-shrink: 0;
+}
+
+.pricing-card-elite.featured-pro .icon-price {
+  color: #fff; /* En la tarjeta destacada, iconos blancos */
 }
 
 .feats-list-elite li span {
