@@ -207,8 +207,8 @@ export default function Landing() {
 
           <div className="features-grid-alt">
             <div className="feat-item-alt">
-              <div className="feat-icon-saas-3d">
-                <img src="https://img.icons8.com/bubbles/100/home.png" alt="Admin" />
+              <div className="feat-icon-saas">
+                <LayoutDashboard size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Tu panel administrador</h4>
@@ -217,8 +217,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas-3d">
-                <img src="https://img.icons8.com/bubbles/100/microphone.png" alt="Voz" />
+              <div className="feat-icon-saas">
+                <Mic size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Asistencia por Voz</h4>
@@ -227,8 +227,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas-3d">
-                <img src="https://img.icons8.com/bubbles/100/chart-line.png" alt="Notas" />
+              <div className="feat-icon-saas">
+                <BarChart3 size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Notas y Trayectorias</h4>
@@ -237,8 +237,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas-3d">
-                <img src="https://img.icons8.com/bubbles/100/export-pdf.png" alt="PDF" />
+              <div className="feat-icon-saas">
+                <FileText size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Generador de PDFs</h4>
@@ -247,8 +247,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas-3d highlight">
-                <img src="https://img.icons8.com/bubbles/100/iphone.png" alt="Celular" />
+              <div className="feat-icon-saas">
+                <Smartphone size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>App en tu Celular</h4>
@@ -257,8 +257,8 @@ export default function Landing() {
             </div>
 
             <div className="feat-item-alt">
-              <div className="feat-icon-saas-3d">
-                <img src="https://img.icons8.com/bubbles/100/conference-call.png" alt="Contactos" />
+              <div className="feat-icon-saas">
+                <Users size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Agenda de Contactos</h4>
