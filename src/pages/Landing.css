@@ -360,70 +360,41 @@ h3 {
   align-items: flex-start;
 }
 
-/* ESTILO CLAY 3D PARA ICONOS EDITABLES */
-.feat-icon-clay {
-  width: 70px;
-  height: 70px;
-  border-radius: 22px;
+/* ESTILO SAAS PREMIUM: MINIMALISTA Y MONOCROMO */
+.feat-icon-saas {
+  width: 65px;
+  height: 65px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: pointer;
-  /* El secreto del efecto Clay: sombreado interno y externo suave */
-  box-shadow: 
-    10px 10px 20px rgba(0,0,0,0.05),
-    inset -8px -8px 15px rgba(0,0,0,0.05),
-    inset 8px 8px 15px rgba(255,255,255,0.8);
-  border: 1px solid rgba(255,255,255,0.4);
+  background: rgba(139, 92, 246, 0.08); /* Violeta muy suave y transparente */
+  color: var(--primary); /* El violeta fuerte de la marca */
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  transition: all 0.4s ease;
+  backdrop-filter: blur(8px); /* Efecto Glass */
 }
 
-.feat-icon-clay svg {
-  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.15)); /* Sombra para que el icono flote */
-  stroke-width: 2.8px; /* Más gruesos para que parezcan objetos sólidos */
-  transition: all 0.3s ease;
+.feat-icon-saas svg {
+  stroke-width: 2px;
+  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.2));
 }
 
-/* EFECTO DE RELLENO SUAVE (FROSTED GLASS LOOK) */
-.feat-icon-clay::after {
-  content: '';
-  position: absolute;
-  width: 60%;
-  height: 60%;
-  background: currentColor;
-  opacity: 0.15;
-  filter: blur(15px);
-  border-radius: 50%;
-  z-index: 0;
+.feat-icon-saas:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
 }
 
-/* VARIANTES DE COLOR CLAY3D ACORDE A LA MARCA */
-.feat-icon-clay.purple { background: #f3e8ff; color: #a855f7; }
-.feat-icon-clay.blue { background: #e0f2fe; color: #0ea5e9; }
-.feat-icon-clay.pink { background: #fdf2f8; color: #ec4899; }
-.feat-icon-clay.orange { background: #fff7ed; color: #f97316; }
-.feat-icon-clay.main { background: #f5f3ff; color: var(--primary); }
-.feat-icon-clay.violet { background: #ede9fe; color: #8b5cf6; }
-
-.feat-icon-clay:hover {
-  transform: translateY(-8px) scale(1.1);
-  box-shadow: 
-    15px 15px 30px rgba(0,0,0,0.1),
-    inset -4px -4px 8px rgba(0,0,0,0.05),
-    inset 4px 4px 8px rgba(255,255,255,0.9);
+.feat-icon-saas.highlight {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
 }
 
-.feat-icon-clay::before {
-  content: '';
-  position: absolute;
-  top: 15%;
-  left: 15%;
-  width: 25%;
-  height: 20%;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  filter: blur(4px);
+.feat-icon-saas.highlight svg {
+  filter: none;
 }
 
 .feat-item-alt:hover .feat-icon-animated {
