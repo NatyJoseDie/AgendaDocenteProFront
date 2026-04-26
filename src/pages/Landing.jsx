@@ -108,6 +108,29 @@ export default function Landing() {
   const [contactData, setContactData] = useState({ nombre: '', email: '', mensaje: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+
+  React.useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
@@ -164,6 +187,18 @@ export default function Landing() {
           </button>
 
           <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
+            {installPrompt && (
+              <button 
+                className="link-secondary install-btn" 
+                onClick={() => {
+                  handleInstallClick();
+                  setMenuOpen(false);
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'inherit', font: 'inherit' }}
+              >
+                <Smartphone size={18} /> Instalar App
+              </button>
+            )}
             <Link to="/login" className="link-secondary" onClick={() => setMenuOpen(false)}>Ingresar</Link>
             <Link to="/login" className="btn-nav-primary" onClick={() => setMenuOpen(false)}>Crear mi cuenta</Link>
           </div>
