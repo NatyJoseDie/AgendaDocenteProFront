@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { motion } from 'framer-motion';
 import './Landing.css';
-import { 
-  LayoutDashboard, 
-  Mic, 
-  BarChart3, 
-  FileText, 
-  Smartphone, 
+import {
+  LayoutDashboard,
+  Mic,
+  BarChart3,
+  FileText,
+  Smartphone,
   Users,
   CheckCircle2,
   Zap,
@@ -114,7 +115,7 @@ export default function Landing() {
     const { error } = await supabase
       .from('contact_messages')
       .insert([contactData]);
-    
+
     setSending(false);
     if (!error) {
       setSent(true);
@@ -125,156 +126,170 @@ export default function Landing() {
     }
   };
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="landing-wrapper">
       {/* HEADER - COLORES AGENDA */}
       <nav className="navbar-pro">
         <div className="container-wide">
           <div className="nav-logo">
-             <div className="img-logo-brand" style={{ display: 'flex', alignItems: 'center' }}>
-               <img 
-                 src="/logo_agenda_3d_final.png" 
-                 alt="Logo Agenda Docente 3D" 
-                 style={{ 
-                   height: '52px', /* Mucho más grande y visible que el anterior */
-                   width: 'auto',
-                   filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.15))', /* Sombra para darle volumen en la Nav */
-                   transition: 'transform 0.3s ease'
-                 }} 
-                 onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                 onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-               />
-             </div>
-             <div className="logo-text">
-               <h1>Agenda Docente</h1>
-               <span className="subtitle-app">Tu espacio inteligente</span>
-             </div>
+            <div className="img-logo-brand" style={{ display: 'flex', alignItems: 'center' }}>
+              <img
+                id="logo-principal-mobile"
+                src="/logo_agenda_3d_final.png"
+                alt="Logo Agenda Docente 3D"
+                className="nav-img-mobile"
+                style={{
+                  filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.15))',
+                  transition: 'transform 0.3s ease'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              />
+            </div>
+            <div className="logo-text">
+              <h1>Agenda Docente</h1>
+              <span className="subtitle-app">Tu espacio inteligente</span>
+            </div>
           </div>
-          <div className="nav-links">
-             <Link to="/login" className="link-secondary">Ingresar</Link>
-             <Link to="/login" className="btn-nav-primary">Crear mi cuenta</Link>
+
+          {/* MENÚ HAMBURGUESA ICONO */}
+          <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+            <div className={`hamburger ${menuOpen ? 'active' : ''}`}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </button>
+
+          <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
+            <Link to="/login" className="link-secondary" onClick={() => setMenuOpen(false)}>Ingresar</Link>
+            <Link to="/login" className="btn-nav-primary" onClick={() => setMenuOpen(false)}>Crear mi cuenta</Link>
           </div>
         </div>
       </nav>
 
       {/* HERO SECTION - COLORES AGENDA */}
-      <header className="hero-pro">
+      <header className="hero-pro" id="hero">
         <div className="container-hero">
           <div className="hero-info animate-slide-in">
-             <span className="badge-promo">✨ DISEÑADA PARA EL AULA REAL</span>
-             <h2 className="hero-title chalk-writing">
-               {displayedTitle.slice(0, pivotPoint)}
-               <span className="hero-accent">
-                 {displayedTitle.slice(pivotPoint)}
-               </span>
-               {!isFinished && <span className="chalk-cursor">|</span>}
-             </h2>
-             <p className="hero-desc">
-               La herramienta definitiva para el docente moderno. Gestioná asistencias, 
-               notas y proyectos en un solo lugar. <strong>Simple, rápida y profesional.</strong>
-             </p>
-             <div className="hero-actions">
-                <Link to="/login" className="btn-hero-main">Empezar a usar ahora</Link>
-                <div className="trust-badges">
-                   <div className="trust-item">
-                      <span className="trust-icon">⭐</span>
-                      <p><strong>4.9/5</strong> de valoración</p>
-                   </div>
-                   <div className="trust-divider"></div>
-                   <div className="trust-item">
-                      <span className="trust-icon">🛡️</span>
-                      <p>Datos <strong>100% Seguros</strong></p>
-                   </div>
+            <span className="badge-promo">✨ DISEÑADA PARA EL AULA REAL</span>
+            <h2 className="hero-title chalk-writing">
+              {displayedTitle.slice(0, pivotPoint)}
+              <span className="hero-accent">
+                {displayedTitle.slice(pivotPoint)}
+              </span>
+              {!isFinished && <span className="chalk-cursor">|</span>}
+            </h2>
+
+            <div className="hero-image-wrapper">
+              <div className="hero-bg-blob"></div>
+              <img src="/teacher_hero.png" alt="Agenda Docente Pro" className="img-floating" />
+            </div>
+
+            <p className="hero-desc">
+              La herramienta definitiva para el docente moderno. Gestioná asistencias,
+              notas y proyectos en un solo lugar. <strong>Simple, rápida y profesional.</strong>
+            </p>
+            <div className="hero-actions">
+              <Link to="/login" className="btn-hero-main">Empezar a usar ahora</Link>
+              <div className="trust-badges">
+                <div className="trust-item">
+                  <span className="trust-icon">⭐</span>
+                  <p><strong>4.9/5</strong> de valoración</p>
                 </div>
-             </div>
-          </div>
-          <div className="hero-image-wrapper">
-             <div className="hero-bg-blob"></div>
-             <img src="/teacher_hero.png" alt="Agenda Docente Pro" className="img-floating" />
+                <div className="trust-divider"></div>
+                <div className="trust-item">
+                  <span className="trust-icon">🛡️</span>
+                  <p>Datos <strong>100% Seguros</strong></p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
       {/* STATS BAR (COLORES AGENDA) */}
       <section className="stats-bar">
-         <div className="container-main">
-            <div className="stats-grid">
-               <div className="stat-item"><strong>5.000+</strong> <p>Docentes activos</p></div>
-               <div className="stat-item"><strong>1.200</strong> <p>Escuelas</p></div>
-               <div className="stat-item"><strong>250k</strong> <p>PDFs Generados</p></div>
-               <div className="stat-item"><strong>🇦🇷</strong> <p>Orgullo Nacional</p></div>
-            </div>
-         </div>
+        <div className="container-main">
+          <div className="stats-grid">
+            <div className="stat-item"><strong>5.000+</strong> <p>Docentes activos</p></div>
+            <div className="stat-item"><strong>1.200</strong> <p>Escuelas</p></div>
+            <div className="stat-item"><strong>250k</strong> <p>PDFs Generados</p></div>
+            <div className="stat-item"><strong>🇦🇷</strong> <p>Orgullo Nacional</p></div>
+          </div>
+        </div>
       </section>
-      
+
       {/* SECCIÓN: ¿DE QUÉ SE TRATA? (ESTILO EMPRETIENDA) */}
       <section className="features-about">
         <div className="container-main">
           <span className="section-label">CARACTERÍSTICAS</span>
           <h2 className="section-title-alt">¿De qué se trata?</h2>
           <p className="section-desc-alt">
-             Agenda Docente es la plataforma que te permite gestionar tu labor diaria de manera simple y completa. 
-             Al crear tu cuenta automáticamente tenés acceso a:
+            Agenda Docente es la plataforma que te permite gestionar tu labor diaria de manera simple y completa.
+            Al crear tu cuenta automáticamente tenés acceso a:
           </p>
 
           <div className="features-grid-alt">
-            <div className="feat-item-alt">
+            <div className="feat-item-alt bento-indigo">
               <div className="feat-icon-saas">
                 <LayoutDashboard size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Tu panel administrador</h4>
-                <p>Donde vas a llevar el control total de tus escuelas, cursos y horarios semanales.</p>
+                <p>Donde vas a llevar el control total de tus escuelas, cursos y horarios semanales. Todo organizado en un solo lugar centralizado.</p>
               </div>
             </div>
 
-            <div className="feat-item-alt">
+            <div className="feat-item-alt bento-blue">
               <div className="feat-icon-saas">
                 <Mic size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Asistencia por Voz</h4>
-                <p>Pasar lista nunca fue tan fácil. Dictale los nombres a la app y cargá el presente al instante.</p>
+                <p>Pasar lista nunca fue tan fácil. Dictale los nombres a la app y cargá el presente al instante sin dejar de mirar al curso.</p>
               </div>
             </div>
 
-            <div className="feat-item-alt">
+            <div className="feat-item-alt bento-purple">
               <div className="feat-icon-saas">
                 <BarChart3 size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Notas y Trayectorias</h4>
-                <p>Cálculo automático de TEA/TED. Visualizá el progreso pedagógico sin usar la calculadora.</p>
+                <p>Cálculo automático de TEA/TED. Visualizá el progreso pedagógico de todo el trimestre sin usar la calculadora. Generá gráficos de rendimiento por alumno o curso completo.</p>
               </div>
             </div>
 
-            <div className="feat-item-alt">
+            <div className="feat-item-alt bento-slate">
               <div className="feat-icon-saas">
                 <FileText size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Generador de PDFs</h4>
-                <p>Exportá planillas de asistencia, notas y planes de clase listos para entregar en secretaría.</p>
+                <p>Exportá planillas de asistencia, notas y planes de clase listos para entregar en secretaría o dirección.</p>
               </div>
             </div>
 
-            <div className="feat-item-alt">
+            <div className="feat-item-alt bento-teal card-featured">
               <div className="feat-icon-saas">
                 <Smartphone size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>App en tu Celular</h4>
-                <p><span className="badge-featured">¡Destacado!</span> Podés instalar la Agenda en tu pantalla de inicio y usarla como una app nativa.</p>
+                <p><span className="badge-featured">¡Destacado!</span> Podés instalar la Agenda en tu pantalla de inicio y usarla como una app nativa, con acceso rápido y notificaciones inteligentes.</p>
               </div>
             </div>
 
-            <div className="feat-item-alt">
+            <div className="feat-item-alt bento-amber">
               <div className="feat-icon-saas">
                 <Users size={26} />
               </div>
               <div className="feat-text-alt">
                 <h4>Agenda de Contactos</h4>
-                <p>Vinculación directa con WhatsApp para comunicarte con familias y colegas en un clic.</p>
+                <p>Vinculación directa con WhatsApp para comunicarte con familias y colegas en un solo clic.</p>
               </div>
             </div>
           </div>
@@ -283,14 +298,24 @@ export default function Landing() {
 
       {/* SECCION FEATURES DINAMICAS (ESTILO APPLE) */}
       <section className="product-showcase-elite">
-        <FeatureSection 
-          title="Tu centro de control diario"
+        <div className="container-main">
+          <div className="showcase-header">
+            <span className="showcase-label">TU CENTRO DE CONTROL</span>
+            <h2 className="showcase-main-title">
+              Diseñado para <br />
+              <span className="showcase-accent">simplificar tu jornada</span>
+            </h2>
+          </div>
+        </div>
+
+        <FeatureSection
+          title="Organización Inteligente"
           description="Olvidate de las anotaciones en papel. Tené a mano tu horario semanal, tus cursos y tus tareas pendientes del día en una sola pantalla clara y amigable."
           bullets={["Vistas por Escuela y Curso", "Acceso rápido a Planificaciones", "Alertas de Exámenes"]}
           media="/landing/dashboard.png"
         />
 
-        <FeatureSection 
+        <FeatureSection
           title="Calificaciones TEA/TED automáticas"
           description="Un sistema de notas que entiende el aula argentina. Cargá tus bimestres y dejá que la Agenda calcule las trayectorias finales sin esfuerzo."
           bullets={["Colores dinámicos por desempeño", "Reportes Bimestrales automáticos", "Exportación a PDF en segundos"]}
@@ -298,14 +323,14 @@ export default function Landing() {
           reverse={true}
         />
 
-        <FeatureSection 
+        <FeatureSection
           title="Pasar lista nunca fue tan rápido"
           description="¿Lista por voz? ¡Claro! O simplemente tocá y marcá. La app registra ausencias y presentes de forma instantánea para cada alumno."
           bullets={["Reconocimiento por Voz", "Historial completo por alumno", "Reporte mensual de asistencias"]}
           media="/landing/asistencia.png"
         />
 
-        <FeatureSection 
+        <FeatureSection
           title="Tus documentos, siempre con vos"
           description="Subí tus planificaciones en PDF. Compartilas por WhatsApp o Email directamente desde la app sin perder tiempo en el aula."
           bullets={["Almacenamiento Seguro", "Compartir por WhatsApp directo", "Gestión de Licencias y Trámites"]}
@@ -316,23 +341,23 @@ export default function Landing() {
 
       {/* SECCIÓN VIDEO EXPLICATIVO */}
       <section className="video-pro">
-         <div className="container-small">
-             <div className="video-card bg-agenda-gradient">
-                <div className="video-info">
-                   <h3>¿Querés ver más?</h3>
-                   <p>Mirá cómo Natalia digitalizó sus cursos en menos de 5 minutos.</p>
-                </div>
-                <div className="video-btn-area">
-                   <div className="play-circle">
-                      <svg viewBox="0 0 24 24" width="32" height="32" fill="white"><path d="M8 5v14l11-7z"/></svg>
-                   </div>
-                </div>
-             </div>
-         </div>
+        <div className="container-small">
+          <div className="video-card bg-agenda-gradient">
+            <div className="video-info">
+              <h3>¿Querés ver más?</h3>
+              <p>Mirá cómo Natalia digitalizó sus cursos en menos de 5 minutos.</p>
+            </div>
+            <div className="video-btn-area">
+              <div className="play-circle">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="white"><path d="M8 5v14l11-7z" /></svg>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* SECCIÓN DE PRECIOS - VIDRIERA ELITE DE 3 PLANES */}
-      <section className="pricing-section-elite">
+      <section className="pricing-section-elite" id="pricing">
         <div className="container-main">
           <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <span className="section-label">MEMBRESÍAS 2026</span>
@@ -357,124 +382,158 @@ export default function Landing() {
 
           <div className="pricing-grid-elite">
             {/* PLAN FREE - EL GANCHO LED */}
-            <div className="pricing-card-elite free-led">
-              <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> REGALO: 30 DÍAS FULL</span>
-              <div className="card-header-elite">
-                <h3>Plan Gratuito</h3>
-                <div className="price-tag-elite">$0 <span>/ siempre</span></div>
+            <motion.div 
+              className="pricing-card-wrapper"
+              initial={{ scale: 0.9, opacity: 0.5 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ amount: 0.8 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="pricing-card-elite free-led">
+                <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> REGALO: 30 DÍAS FULL</span>
+                <div className="card-header-elite">
+                  <h3>Plan Gratuito</h3>
+                  <div className="price-tag-elite">$0 <span>/ siempre</span></div>
+                </div>
+                <ul className="feats-list-elite">
+                  <li><Zap size={18} className="icon-price" /> Todas las funciones DESBLOQUEADAS</li>
+                  <li><Gift size={18} className="icon-price" /> 5 Escuelas/Cursos (30 días de REGALO)</li>
+                  <li><Home size={18} className="icon-price" /> Luego máximo de 2 Escuelas</li>
+                  <li><TrendingUp size={18} className="icon-price" /> Seguimiento Pedagógico Completo</li>
+                </ul>
+                <Link to="/login" className="btn-card-elite secondary">Probar ahora gratis</Link>
               </div>
-              <ul className="feats-list-elite">
-                <li><Zap size={18} className="icon-price" /> Todas las funciones DESBLOQUEADAS</li>
-                <li><Gift size={18} className="icon-price" /> 5 Escuelas/Cursos (30 días de REGALO)</li>
-                <li><Home size={18} className="icon-price" /> Luego máximo de 2 Escuelas</li>
-                <li><TrendingUp size={18} className="icon-price" /> Seguimiento Pedagógico Completo</li>
-              </ul>
-              <Link to="/login" className="btn-card-elite secondary">Probar ahora gratis</Link>
-            </div>
+            </motion.div>
 
             {/* PLAN PRO - EL RECOMENDADO */}
-            <div className="pricing-card-elite featured-pro">
-              <span className="featured-badge-elite"><Star size={14} style={{ marginRight: '5px' }} /> EL MÁS ELEGIDO</span>
-              <div className="card-header-elite">
-                <h3>Plan Profesional</h3>
-                <div className="price-tag-elite">$10.000 <span>/ año</span></div>
+            <motion.div 
+              className="pricing-card-wrapper"
+              initial={{ scale: 0.9, opacity: 0.5 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ amount: 0.8 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="pricing-card-elite featured-pro">
+                <span className="featured-badge-elite"><Star size={14} style={{ marginRight: '5px' }} /> EL MÁS ELEGIDO</span>
+                <div className="card-header-elite">
+                  <h3>Plan Profesional</h3>
+                  <div className="price-tag-elite">$10.000 <span>/ año</span></div>
+                </div>
+                <ul className="feats-list-elite">
+                  <li><Rocket size={18} className="icon-price" /> Hasta 10 Escuelas / Cursos</li>
+                  <li><BarChart3 size={18} className="icon-price" /> Calificaciones e Intensificación</li>
+                  <li><PhoneCall size={18} className="icon-price" /> Libro de Temas y Contactos</li>
+                  <li><MessageCircle size={18} className="icon-price" /> Soporte por WhatsApp</li>
+                </ul>
+                <Link to="/login" className="btn-card-elite primary">Mejorar a PRO</Link>
               </div>
-              <ul className="feats-list-elite">
-                <li><Rocket size={18} className="icon-price" /> Hasta 10 Escuelas / Cursos</li>
-                <li><BarChart3 size={18} className="icon-price" /> Calificaciones e Intensificación</li>
-                <li><PhoneCall size={18} className="icon-price" /> Libro de Temas y Contactos</li>
-                <li><MessageCircle size={18} className="icon-price" /> Soporte por WhatsApp</li>
-              </ul>
-              <Link to="/login" className="btn-card-elite primary">Mejorar a PRO</Link>
-            </div>
+            </motion.div>
 
             {/* PLAN PREMIUM - ELITE */}
-            <div className="pricing-card-elite premium-elite">
-              <div className="card-header-elite">
-                <h3>Plan Premium</h3>
-                <div className="price-tag-elite">$15.000 <span>/ año</span></div>
+            <motion.div 
+              className="pricing-card-wrapper"
+              initial={{ scale: 0.9, opacity: 0.5 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ amount: 0.8 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="pricing-card-elite premium-elite">
+                <div className="card-header-elite">
+                  <h3>Plan Premium</h3>
+                  <div className="price-tag-elite">$15.000 <span>/ año</span></div>
+                </div>
+                <ul className="feats-list-elite">
+                  <li><Crown size={18} className="icon-price" /> TODO ILIMITADO - NIVEL ELITE</li>
+                  <li><Infinity size={18} className="icon-price" /> Sin límite de Escuelas o Cursos</li>
+                  <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
+                  <li><ShieldCheck size={18} className="icon-price" /> Soporte Prioritario VIP 24/7</li>
+                </ul>
+                <Link to="/login" className="btn-card-elite secondary-outline">Ser Premium</Link>
               </div>
-              <ul className="feats-list-elite">
-                <li><Crown size={18} className="icon-price" /> TODO ILIMITADO - NIVEL ELITE</li>
-                <li><Infinity size={18} className="icon-price" /> Sin límite de Escuelas o Cursos</li>
-                <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
-                <li><ShieldCheck size={18} className="icon-price" /> Soporte Prioritario VIP 24/7</li>
-              </ul>
-              <Link to="/login" className="btn-card-elite secondary-outline">Ser Premium</Link>
+            </motion.div>
+          </div>
+
+          {/* INDICADOR MÓVIL DE SWIPE */}
+          <div className="swipe-indicator-mobile">
+            <span className="swipe-text">Deslizá para ver planes Premium</span>
+            <div className="swipe-dots">
+              <span className="dot dot-1"></span>
+              <span className="dot dot-2"></span>
+              <span className="dot dot-3"></span>
             </div>
           </div>
         </div>
       </section>
 
       {/* FAQ ESTILO EMPRETIENDA (ACORDEÓN) */}
-      <section className="faq-pro">
-         <div className="container-main">
-            <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
-              <span className="section-label">SOPORTE</span>
-              <h2 className="section-title-alt" style={{ color: 'var(--background)' }}>Preguntas frecuentes</h2>
-            </header>
-            
-            <div className="faq-accordion-grid">
-               {faqData.map((item, idx) => (
-                 <FaqItem key={idx} {...item} />
-               ))}
-            </div>
-         </div>
+      <section className="faq-pro" id="faq">
+        <div className="container-main">
+          <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <span className="section-label">SOPORTE</span>
+            <h2 className="section-title-alt" style={{ color: 'var(--background)' }}>Preguntas frecuentes</h2>
+          </header>
+
+          <div className="faq-accordion-grid">
+            {faqData.map((item, idx) => (
+              <FaqItem key={idx} {...item} />
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* SECCIÓN DE CONTACTO CON CARD CAPSULA */}
-      <section className="contact-pro">
+      <section className="contact-pro" id="contact">
         <div className="container-main">
           <div className="contact-card-elite">
             <div className="contact-grid-elite">
               {/* IZQUIERDA: MENSAJE */}
               <div className="contact-info-panel">
-                 <span className="label-hola">HOLA</span>
-                 <h2 className="contact-heading">¿Tenés alguna consulta para hacernos?</h2>
+                <span className="label-hola">HOLA</span>
+                <h2 className="contact-heading">¿Tenés alguna consulta para hacernos?</h2>
               </div>
 
               {/* DERECHA: FORMULARIO */}
               <div className="contact-form-panel">
-                 {sent ? (
-                    <div className="sent-success animate-fade-in" style={{ background: 'white', padding: '2rem', borderRadius: '15px', textAlign: 'center' }}>
-                       <span style={{ fontSize: '3rem' }}>✅</span>
-                       <h3 style={{ color: 'var(--primary)', marginTop: '1rem' }}>¡Mensaje enviado con éxito!</h3>
-                       <p>Natalia se pondrá en contacto pronto.</p>
+                {sent ? (
+                  <div className="sent-success animate-fade-in" style={{ background: 'white', padding: '2rem', borderRadius: '15px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '3rem' }}>✅</span>
+                    <h3 style={{ color: 'var(--primary)', marginTop: '1rem' }}>¡Mensaje enviado con éxito!</h3>
+                    <p>Natalia se pondrá en contacto pronto.</p>
+                  </div>
+                ) : (
+                  <form className="form-elite" onSubmit={handleContactSubmit}>
+                    <div className="form-group-elite">
+                      <input
+                        type="text"
+                        placeholder="Tu nombre"
+                        required
+                        value={contactData.nombre}
+                        onChange={(e) => setContactData({ ...contactData, nombre: e.target.value })}
+                      />
                     </div>
-                 ) : (
-                    <form className="form-elite" onSubmit={handleContactSubmit}>
-                       <div className="form-group-elite">
-                          <input 
-                            type="text" 
-                            placeholder="Tu nombre" 
-                            required 
-                            value={contactData.nombre}
-                            onChange={(e) => setContactData({...contactData, nombre: e.target.value})}
-                          />
-                       </div>
-                       <div className="form-group-elite">
-                          <input 
-                            type="email" 
-                            placeholder="Tu email" 
-                            required 
-                            value={contactData.email}
-                            onChange={(e) => setContactData({...contactData, email: e.target.value})}
-                          />
-                       </div>
-                       <div className="form-group-elite">
-                          <textarea 
-                            placeholder="Tu mensaje" 
-                            rows="5" 
-                            required
-                            value={contactData.mensaje}
-                            onChange={(e) => setContactData({...contactData, mensaje: e.target.value})}
-                          ></textarea>
-                       </div>
-                       <button type="submit" className="btn-send-elite" disabled={sending}>
-                          {sending ? 'Enviando...' : 'Enviar mensaje'}
-                       </button>
-                    </form>
-                 )}
+                    <div className="form-group-elite">
+                      <input
+                        type="email"
+                        placeholder="Tu email"
+                        required
+                        value={contactData.email}
+                        onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group-elite">
+                      <textarea
+                        placeholder="Tu mensaje"
+                        rows="5"
+                        required
+                        value={contactData.mensaje}
+                        onChange={(e) => setContactData({ ...contactData, mensaje: e.target.value })}
+                      ></textarea>
+                    </div>
+                    <button type="submit" className="btn-send-elite" disabled={sending}>
+                      {sending ? 'Enviando...' : 'Enviar mensaje'}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>
@@ -483,86 +542,86 @@ export default function Landing() {
 
       {/* FOOTER ELITE */}
       <footer className="footer-pro">
-         <div className="container-main">
-            <div className="footer-grid">
-               {/* LOGO & INFO */}
-                <div className="footer-col brand-col">
-                   <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <img 
-                        src="/logo_agenda_3d_final.png" 
-                        alt="Logo" 
-                        style={{ 
-                          height: '65px', 
-                          width: '65px', 
-                          objectFit: 'contain',
-                          borderRadius: '50%',
-                          clipPath: 'circle(42%)', /* Recorte más agresivo para asegurar limpieza */
-                          filter: 'brightness(1.1) contrast(1.1)' 
-                        }} 
-                      />
-                      Agenda Docente
-                   </div>
-                  <p className="f-description">
-                    Simplificando la gestión pedagógica de miles de docentes argentinos. 
-                    Organización, dictado por voz y reportes en segundos.
-                  </p>
-               </div>
-
-               {/* LINKS RÁPIDOS */}
-               <div className="footer-col">
-                  <h4>Navegación</h4>
-                  <ul className="f-links">
-                     <li><a href="#hero">Inicio</a></li>
-                     <li><a href="#pricing">Planes</a></li>
-                     <li><a href="#faq">Preguntas</a></li>
-                  </ul>
-               </div>
-
-               {/* SOPORTE */}
-               <div className="footer-col">
-                  <h4>Ayuda</h4>
-                  <ul className="f-links">
-                     <li><a href="#contact">Contacto</a></li>
-                     <li><a href="#">Manual de Usuario</a></li>
-                     <li><a href="#">Términos y condiciones</a></li>
-                  </ul>
-               </div>
-
-               {/* REDES */}
-               <div className="footer-col social-col">
-                  <h4>Seguinos</h4>
-                  <div className="f-social-row">
-                     <a href="#" className="f-social-icon-link" title="Facebook">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                     </a>
-                     <a href="#" className="f-social-icon-link" title="Instagram">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.51"/></svg>
-                     </a>
-                     <a href="#" className="f-social-icon-link" title="YouTube">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
-                     </a>
-                  </div>
-               </div>
+        <div className="container-main">
+          <div className="footer-grid">
+            {/* LOGO & INFO */}
+            <div className="footer-col brand-col">
+              <div className="f-logo" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <img
+                  src="/logo_agenda_3d_final.png"
+                  alt="Logo"
+                  style={{
+                    height: '65px',
+                    width: '65px',
+                    objectFit: 'contain',
+                    borderRadius: '50%',
+                    clipPath: 'circle(42%)', /* Recorte más agresivo para asegurar limpieza */
+                    filter: 'brightness(1.1) contrast(1.1)'
+                  }}
+                />
+                Agenda Docente
+              </div>
+              <p className="f-description">
+                Simplificando la gestión pedagógica de miles de docentes argentinos.
+                Organización, dictado por voz y reportes en segundos.
+              </p>
             </div>
 
-            <div className="footer-bottom-bar">
-               <p>
-                  © 2026 Agenda Docente PRO. Hecho con 
-                  <span className="heart-brand">
-                     <svg width="22" height="22" viewBox="0 0 24 24" fill="url(#heart-grad)">
-                        <defs>
-                           <linearGradient id="heart-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stopColor="var(--primary)" />
-                              <stop offset="100%" stopColor="var(--secondary)" />
-                           </linearGradient>
-                        </defs>
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                     </svg>
-                  </span>
-                  para los docentes de todo el país.
-               </p>
+            {/* LINKS RÁPIDOS */}
+            <div className="footer-col">
+              <h4>Navegación</h4>
+              <ul className="f-links">
+                <li><a href="#hero">Inicio</a></li>
+                <li><a href="#pricing">Planes</a></li>
+                <li><a href="#faq">Preguntas</a></li>
+              </ul>
             </div>
-         </div>
+
+            {/* SOPORTE */}
+            <div className="footer-col">
+              <h4>Ayuda</h4>
+              <ul className="f-links">
+                <li><a href="#contact">Contacto</a></li>
+                <li><a href="#">Manual de Usuario</a></li>
+                <li><a href="#">Términos y condiciones</a></li>
+              </ul>
+            </div>
+
+            {/* REDES */}
+            <div className="footer-col social-col">
+              <h4>Seguinos</h4>
+              <div className="f-social-row">
+                <a href="#" className="f-social-icon-link" title="Facebook">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
+                </a>
+                <a href="#" className="f-social-icon-link" title="Instagram">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.51" /></svg>
+                </a>
+                <a href="#" className="f-social-icon-link" title="YouTube">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" /><path d="m10 15 5-3-5-3z" /></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-bottom-bar">
+            <p>
+              © 2026 Agenda Docente PRO. Hecho con
+              <span className="heart-brand">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="url(#heart-grad)">
+                  <defs>
+                    <linearGradient id="heart-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="var(--primary)" />
+                      <stop offset="100%" stopColor="var(--secondary)" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </span>
+              para los docentes de todo el país.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
