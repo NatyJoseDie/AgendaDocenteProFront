@@ -11,8 +11,7 @@ export default function Login() {
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
-        },
-        scopes: 'https://www.googleapis.com/auth/calendar.events'
+        }
       }
     });
     if (error) console.error("Error al iniciar sesión:", error.message);
