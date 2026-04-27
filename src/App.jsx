@@ -55,10 +55,10 @@ function App() {
     <Router>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Routes>
-          {/* RUTA RAÍZ INTELIGENTE */}
+          {/* RUTA RAÍZ: Si hay sesión, directo a la App. Si no, a la Landing. */}
           <Route 
             path="/" 
-            element={isPWA ? (session ? <Navigate to="/dashboard" /> : <Navigate to="/login" />) : <Landing session={session} />} 
+            element={session ? <Navigate to="/dashboard" /> : <Landing session={session} />} 
           />
 
           {/* RUTA EXPLÍCITA PARA VOLVER A LA LANDING (Sin redirecciones) */}
