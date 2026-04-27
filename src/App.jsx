@@ -55,11 +55,14 @@ function App() {
     <Router>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Routes>
-          {/* RUTA RAÍZ: Siempre Landing, excepto si es PWA Standalone que va al Dashboard/Login */}
+          {/* RUTA RAÍZ INTELIGENTE */}
           <Route 
             path="/" 
-            element={isPWA ? (session ? <Navigate to="/dashboard" /> : <Navigate to="/login" />) : <Landing />} 
+            element={isPWA ? (session ? <Navigate to="/dashboard" /> : <Navigate to="/login" />) : <Landing session={session} />} 
           />
+
+          {/* RUTA EXPLÍCITA PARA VOLVER A LA LANDING (Sin redirecciones) */}
+          <Route path="/inicio" element={<Landing session={session} />} />
 
           <Route 
             path="/login" 
@@ -68,57 +71,57 @@ function App() {
 
           <Route 
             path="/dashboard" 
-            element={session ? <Dashboard session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Dashboard session={session} /> : <Navigate to="/" />} 
           />
 
-          {/* RUTAS PROTEGIDAS: Si no hay login, ahora van a /login (no a la landing) */}
+          {/* RUTAS PROTEGIDAS: Si no hay login, ahora van a la raíz inteligente */}
           <Route 
             path="/asistencias" 
-            element={session ? <Attendance session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Attendance session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/escuelas" 
-            element={session ? <Escuelas session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Escuelas session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/escuelas/:id" 
-            element={session ? <EscuelaDashboard session={session} /> : <Navigate to="/login" />} 
+            element={session ? <EscuelaDashboard session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/cursos/:id" 
-            element={session ? <CursoDashboard session={session} /> : <Navigate to="/login" />} 
+            element={session ? <CursoDashboard session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/asistencia/:id" 
-            element={session ? <Attendance session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Attendance session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/horarios" 
-            element={session ? <HorarioSemanal session={session} /> : <Navigate to="/login" />} 
+            element={session ? <HorarioSemanal session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/libro-temas" 
-            element={session ? <LibroTemas session={session} /> : <Navigate to="/login" />} 
+            element={session ? <LibroTemas session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/planificaciones" 
-            element={session ? <Planificaciones session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Planificaciones session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/licencias" 
-            element={session ? <Licencias session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Licencias session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/calendario" 
-            element={session ? <Calendario session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Calendario session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/contactos" 
-            element={session ? <Contactos session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Contactos session={session} /> : <Navigate to="/" />} 
           />
           <Route 
             path="/suscripcion" 
-            element={session ? <Suscripcion session={session} /> : <Navigate to="/login" />} 
+            element={session ? <Suscripcion session={session} /> : <Navigate to="/" />} 
           />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

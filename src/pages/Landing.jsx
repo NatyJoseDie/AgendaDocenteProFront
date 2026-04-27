@@ -43,7 +43,7 @@ const FaqItem = ({ q, a }) => {
   );
 };
 
-export default function Landing() {
+export default function Landing({ session }) {
   const [displayedTitle, setDisplayedTitle] = useState("");
   const [isFinished, setIsFinished] = useState(false);
   const fullTitle = "Crea tu Agenda Docente Digital en simples pasos.";
@@ -60,6 +60,13 @@ export default function Landing() {
       }
     }, 60);
     return () => clearInterval(interval);
+  }, []);
+
+  // Limpiar el numeral (#) de la URL si venimos de un login exitoso
+  React.useEffect(() => {
+    if (window.location.hash) {
+      window.history.replaceState(null, null, window.location.pathname);
+    }
   }, []);
 
   const faqData = [
@@ -199,8 +206,12 @@ export default function Landing() {
                 <Smartphone size={18} /> Instalar App
               </button>
             )}
-            <Link to="/login" className="link-secondary" onClick={() => setMenuOpen(false)}>Ingresar</Link>
-            <Link to="/login" className="btn-nav-primary" onClick={() => setMenuOpen(false)}>Crear mi cuenta</Link>
+            <Link to={session ? "/dashboard" : "/login"} className="link-secondary" onClick={() => setMenuOpen(false)}>
+              {session ? "Mi Agenda" : "Ingresar"}
+            </Link>
+            <Link to={session ? "/dashboard" : "/login"} className="btn-nav-primary" onClick={() => setMenuOpen(false)}>
+              {session ? "Ir al Dashboard" : "Crear mi cuenta"}
+            </Link>
           </div>
         </div>
       </nav>
@@ -228,7 +239,9 @@ export default function Landing() {
               notas y proyectos en un solo lugar. <strong>Simple, rápida y profesional.</strong>
             </p>
             <div className="hero-actions">
-              <Link to="/login" className="btn-hero-main">Empezar a usar ahora</Link>
+              <Link to={session ? "/dashboard" : "/login"} className="btn-hero-main">
+                {session ? "Volver a mi Agenda" : "Empezar a usar ahora"}
+              </Link>
               <div className="trust-badges">
                 <div className="trust-item">
                   <span className="trust-icon">⭐</span>

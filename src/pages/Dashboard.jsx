@@ -104,7 +104,10 @@ export default function Dashboard({ session }) {
     } catch (e) { alert('Error CSV'); } finally { setExporting(false); }
   };
 
-  const handleLogout = async () => { await supabase.auth.signOut(); };
+  const handleLogout = async () => { 
+    await supabase.auth.signOut(); 
+    navigate('/');
+  };
 
   const handleSendFeedback = async () => {
     try {
@@ -184,66 +187,60 @@ export default function Dashboard({ session }) {
             </svg>
           </button>
 
-          {/* MENÚ DESPLEGABLE */}
+          {/* MENÚ DESPLEGABLE REFORMULADO */}
           {showConfig && (
             <>
               <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 90 }} onClick={() => setShowConfig(false)} />
               <div className="glass-card animate-scale-in" style={{ 
                 position: 'absolute', top: '120%', right: 0, zIndex: 100,
-                width: '260px', padding: '12px', border: '1px solid rgba(255,255,255,0.1)',
-                background: '#141824', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                width: '280px', padding: '16px', border: '1px solid rgba(255,255,255,0.1)',
+                background: '#141824', boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                borderRadius: '20px'
               }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', padding: '0 10px 10px 10px', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>Navegación</p>
+                
+                <Link to="/inicio" onClick={() => setShowConfig(false)} className="menu-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', textDecoration: 'none', color: '#fff', borderRadius: '12px', transition: '0.2s', whiteSpace: 'nowrap' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <span style={{ fontWeight: 600 }}>Ir al Sitio Web (Inicio)</span>
+                </Link>
+
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '12px 0' }} />
+
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', padding: '0 10px 10px 10px', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>Suscripción</p>
+                
                 {!docente?.is_premium && (
                   <Link to="/suscripcion" onClick={() => setShowConfig(false)} style={{ 
-                    textDecoration: 'none', background: 'var(--primary)', color: '#fff', 
-                    padding: '12px', borderRadius: '10px', display: 'flex', justifyContent: 'center',
-                    fontWeight: 800, fontSize: '0.8rem', marginBottom: '12px'
+                    textDecoration: 'none', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', color: '#fff', 
+                    padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center',
+                    fontWeight: 800, fontSize: '0.85rem', marginBottom: '12px', boxShadow: '0 10px 20px rgba(139, 92, 246, 0.3)'
                   }}>
                     PASAR A PREMIUM ✨
                   </Link>
                 )}
 
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', padding: '5px 10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Suscripción</p>
-                <Link to="/suscripcion" onClick={() => setShowConfig(false)} className="menu-item" style={{ display: 'flex', gap: '10px', padding: '10px', textDecoration: 'none', color: '#fff' }}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                  <span>Planes y Beneficios</span>
+                <Link to="/suscripcion" onClick={() => setShowConfig(false)} className="menu-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', textDecoration: 'none', color: '#fff', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#a78bfa" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                  </div>
+                  <span style={{ fontWeight: 600 }}>Planes y Beneficios</span>
                 </Link>
 
-                {deferredPrompt && (
-                  <button onClick={handleInstallApp} className="menu-item" style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', gap: '10px', padding: '10px', color: 'var(--primary)', cursor: 'pointer', fontWeight: 800 }}>
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                    <span>INSTALAR APLICACIÓN</span>
-                  </button>
-                )}
-
-                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }} />
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '12px 0' }} />
                 
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', padding: '5px 10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Datos y Backup</p>
-                <button onClick={handleExportCSV} className="menu-item" style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', gap: '10px', padding: '10px', color: '#fff', cursor: 'pointer' }}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--blue)" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <span>Exportar a Excel</span>
-                </button>
-                <button onClick={handleExportJSON} className="menu-item" style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', gap: '10px', padding: '10px', color: '#fff', cursor: 'pointer' }}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--green)" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  <span>Resguardo Técnico</span>
-                </button>
-                <button onClick={handleRestoreAuto} className="menu-item" style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', gap: '10px', padding: '10px', color: '#fff', cursor: 'pointer' }}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--orange)" strokeWidth="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                  <span>Restaurar de la Nube</span>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', padding: '0 10px 10px 10px', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>Herramientas</p>
+                
+                <button onClick={handleExportCSV} className="menu-item" style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', color: '#fff', cursor: 'pointer', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <span style={{ fontWeight: 600 }}>Exportar a Excel</span>
                 </button>
 
-                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }} />
-                
-                <button onClick={handleLogout} className="menu-item" style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', gap: '10px', padding: '10px', color: '#ff4d4d', cursor: 'pointer' }}>
+                <button onClick={handleLogout} className="menu-item" style={{ width: '100%', border: 'none', background: 'rgba(239, 68, 68, 0.1)', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', color: '#ef4444', cursor: 'pointer', borderRadius: '12px', marginTop: '10px', whiteSpace: 'nowrap' }}>
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                  <span>Cerrar Sesión</span>
-                </button>
-
-                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }} />
-                
-                <button onClick={() => { setShowFeedback(true); setShowConfig(false); }} className="menu-item" style={{ width: '100%', border: 'none', background: 'rgba(255,255,255,0.03)', textAlign: 'left', display: 'flex', gap: '10px', padding: '12px', color: '#facc15', cursor: 'pointer', borderRadius: '8px' }}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                  <span style={{ fontWeight: 800 }}>Darnos Feedback ⭐</span>
+                  <span style={{ fontWeight: 700 }}>Cerrar Sesión</span>
                 </button>
               </div>
             </>
