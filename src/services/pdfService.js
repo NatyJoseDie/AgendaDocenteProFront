@@ -96,37 +96,70 @@ export const ExportPDF = {
   },
 
   /**
-   * Genera el PDF de Asistencia Mensual
+   * Genera la Planilla de Asistencia Mensual Completa (Grilla 1-31)
    */
-  asistencia: (curso, alumnos, asistencias, mesNombre, docenteNombre) => {
-    const doc = new jsPDF('l', 'mm', 'a4');
+  asistencia: (curso, alumnos, historial, mesNombre, docenteNombre) => {
+    const doc = new jsPDF('l', 'mm', 'a4'); // Paisaje para que entre la grilla
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFontSize(18);
-    doc.setTextColor(79, 70, 229);
-    doc.text('Informe de Asistencia Mensual', 14, 20);
+    // Título y Encabezado
+    doc.setFontSize(16);
+    doc.setTextColor(40);
+    doc.text(`PLANILLA DE ASISTENCIA MENSUAL - ${mesNombre}`, 14, 15);
     
     doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Período: ${mesNombre}`, 14, 28);
-    doc.text(`Escuela: ${curso.escuelas?.nombre || 'General'} | Curso: ${curso.anio_o_grado} ${curso.division || ''}`, 14, 33);
+    doc.text(`Escuela: ${curso.escuelas?.nombre || 'General'}`, 14, 22);
+    doc.text(`Curso: ${curso.anio_o_grado} ${curso.division || ''} | Docente: ${docenteNombre}`, 14, 27);
     
-    doc.line(14, 38, pageWidth - 14, 38);
+    doc.line(14, 30, pageWidth - 14, 30);
 
-    const tableBody = alumnos.map((al, i) => {
-      const total = asistencias.filter(a => a.alumno_id === al.id).length;
-      const presentes = asistencias.filter(a => a.alumno_id === al.id && a.estado === 'presente').length;
-      const porcentaje = total > 0 ? ((presentes / total) * 100).toFixed(0) : '0';
+    // Generar días del mes para el encabezado
+    // Asumimos que el historial nos dice qué días hubo (o generamos 31)
+    const diasUnicos = Array.from(new Set(historial.map(h => h.fecha))).sort();
+    
+    // Si no hay datos, mostramos un mensaje
+    if (diasUnicos.length === 0) {
+      doc.setFontSize(12);
+      doc.text("No hay datos de asistencia registrados para este período.", 14, 45);
+      doc.save(`Asistencia_${mesNombre}.pdf`);
+      return;
+    }
+
+    // Cabecera: [#, Alumno, 1, 2, 3, ..., Totales]
+    const head = [['#', 'Apellido y Nombre', ...diasUnicos.map(d => d.split('-')[2]), 'P', 'A']];
+
+    const body = alumnos.map((al, index) => {
+      const asistenciasAlumno = historial.filter(h => h.alumno_id === al.id);
+      const row = [index + 1, `${al.apellido}, ${al.nombre}`];
       
-      return [i + 1, `${al.apellido}, ${al.nombre}`, presentes, total - presentes, `${porcentaje}%`];
+      let pCount = 0;
+      let aCount = 0;
+
+      diasUnicos.forEach(dia => {
+        const registro = asistenciasAlumno.find(h => h.fecha === dia);
+        if (registro) {
+          row.push(registro.estado);
+          if (registro.estado === 'P') pCount++;
+          if (registro.estado === 'A') aCount++;
+        } else {
+          row.push('-');
+        }
+      });
+
+      row.push(pCount, aCount);
+      return row;
     });
 
-    doc.autoTable({
-      startY: 45,
-      head: [['#', 'Alumno', 'Presentes', 'Ausentes', '% Asistencia']],
-      body: tableBody,
-      theme: 'striped',
-      headStyles: { fillColor: [79, 70, 229] }
+    autoTable(doc, {
+      startY: 35,
+      head: head,
+      body: body,
+      theme: 'grid',
+      styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
+      columnStyles: {
+        1: { halign: 'left', cellWidth: 40 } // Nombre más ancho
+      },
+      headStyles: { fillColor: [51, 65, 85] }
     });
 
     doc.save(`Asistencia_${mesNombre}_${curso.anio_o_grado}.pdf`);

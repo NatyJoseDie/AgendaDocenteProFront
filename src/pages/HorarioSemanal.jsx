@@ -8,10 +8,23 @@ export default function HorarioSemanal({ session }) {
   const [horarios, setHorarios] = useState([]);
   const [bloquesDinamicos, setBloquesDinamicos] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [viewMode, setViewMode] = useState(window.innerWidth > 991 ? 'table' : 'cards'); 
+  
+  const [diaSeleccionado, setDiaSeleccionado] = useState(() => {
+    const hoy = new Date().getDay(); // 0=Dom, 1=Lun...5=Vie
+    return hoy >= 1 && hoy <= 5 ? hoy - 1 : 0; // 0=Lunes index
+  });
   const docenteId = session?.user?.id;
 
   useEffect(() => {
     if (docenteId) loadHorarios();
+    
+    const handleResize = () => {
+      if (window.innerWidth <= 991) setViewMode('cards');
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [docenteId]);
 
   const loadHorarios = async () => {
@@ -29,13 +42,9 @@ export default function HorarioSemanal({ session }) {
 
       if (error) throw error;
       setHorarios(data || []);
-      
-      // ELIMINAMOS LOS BLOQUES DE 1 HORA.
-      // Ahora vamos a identificar todos los horarios "únicos" que existen en la semana
-      // para que cada fila sea un horario real.
+
       if (data && data.length > 0) {
         const rangosExistentes = data.map(h => `${h.hora_inicio.slice(0, 5)} - ${h.hora_fin.slice(0, 5)}`);
-        // Quitamos duplicados y ordenamos por hora de inicio
         const rangosUnicos = [...new Set(rangosExistentes)].sort((a, b) => a.localeCompare(b));
         setBloquesDinamicos(rangosUnicos);
       }
@@ -48,151 +57,140 @@ export default function HorarioSemanal({ session }) {
 
   const getEventos = (diaIdx, horaRango) => {
     const [inicioBloque, finBloque] = horaRango.split(' - ');
-    
     return horarios.filter(h => {
       const hInicio = h.hora_inicio.slice(0, 5);
       const hFin = h.hora_fin.slice(0, 5);
-      
-      const coincideDia = h.dia_semana === (diaIdx + 1);
-      // Ahora la coincidencia es EXACTA con el rango de la fila
-      const coincideHorario = hInicio === inicioBloque && hFin === finBloque;
-      
-      return coincideDia && coincideHorario;
+      return h.dia_semana === (diaIdx + 1) && hInicio === inicioBloque && hFin === finBloque;
     });
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem', color: '#6366f1' }}>Dibujando tu agenda... ✨</div>;
+  const getClasesDia = (diaIdx) => horarios.filter(h => h.dia_semana === (diaIdx + 1))
+    .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+
+  const hoyIdx = (() => { const d = new Date().getDay(); return d >= 1 && d <= 5 ? d - 1 : -1; })();
+
+  if (loading) return <div style={{ textAlign: 'center', padding: '5rem', color: '#6366f1', fontFamily: "'Outfit', sans-serif" }}>Cargando tu agenda... ✨</div>;
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f6f1f8',
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 1000 1000' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M794 371Q851 492 787 598.5t-138.5 131.5Q574 755 450 782t-271-63.5Q32 628 47 483.5t129.5-242Q306 144 430.5 141T655 249.5t139 121.5z' fill='rgba(139, 92, 246, 0.12)'/%3E%3Cpath d='M833.5 174Q892 298 840.5 417t-140.5 156.5Q611 611 501.5 677.5T237 733Q82 722 84 553t66-228.5Q214 165 348 114t254 1.5 231.5 58.5z' fill='rgba(244, 63, 94, 0.08)'/%3E%3Cpath d='M756.5 733.5Q642 841 490 850.5T202 770.5q-136-90-123-261t97-251Q260 178 409.5 125T682 173t149 203Q906 477 831 605.5t-74.5 128z' fill='rgba(16, 185, 129, 0.10)'/%3E%3C/svg%3E")`,
-      backgroundSize: 'cover',
-      backgroundAttachment: 'fixed',
-      backgroundPosition: 'center',
-      padding: '1.5rem',
-      fontFamily: "'Outfit', sans-serif"
-    }}>
-      {/* Botón Regresar */}
-      <Link to="/dashboard" style={{ 
-        display: 'inline-flex', 
-        alignItems: 'center', 
-        gap: '8px', 
-        color: '#4B2C82', 
-        textDecoration: 'none', 
-        fontWeight: 700,
-        marginBottom: '1rem',
-        fontSize: '0.9rem',
-        background: 'rgba(255,255,255,0.6)',
-        padding: '0.5rem 1rem',
-        borderRadius: '12px',
-        backdropFilter: 'blur(5px)',
-        border: '1px solid rgba(75, 44, 130, 0.2)'
-      }}>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-        Regresar al Inicio
-      </Link>
+    <div className="app-container" style={{ minHeight: '100vh', color: '#fff' }}>
 
-      <header style={{ textAlign: 'center', marginBottom: '1.5rem', position: 'relative' }}>
-        <h1 style={{ 
-          fontSize: '2.8rem', 
-          color: '#4B2C82', 
-          fontWeight: 900, 
-          margin: 0,
-          fontFamily: "'Outfit', sans-serif" 
-        }}>
-          Mi Agenda Semanal
-        </h1>
-        <div style={{ width: '60px', height: '4px', background: '#4B2C82', margin: '0.5rem auto', borderRadius: '2px' }}></div>
+      {/* ── HEADER ── */}
+      <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <Link to="/dashboard" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontWeight: 600,
+            marginBottom: '16px', background: 'rgba(255,255,255,0.06)', padding: '7px 12px',
+            borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Volver
+          </Link>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 900, margin: '0 0 4px', color: '#fff' }}>Mi Horario Semanal</h1>
+          <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Tus clases de la semana</p>
+        </div>
+
+        {/* Toggle - SOLO PARA DESKTOP */}
+        <div className="desktop-only" style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <button onClick={() => setViewMode('table')} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800,
+            background: viewMode === 'table' ? '#6366f1' : 'transparent', color: viewMode === 'table' ? '#fff' : 'rgba(255,255,255,0.4)', transition: 'all 0.3s'
+          }}>VISTA TABLA</button>
+          <button onClick={() => setViewMode('cards')} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800,
+            background: viewMode === 'cards' ? '#6366f1' : 'transparent', color: viewMode === 'cards' ? '#fff' : 'rgba(255,255,255,0.4)', transition: 'all 0.3s'
+          }}>VISTA LISTA</button>
+        </div>
       </header>
 
-      {/* Grilla Clásica con Fondo Nuevo */}
-      <div style={{ overflowX: 'auto', paddingBottom: '2rem' }}>
-        <table style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse', 
-          minWidth: '700px',
-          border: '3px solid #4B2C82',
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(5px)'
-        }}>
+      {/* ── VISTA CARDS (Mobile / Web Simplificada) ── */}
+      <div className={(viewMode === 'cards' ? 'show-block' : 'hide-on-desktop') + ' horario-cards-container'}>
+        <div className="dia-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', scrollbarWidth: 'none', padding: '12px 10px' }}>
+          {DIAS_SEMANA.map((dia, idx) => {
+            const activo = diaSeleccionado === idx;
+            return (
+              <button key={dia} onClick={() => setDiaSeleccionado(idx)} style={{
+                flexShrink: 0, padding: '8px 14px', borderRadius: '10px', border: 'none',
+                background: activo ? '#6366f1' : 'rgba(255,255,255,0.06)',
+                color: activo ? '#fff' : 'rgba(255,255,255,0.55)',
+                fontWeight: activo ? 800 : 600, fontSize: '0.8rem', cursor: 'pointer',
+                fontFamily: "'Outfit', sans-serif",
+                outline: idx === hoyIdx && !activo ? '2px solid #6366f1' : 'none',
+                animation: idx === hoyIdx ? 'glow-pulse 2s ease-in-out infinite' : 'none',
+                position: 'relative'
+              }}>
+                {dia.slice(0, 3)}
+                {idx === hoyIdx && <span style={{ display: 'block', fontSize: '0.45rem', fontWeight: 900, marginTop: '1px', opacity: 0.8 }}>HOY</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ paddingBottom: '100px' }}>
+          {getClasesDia(diaSeleccionado).length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>Sin clases este día 🎉</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '500px', margin: viewMode === 'cards' && window.innerWidth > 991 ? '0 auto' : '0' }}>
+              {getClasesDia(diaSeleccionado).map(clase => {
+                const color = (clase.cursos?.materia || '').toLowerCase().includes('preceptor') ? '#10b981' : '#8b5cf6';
+                return (
+                  <div key={clase.id} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid rgba(255,255,255,0.1)`, borderLeft: `4px solid ${color}`, borderRadius: '14px', padding: '14px', display: 'flex', gap: '12px' }}>
+                    <div style={{ flexShrink: 0, textAlign: 'center', minWidth: '48px' }}>
+                      <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 900, color }}>{clase.hora_inicio.slice(0, 5)}</p>
+                      <div style={{ width: '1px', height: '16px', background: `${color}44`, margin: '4px auto' }} />
+                      <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>{clase.hora_fin.slice(0, 5)}</p>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: '0 0 2px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>{clase.cursos?.escuelas?.nombre} {clase.cursos?.escuelas?.numero ? `Nº ${clase.cursos.escuelas.numero}` : ''}</p>
+                      <p style={{ margin: '0 0 4px', fontSize: '0.95rem', fontWeight: 900 }}>{clase.cursos?.anio_o_grado} {clase.cursos?.division}</p>
+                      <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: '20px', background: `${color}22`, border: `1px solid ${color}44`, fontSize: '0.7rem', fontWeight: 700, color }}>{clase.cursos?.materia || 'Sin materia'}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── VISTA TABLA (Desktop Default / Optional) ── */}
+      <div className={(viewMode === 'table' ? 'show-block' : 'hide-always') + ' horario-table-container'} style={{ 
+        overflowX: 'auto', 
+        background: '#242f47', // Azul Slate 700/800 más claro y sólido
+        borderRadius: '24px', 
+        border: '1px solid rgba(255,255,255,0.12)', 
+        padding: '1.5rem',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.4)'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '12px', minWidth: '950px' }}>
           <thead>
             <tr>
-              <th style={{ border: '2px solid #4B2C82', width: '120px' }}></th>
-              {DIAS_SEMANA.map(dia => (
-                <th key={dia} style={{ 
-                  border: '2px solid #4B2C82', 
-                  padding: '1rem', 
-                  color: '#4B2C82', 
-                  textTransform: 'uppercase',
-                  fontSize: '0.9rem',
-                  fontWeight: 900,
-                  letterSpacing: '1px'
-                }}>
-                  {dia}
-                </th>
+              <th style={{ padding: '12px', textAlign: 'left', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '1.5px' }}>HORARIO</th>
+              {DIAS_SEMANA.map((dia, idx) => (
+                <th key={dia} style={{ padding: '12px', textAlign: 'center', color: idx === hoyIdx ? '#818cf8' : '#fff', fontWeight: 800, fontSize: '0.9rem', letterSpacing: '1px' }}>{dia.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {bloquesDinamicos.map((bloque) => (
-              <tr key={bloque}>
-                <td style={{ 
-                  border: '1.5px solid #4B2C82', 
-                  padding: '0.8rem', 
-                  textAlign: 'center', 
-                  fontWeight: 800,
-                  fontSize: '0.75rem',
-                  color: '#4B2C82',
-                  background: 'rgba(75, 44, 130, 0.05)'
-                }}>
-                  {bloque}
-                </td>
-                {DIAS_SEMANA.map((_, diaIdx) => {
-                  const clases = getEventos(diaIdx, bloque);
+            {bloquesDinamicos.map(rango => (
+              <tr key={rango}>
+                <td style={{ padding: '12px', background: 'rgba(255,255,255,0.06)', borderRadius: '15px', textAlign: 'center', fontWeight: 800, fontSize: '0.8rem', color: '#818cf8', border: '1px solid rgba(255,255,255,0.05)' }}>{rango}</td>
+                {DIAS_SEMANA.map((_, idx) => {
+                  const eventos = getEventos(idx, rango);
                   return (
-                    <td key={diaIdx} style={{ 
-                      border: '1.5px solid #4B2C82', 
-                      height: '80px',
-                      padding: '8px',
-                      background: 'rgba(255, 255, 255, 0.4)',
-                      verticalAlign: 'top'
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', height: '100%' }}>
-                        {clases.map(clase => {
-                          const esPreceptor = (clase.cursos?.materia || '').toLowerCase().includes('preceptor');
-                          return (
-                            <div key={clase.id} style={{
-                              background: esPreceptor ? '#e8f5e9' : '#f3e5f5',
-                              borderLeft: `5px solid ${esPreceptor ? '#2e7d32' : '#7b1fa2'}`,
-                              borderRadius: '4px',
-                              padding: '0.6rem',
-                              flex: 1,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              justifyContent: 'center',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                            }}>
-                              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#444', lineHeight: 1.1 }}>
-                                {clase.cursos?.escuelas?.nombre?.toUpperCase()} 
-                                <span style={{ color: '#4B2C82' }}> {clase.cursos?.escuelas?.numero ? `Nº ${clase.cursos.escuelas.numero}` : ''}</span>
-                              </span>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '2px' }}>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000' }}>
-                                  {clase.cursos?.anio_o_grado} {clase.cursos?.division}
-                                </span>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#666', opacity: 0.8 }}>
-                                  {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
-                                </span>
-                              </div>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: esPreceptor ? '#2e7d32' : '#7b1fa2', marginTop: '2px' }}>
-                                {clase.cursos?.materia || 'CARGO'}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                    <td key={idx} style={{ verticalAlign: 'top', width: '18%' }}>
+                      {eventos.map(ev => {
+                        const color = (ev.cursos?.materia || '').toLowerCase().includes('preceptor') ? '#10b981' : '#8b5cf6';
+                        return (
+                          <div key={ev.id} style={{ background: 'rgba(15, 23, 42, 0.4)', border: `1px solid rgba(255,255,255,0.08)`, borderLeft: `5px solid ${color}`, padding: '12px', borderRadius: '15px', fontSize: '0.75rem', marginBottom: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                            <p style={{ margin: '0 0 3px', fontWeight: 800, fontSize: '0.85rem', color: '#fff' }}>{ev.cursos?.anio_o_grado} {ev.cursos?.division}</p>
+                            <p style={{ margin: 0, opacity: 0.9, fontWeight: 700, color: color, fontSize: '0.7rem' }}>{ev.cursos?.materia || 'Sin materia'}</p>
+                            <p style={{ margin: '6px 0 0', opacity: 0.4, fontSize: '0.62rem', fontWeight: 600 }}>{ev.cursos?.escuelas?.nombre} {ev.cursos?.escuelas?.numero ? `Nº ${ev.cursos.escuelas.numero}` : ''}</p>
+                          </div>
+                        );
+                      })}
                     </td>
                   );
                 })}
@@ -203,8 +201,22 @@ export default function HorarioSemanal({ session }) {
       </div>
 
       <style>{`
-        body { background-color: #fdfbf7 !important; overflow-x: hidden; }
-        .bottom-nav { display: none !important; }
+        @keyframes glow-pulse {
+          0%   { box-shadow: 0 0 0px 0px rgba(249,115,22,0); }
+          50%  { box-shadow: 0 0 14px 5px rgba(249,115,22,0.85); }
+          100% { box-shadow: 0 0 0px 0px rgba(249,115,22,0); }
+        }
+        @media (min-width: 992px) {
+          .desktop-only { display: flex !important; }
+          .show-block { display: block !important; }
+          .hide-on-desktop { display: none !important; }
+          .hide-always { display: none !important; }
+        }
+        @media (max-width: 991px) {
+          .desktop-only { display: none !important; }
+          .horario-table-container { display: none !important; }
+          .horario-cards-container { display: block !important; }
+        }
       `}</style>
     </div>
   );

@@ -513,6 +513,78 @@ export default function Landing({ session }) {
         </div>
       </section>
 
+      {/* SECCIÓN DE TESTIMONIOS - VOCES DE LA COMUNIDAD */}
+      <section className="testimonials-section">
+        <div className="container-main">
+          <header style={{ textAlign: 'center', marginBottom: '5rem' }}>
+            <span className="section-label">COMUNIDAD</span>
+            <h2 className="section-title-alt" style={{ color: '#fff' }}>Lo que dicen los profes</h2>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '1rem auto' }}>
+              Cientos de docentes ya transformaron su día a día. Tu espacio de trabajo inteligente está esperando por vos.
+            </p>
+          </header>
+
+          <div className="testimonials-grid">
+            {/* Testimonio 1 */}
+            <div className="testimonial-card-elite animate-slide-up">
+              <div className="stars-row">
+                {Array(5).fill().map((_, i) => <span key={i}>★</span>)}
+              </div>
+              <p className="testimonial-quote">
+                "¡Por fin una herramienta que entiende la realidad del aula argentina! No más carpetas pesadas, ahora tengo todo en mi celu. La función de asistencia es un viaje de ida."
+              </p>
+              <div className="testimonial-user">
+                <div className="user-avatar-frame">
+                  <img src="https://ui-avatars.com/api/?name=Mariana+G&background=8b5cf6&color=fff" alt="Profe" />
+                </div>
+                <div className="user-details">
+                  <h4>Mariana González</h4>
+                  <span>Primaria • Buenos Aires</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonio 2 */}
+            <div className="testimonial-card-elite animate-slide-up" style={{ transitionDelay: '0.1s' }}>
+              <div className="stars-row">
+                {Array(5).fill().map((_, i) => <span key={i}>★</span>)}
+              </div>
+              <p className="testimonial-quote">
+                "Como profe de secundaria con 15 cursos, la Agenda Docente me salvó la vida. Gestionar las notas y las faltas nunca fue tan simple y rápido. 100% recomendada."
+              </p>
+              <div className="testimonial-user">
+                <div className="user-avatar-frame">
+                  <img src="https://ui-avatars.com/api/?name=Ricardo+P&background=0ea5e9&color=fff" alt="Profe" />
+                </div>
+                <div className="user-details">
+                  <h4>Ricardo Peralta</h4>
+                  <span>Secundaria • Córdoba</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonio 3 */}
+            <div className="testimonial-card-elite animate-slide-up" style={{ transitionDelay: '0.2s' }}>
+              <div className="stars-row">
+                {Array(5).fill().map((_, i) => <span key={i}>★</span>)}
+              </div>
+              <p className="testimonial-quote">
+                "Me encanta la estética y lo intuitiva que es. Se nota que está hecha pensando en nosotros. El soporte técnico de Natalia es excelente y siempre están mejorando."
+              </p>
+              <div className="testimonial-user">
+                <div className="user-avatar-frame">
+                  <img src="https://ui-avatars.com/api/?name=Silvina+M&background=ec4899&color=fff" alt="Profe" />
+                </div>
+                <div className="user-details">
+                  <h4>Silvina Mendoza</h4>
+                  <span>Docente Terciaria • Mendoza</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ ESTILO EMPRETIENDA (ACORDEÓN) */}
       <section className="faq-pro" id="faq">
         <div className="container-main">

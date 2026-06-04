@@ -31,7 +31,19 @@ function TipoBadge({ tipo }) {
   );
 }
 
+// Hook personalizado para detectar responsive
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return isMobile;
+}
+
 export default function Planificaciones({ session }) {
+  const isMobile = useIsMobile();
   const query = new URLSearchParams(useLocation().search);
   const cursoId = query.get('curso');
   const docenteId = session?.user?.id;
@@ -207,48 +219,59 @@ export default function Planificaciones({ session }) {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           {cursoId ? 'Volver al Curso' : 'Volver al Inicio'}
         </Link>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-          <div>
-            <h2 className="text-gradient" style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.3rem' }}>
+        {isMobile ? (
+          /* MÓVIL: título arriba full width, botón y descripción abajo */
+          <>
+            <h2 className="text-gradient" style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.4rem' }}>
               Mis Planificaciones
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              {cursoId ? 'Documentos PDF de este curso' : 'Todos mis documentos PDF'}
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0 }}>
+                {cursoId ? 'PDFs de este curso' : 'Todos mis PDFs'}
+              </p>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="btn-primary"
+                style={{ borderRadius: '12px', padding: '0.55rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+              >
+                {showForm ? 'Cancelar' : cursoId ? '+ Subir PDF' : '+ Nueva Planificación'}
+              </button>
+            </div>
+          </>
+        ) : (
+          /* DESKTOP */
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+            <div>
+              <h2 className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.3rem' }}>
+                Mis Planificaciones
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
+                {cursoId ? 'Documentos PDF de este curso' : 'Todos mis documentos PDF'}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn-primary"
+              style={{ minWidth: '130px', borderRadius: '14px', padding: '0.7rem 1.2rem', whiteSpace: 'nowrap' }}
+            >
+              {showForm ? 'Cancelar' : cursoId ? '+ Subir PDF' : '+ Nueva Planificación'}
+            </button>
           </div>
-          {cursoId && cursoId !== 'null' && (
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="btn-primary"
-              style={{ minWidth: '130px', borderRadius: '14px', padding: '0.7rem 1.2rem' }}
-            >
-              {showForm ? 'Cancelar' : '+ Subir PDF'}
-            </button>
-          )}
-          {(!cursoId || cursoId === 'null') && (
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="btn-primary"
-              style={{ minWidth: '130px', borderRadius: '14px', padding: '0.7rem 1.2rem' }}
-            >
-              {showForm ? 'Cancelar' : '+ Nueva Planificación'}
-            </button>
-          )}
-        </div>
+        )}
       </header>
 
       {/* Formulario de carga */}
       {showForm && (
         <form onSubmit={handleSubmit} className="glass-card animate-slide-up" style={{
-          padding: '1.8rem', marginBottom: '2rem',
+          padding: isMobile ? '1.2rem' : '1.8rem', marginBottom: '2rem',
           border: '1px solid rgba(99,102,241,0.4)',
           background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(79,70,229,0.04))'
         }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: 700 }}>
+          <h3 style={{ marginBottom: '1.2rem', fontSize: '1.1rem', fontWeight: 700 }}>
             Cargar nueva planificación
           </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
             <div className="form-group">
               <label>Título del documento *</label>
               <input
@@ -289,7 +312,7 @@ export default function Planificaciones({ session }) {
               </div>
             )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
             <div className="form-group">
               <label>Período</label>
               <select
@@ -441,60 +464,75 @@ export default function Planificaciones({ session }) {
                 key={plan.id}
                 className="glass-card"
                 style={{
-                  padding: '1rem 1.2rem',
+                  padding: isMobile ? '1rem' : '1rem 1.2rem',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: isMobile ? 'stretch' : 'center',
+                  gap: isMobile ? '0.8rem' : '1rem',
                   borderLeft: '4px solid ' + tipo.color,
                   transition: 'transform 0.15s ease',
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateX(3px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
+                onMouseEnter={e => { if (!isMobile) e.currentTarget.style.transform = 'translateX(3px)'; }}
+                onMouseLeave={e => { if (!isMobile) e.currentTarget.style.transform = 'translateX(0)'; }}
               >
-                {/* Ícono */}
-                <div style={{
-                  width: '46px', height: '46px', borderRadius: '13px', flexShrink: 0,
-                  background: tipo.color + '22',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem'
-                }}>
-                  {tipo.emoji}
-                </div>
+                {/* Contenedor principal de info (Ícono + Datos) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
+                  {/* Ícono */}
+                  <div style={{
+                    width: isMobile ? '40px' : '46px',
+                    height: isMobile ? '40px' : '46px',
+                    borderRadius: '12px', flexShrink: 0,
+                    background: tipo.color + '22',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: isMobile ? '1.2rem' : '1.4rem'
+                  }}>
+                    {tipo.emoji}
+                  </div>
 
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
-                    <TipoBadge tipo={plan.tipo} />
-                    {plan.periodo && (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                        {plan.periodo}
-                      </span>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+                      <TipoBadge tipo={plan.tipo} />
+                      {plan.periodo && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          {plan.periodo}
+                        </span>
+                      )}
+                    </div>
+                    <h4 style={{
+                      fontSize: isMobile ? '0.9rem' : '0.95rem',
+                      fontWeight: 700, margin: 0,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>
+                      {plan.titulo}
+                    </h4>
+                    {plan.cursos && (
+                      <p style={{ fontSize: '0.72rem', color: '#818cf8', marginTop: '2px', fontWeight: 700 }}>
+                        🏛️ {(() => {
+                          const esc = plan.cursos.escuelas || plan.cursos.escuela;
+                          if (!esc) return 'Escuela';
+                          const hasNoFlag = !esc.nombre.includes('N°') && !esc.nombre.includes('Nº');
+                          return hasNoFlag && esc.numero ? `${esc.nombre} N° ${esc.numero}` : `${esc.nombre} ${esc.numero || ''}`;
+                        })()} — {plan.cursos.anio_o_grado} {plan.cursos.division || ''} ({plan.cursos.materia || ''})
+                      </p>
+                    )}
+                    {plan.fecha_entrega && (
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        📅 Entrega a Dirección: {plan.fecha_entrega.split('-').reverse().join('/')}
+                      </p>
                     )}
                   </div>
-                  <h4 style={{
-                    fontSize: '0.95rem', fontWeight: 700, margin: 0,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>
-                    {plan.titulo}
-                  </h4>
-                  {plan.cursos && (
-                    <p style={{ fontSize: '0.72rem', color: '#818cf8', marginTop: '2px', fontWeight: 700 }}>
-                      🏛️ {(() => {
-                        const esc = plan.cursos.escuelas || plan.cursos.escuela;
-                        if (!esc) return 'Escuela';
-                        const hasNoFlag = !esc.nombre.includes('N°') && !esc.nombre.includes('Nº');
-                        return hasNoFlag && esc.numero ? `${esc.nombre} N° ${esc.numero}` : `${esc.nombre} ${esc.numero || ''}`;
-                      })()} — {plan.cursos.anio_o_grado} {plan.cursos.division || ''} ({plan.cursos.materia || ''})
-                    </p>
-                  )}
-                  {plan.fecha_entrega && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                      📅 Entrega a Dirección: {plan.fecha_entrega.split('-').reverse().join('/')}
-                    </p>
-                  )}
                 </div>
 
-                {/* Botones de acción */}
-                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                {/* Botones de acción (Abajo en móvil, a la derecha en desktop) */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flexShrink: 0,
+                  borderTop: isMobile ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                  paddingTop: isMobile ? '0.8rem' : 0,
+                  marginTop: isMobile ? '0.2rem' : 0
+                }}>
 
                   {/* Ver PDF */}
                   <a
@@ -502,7 +540,8 @@ export default function Planificaciones({ session }) {
                     title="Ver PDF"
                     onClick={e => { if (!plan.archivo_url) e.preventDefault(); }}
                     style={{
-                      width: '38px', height: '38px', borderRadius: '11px',
+                      flex: isMobile ? 1 : 'none',
+                      width: isMobile ? 'auto' : '38px', height: '38px', borderRadius: '11px',
                       background: plan.archivo_url ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       textDecoration: 'none', transition: 'background 0.2s',
@@ -523,7 +562,8 @@ export default function Planificaciones({ session }) {
                     disabled={!plan.archivo_url}
                     title="Compartir por WhatsApp"
                     style={{
-                      width: '38px', height: '38px', borderRadius: '11px', border: 'none',
+                      flex: isMobile ? 1 : 'none',
+                      width: isMobile ? 'auto' : '38px', height: '38px', borderRadius: '11px', border: 'none',
                       background: plan.archivo_url ? '#25D36622' : 'rgba(255,255,255,0.03)',
                       cursor: plan.archivo_url ? 'pointer' : 'default',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -538,13 +578,13 @@ export default function Planificaciones({ session }) {
                   </button>
 
                   {/* Email con Menú de Opciones */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative', flex: isMobile ? 1 : 'none', display: 'flex' }}>
                     <button
                       onClick={() => setShowEmailMenu(showEmailMenu === plan.id ? null : plan.id)}
                       disabled={!plan.archivo_url}
                       title="Compartir por Email"
                       style={{
-                        width: '38px', height: '38px', borderRadius: '11px', border: 'none',
+                        width: '100%', height: '38px', borderRadius: '11px', border: 'none',
                         background: plan.archivo_url ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
                         cursor: plan.archivo_url ? 'pointer' : 'default',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -585,7 +625,8 @@ export default function Planificaciones({ session }) {
                     disabled={deletingId === plan.id}
                     title="Eliminar"
                     style={{
-                      width: '38px', height: '38px', borderRadius: '11px', border: 'none',
+                      flex: isMobile ? 1 : 'none',
+                      width: isMobile ? 'auto' : '38px', height: '38px', borderRadius: '11px', border: 'none',
                       background: 'rgba(239,68,68,0.1)',
                       cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',

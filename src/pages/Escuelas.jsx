@@ -106,7 +106,7 @@ export default function Escuelas({ session }) {
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Volver
           </Link>
-          <h2 style={{ fontSize: '1.8rem' }}>Mis Escuelas</h2>
+          <h2 style={{ fontSize: '1.8rem' }}>Mis escuelas</h2>
         </div>
         <button className="btn-primary" onClick={handleOpenModal} style={{ padding: '0.8rem 1.2rem' }}>
           + Agregar
@@ -132,7 +132,7 @@ export default function Escuelas({ session }) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{escuela.nombre}{tieneNum}</h4>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', textTransform: 'capitalize' }}>{(escuela.nombre + tieneNum).toLowerCase()}</h4>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'capitalize' }}>{escuela.nivel}</p>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>

@@ -1073,6 +1073,124 @@ h3 {
   transform: scale(1.3);
 }
 
+/* ==========================================================================
+   TESTIMONIALS SECTION - PREMIUM
+   ========================================================================== */
+.testimonials-section {
+  padding: 8rem 0;
+  background: var(--background);
+  position: relative;
+  overflow: hidden;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  margin-top: 4rem;
+}
+
+.testimonial-card-elite {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  padding: 2.5rem;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+}
+
+.testimonial-card-elite:hover {
+  transform: translateY(-15px) scale(1.02);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--primary);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+}
+
+.testimonial-quote {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-style: italic;
+  flex-grow: 1;
+}
+
+.testimonial-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar-frame {
+  width: 60px;
+  height: 60px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid var(--primary);
+  background: var(--purple-bg);
+}
+
+.user-avatar-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-details h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.user-details span {
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.stars-row {
+  color: #facc15;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 4px;
+}
+
+@media (max-width: 1024px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+    gap: 1.5rem; /* Menos espacio entre tarjetas en móvil */
+  }
+  .testimonials-section {
+    padding: 4rem 0;
+  }
+  .testimonial-card-elite {
+    padding: 1.5rem; /* Más aire en los costados */
+    border-radius: 24px;
+  }
+  .testimonial-quote {
+    font-size: 0.95rem; /* Texto más apto para lectura en móvil */
+    margin-bottom: 1.5rem;
+  }
+  .user-avatar-frame {
+    width: 50px;
+    height: 50px;
+  }
+  .user-details h4 {
+    font-size: 1rem;
+  }
+}
+
 /* RESPONSIVE FOOTER */
 @media (max-width: 900px) {
   .footer-grid {

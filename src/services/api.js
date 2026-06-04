@@ -128,11 +128,17 @@ export const AlumnosAPI = {
     if (error) throw error;
     return data;
   },
+  createCondicion: async (condicionData) => {
+    const { data, error } = await supabase.from('condiciones_especiales').insert([condicionData]).select().single();
+    if (error) throw error;
+    return data;
+  },
   create: async (alumnoData, condicionData = null) => {
+    if (!alumnoData) throw new Error("Faltan datos del alumno");
     const { data: alumno, error } = await supabase.from('alumnos').insert([alumnoData]).select().single();
     if (error) throw error;
 
-    if (condicionData) {
+    if (condicionData && alumno) {
       const condicionToInsert = {
         ...condicionData,
         alumno_id: alumno.id,
@@ -226,12 +232,15 @@ export const AsistenciasAPI = {
   getResumenMensual: async (cursoId, mes, anio) => {
     // Simulamos el endpoint del backend /api/asistencias/resumen-mensual
     // En una implementación real con Supabase esto podría ser un RPC o una consulta filtrada
+    const lastDay = new Date(anio, mes, 0).getDate(); 
+    const endDate = `${anio}-${String(mes).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
     const { data, error } = await supabase
       .from('asistencias')
       .select('*, alumnos(apellido, nombre)')
       .eq('curso_id', cursoId)
       .gte('fecha', `${anio}-${String(mes).padStart(2, '0')}-01`)
-      .lte('fecha', `${anio}-${String(mes).padStart(2, '0')}-31`);
+      .lte('fecha', endDate);
     if (error) throw error;
     return data;
   },
@@ -699,5 +708,27 @@ export const FeedbackAPI = {
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
+  }
+};
+
+// ─── OCR PROFESIONAL (BACKEND) ─────────────────────────────
+const BACKEND_URL = 'http://localhost:3000/api';
+
+export const OCRAPI = {
+  processImage: async (imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    const response = await fetch(`${BACKEND_URL}/ocr/process`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.details || errorData.error || 'Error en el escaneo');
+    }
+
+    return await response.json();
   }
 };

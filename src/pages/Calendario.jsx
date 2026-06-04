@@ -105,33 +105,31 @@ export default function Calendario({ session }) {
   if (view === 'anual') {
     return (
       <div className="app-container animate-fade-in" style={{ minHeight: '100vh', backgroundColor: '#0f172a', padding: '2.5rem 1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <header style={{ textAlign: 'center', marginBottom: '4rem', position: 'relative' }}>
-          <Link to="/dashboard" style={{ position: 'absolute', left: '0', top: '0', color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, opacity: 0.8 }}>
+        <header className="calendario-header">
+          <Link to="/dashboard" className="calendario-back-link" style={{ color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, opacity: 0.8 }}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             VOLVER
           </Link>
-          <h1 style={{ fontSize: '5rem', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-2px' }}>{selectedYear}</h1>
-          <div style={{ height: '4px', width: '80px', backgroundColor: 'var(--purple)', margin: '15px auto', borderRadius: '10px', boxShadow: '0 0 15px var(--purple)' }}></div>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 700, letterSpacing: '4px', textTransform: 'uppercase' }}>Planner Catedral</p>
+          <h1 className="calendario-title-year">{selectedYear}</h1>
+          <div className="calendario-divider" style={{ height: '4px', width: '80px', backgroundColor: 'var(--purple)', margin: '15px auto', borderRadius: '10px', boxShadow: '0 0 15px var(--purple)' }}></div>
+          <p className="calendario-subtitle" style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 700, letterSpacing: '4px', textTransform: 'uppercase' }}>Planner Catedral</p>
           
-          <button onClick={() => setShowModal(true)} style={{
-            position: 'absolute', right: 0, top: '10px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: '18px', padding: '1rem 2rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(124, 58, 237, 0.4)'
+          <button onClick={() => setShowModal(true)} className="calendario-btn-agendar" style={{
+            background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: '18px', padding: '1rem 2rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(124, 58, 237, 0.4)'
           }}>
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             AGENDAR
           </button>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', rowGap: '3rem' }}>
+        <div className="calendario-grid-anual">
           {MESES.map((mes, index) => {
             const firstDay = new Date(selectedYear, index, 1).getDay();
             const daysInMonth = new Date(selectedYear, index + 1, 0).getDate();
             const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
 
             return (
-              <div key={mes} onClick={() => { setSelectedMonth(index); setView('mensual'); }} style={{ 
-                cursor: 'pointer', textAlign: 'center', backgroundColor: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(10px)', padding: '2rem 1.5rem', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', transition: '0.3s transform'
-              }}>
+              <div key={mes} onClick={() => { setSelectedMonth(index); setView('mensual'); }} className="calendario-card-mes">
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '1.2rem', color: '#fff', fontWeight: 900 }}>{mes}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', marginBottom: '10px' }}>
                    {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => <span key={d}>{d}</span>)}
@@ -178,35 +176,35 @@ export default function Calendario({ session }) {
         cursos={cursos} 
       />
 
-      <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="calendario-header-mensual">
         <div>
-          <button onClick={() => setView('anual')} style={{ background: 'none', border: 'none', color: '#fff', opacity: 0.8, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', fontWeight: 700, padding: 0 }}>
+          <button onClick={() => setView('anual')} className="calendario-btn-volver-mensual">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             VISTA ANUAL
           </button>
-          <h2 className="text-gradient" style={{ fontSize: '4rem', fontWeight: 900, margin: '0.5rem 0 0 0', color: '#fff' }}>{MESES[selectedMonth]}</h2>
+          <h2 className="text-gradient calendario-titulo-mes">{MESES[selectedMonth]}</h2>
         </div>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-           <button onClick={() => setShowModal(true)} style={{ background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: '12px', padding: '0.8rem 1.5rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="calendario-actions-mensual">
+           <button onClick={() => setShowModal(true)} className="calendario-btn-mensual-accion calendario-btn-mensual-accion-principal">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               AGENDAR
            </button>
-           <button onClick={() => setSelectedMonth(selectedMonth === 0 ? 11 : selectedMonth - 1)} className="btn-primary" style={{ padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer' }}>Anterior</button>
-           <button onClick={() => setSelectedMonth(selectedMonth === 11 ? 0 : selectedMonth + 1)} className="btn-primary" style={{ padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer' }}>Siguiente</button>
+           <button onClick={() => setSelectedMonth(selectedMonth === 0 ? 11 : selectedMonth - 1)} className="calendario-btn-mensual-accion">Anterior</button>
+           <button onClick={() => setSelectedMonth(selectedMonth === 11 ? 0 : selectedMonth + 1)} className="calendario-btn-mensual-accion">Siguiente</button>
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: '3rem' }}>
+      <div className="calendario-layout-mensual">
         
-        <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(15px)', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', backgroundColor: 'rgba(15, 23, 42, 0.8)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="calendario-tabla-mensual">
+          <div className="calendario-tabla-cabecera">
             {['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'].map(d => (
-              <div key={d} style={{ padding: '1.5rem 0.5rem', fontSize: '0.85rem', fontWeight: 900, color: '#94a3b8', letterSpacing: '2px' }}>{d}</div>
+              <div key={d} className="calendario-tabla-cabecera-celda">{d}</div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          <div className="calendario-tabla-cuerpo">
             {blankSpaces.map((_, i) => (
-              <div key={`blank-${i}`} style={{ minHeight: '150px', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(15, 23, 42, 0.1)' }}></div>
+              <div key={`blank-${i}`} className="calendario-celda-vacia"></div>
             ))}
             {monthDays.map((_, i) => {
               const day = i + 1;
@@ -217,14 +215,13 @@ export default function Calendario({ session }) {
               const hasEvents = dayEvents.length > 0;
               
               return (
-                <div key={day} style={{ 
-                  minHeight: '150px', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.2rem', position: 'relative',
+                <div key={day} className="calendario-celda-dia" style={{ 
                   backgroundColor: hasEvents ? `${dayEvents[0].color || 'var(--purple)'}10` : 'transparent'
                 }}>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 900, color: hasEvents ? (dayEvents[0].color || 'var(--purple)') : '#475569' }}>{day}</span>
+                  <span className="calendario-numero-dia" style={{ color: hasEvents ? (dayEvents[0].color || 'var(--purple)') : '#475569' }}>{day}</span>
                   {dayEvents.map((e, idx) => (
-                    <div key={idx} style={{ 
-                      fontSize: '0.75rem', backgroundColor: e.color || 'var(--purple)', color: '#fff', padding: '8px 12px', borderRadius: '12px', marginTop: '10px', fontWeight: 900, boxShadow: '0 4px 10px rgba(0,0,0,0.3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    <div key={idx} className="calendario-evento-item" style={{ 
+                      backgroundColor: e.color || 'var(--purple)'
                     }}>
                       {e.titulo}
                     </div>
@@ -235,11 +232,11 @@ export default function Calendario({ session }) {
           </div>
         </div>
 
-        <aside style={{ backgroundColor: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(15px)', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ background: 'linear-gradient(135deg, var(--purple), #4f46e5)', color: '#fff', padding: '2.5rem', borderRadius: '35px 35px 15px 15px', textAlign: 'center' }}>
-            <h3 style={{ margin: 0, fontWeight: 900, fontSize: '1.8rem', letterSpacing: '4px' }}>IMPORTANTE</h3>
+        <aside className="calendario-aside">
+          <div className="calendario-aside-header">
+            <h3 className="calendario-aside-titulo">IMPORTANTE</h3>
           </div>
-          <div style={{ padding: '3rem 2rem', flexGrow: 1 }}>
+          <div className="calendario-aside-contenido">
             {eventosDelMes.length === 0 ? (
               <div style={{ textAlign: 'center', marginTop: '6rem', color: '#64748b' }}>
                 <p style={{ fontSize: '1.3rem', fontWeight: 900 }}>Nada anotado ✨</p>

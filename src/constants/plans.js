@@ -44,6 +44,13 @@ export const SUBSCRIPTION_PLANS = {
 SUBSCRIPTION_PLANS.expert = SUBSCRIPTION_PLANS.premium;
 
 export const checkPlanLimit = (docente, currentCount, type = 'cursos') => {
+  // 👑 GOD MODE: Bypassear límites para la fundadora o usuarios Premium
+  const ADMIN_EMAILS = ['natalia@agendadocente.com', 'admin@agendadocente.com']; // Agregá el tuyo acá
+  
+  if (docente?.is_premium === true || ADMIN_EMAILS.includes(docente?.email?.toLowerCase())) {
+    return { limited: false };
+  }
+
   const planKey = docente?.subscription_plan || 'free';
   const plan = SUBSCRIPTION_PLANS[planKey];
   

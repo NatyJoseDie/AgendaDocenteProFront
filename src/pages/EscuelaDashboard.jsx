@@ -167,7 +167,7 @@ export default function EscuelaDashboard({ session }) {
           Volver a Escuelas
         </Link>
         <div>
-          <h2 style={{ fontSize: '1.8rem', lineHeight: 1.1 }}>{escuela.nombre}{tieneNum}</h2>
+          <h2 style={{ fontSize: '1.8rem', lineHeight: 1.1, textTransform: 'capitalize' }}>{(escuela.nombre + tieneNum).toLowerCase()}</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.95rem', textTransform: 'capitalize' }}>
             {escuela.nivel} {escuela.direccion ? `• ${escuela.direccion}` : ''}
           </p>
@@ -213,13 +213,13 @@ export default function EscuelaDashboard({ session }) {
               <Link to={`/cursos/${c.id}`} className="glass-card module-card" style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem', textDecoration: 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h4 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)' }}>
-                    {c.nombre || 'CURSO'}
-                    <span style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 800 }}>
-                      {c.anio_o_grado} {c.division}
+                  <h4 style={{ fontSize: '1.15rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.8rem', color: 'var(--text-primary)', paddingRight: '85px', textTransform: 'capitalize' }}>
+                    {(c.nombre || 'CURSO').toLowerCase()}
+                    <span style={{ fontSize: '0.9rem', color: 'var(--primary)', letterSpacing: '3px' }}>
+                      {(c.anio_o_grado + (c.division ? ` ${c.division}` : '')).toLowerCase().replace(/([º°oa])([0-9])/gi, '$1 $2')}
                     </span>
-                    <span style={{ fontWeight: 500, background: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)', padding: '0.2rem 0.5rem', borderRadius: '12px', fontSize: '0.65rem', textTransform: 'uppercase', marginLeft: 'auto' }}>
-                      {c.turno}
+                    <span style={{ fontWeight: 600, background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', padding: '0.2rem 0.6rem', borderRadius: '10px', fontSize: '0.65rem' }}>
+                      {(c.turno || '').toLowerCase()}
                     </span>
                   </h4>
                   {c.materia !== 'Sin materia' && (
