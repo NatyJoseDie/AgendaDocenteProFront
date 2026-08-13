@@ -3,6 +3,7 @@ import { EscuelasAPI, CursosAPI, PerfilAPI } from '../services/api';
 import { checkPlanLimit } from '../constants/plans';
 import { useParams, Link } from 'react-router-dom';
 import '../components/Modal.css';
+import OnboardingTour from '../components/OnboardingTour';
 
 const DIAS_SEMANA = {
   1: 'Lunes',
@@ -20,7 +21,29 @@ export default function EscuelaDashboard({ session }) {
   const [docente, setDocente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showCursoModal, setShowCursoModal] = useState(false);
+  const [forceStartTour, setForceStartTour] = useState(false);
   const docenteId = session?.user?.id;
+
+  const escuelaDashTourSteps = [
+    {
+      target: '#tour-escuela-info',
+      title: 'Panel de la Escuela 🏛️',
+      content: 'Aquí administras los cursos, módulos y cargos específicos de esta institución educativa.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-curso-agregar',
+      title: 'Crear Curso o Cargo 📝',
+      content: 'Presiona en "+ Agregar" para registrar tus roles (Ej: Profesor, Preceptor) especificando el año, división, materia y los días y horarios que dictas clase.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-cursos-lista',
+      title: 'Entrar a las Planillas 📊',
+      content: 'Toca sobre la tarjeta de cualquiera de tus cursos creados para ingresar a tomar asistencia, cargar calificaciones y llevar el libro de temas.',
+      position: 'top'
+    }
+  ];
 
   const [cursoData, setCursoData] = useState({
     nombre: '',
@@ -166,11 +189,19 @@ export default function EscuelaDashboard({ session }) {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Volver a Escuelas
         </Link>
-        <div>
-          <h2 style={{ fontSize: '1.8rem', lineHeight: 1.1, textTransform: 'capitalize' }}>{(escuela.nombre + tieneNum).toLowerCase()}</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.95rem', textTransform: 'capitalize' }}>
-            {escuela.nivel} {escuela.direccion ? `• ${escuela.direccion}` : ''}
-          </p>
+        <div id="tour-escuela-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+          <div>
+            <h2 style={{ fontSize: '1.8rem', lineHeight: 1.1, textTransform: 'capitalize', margin: 0 }}>{(escuela.nombre + tieneNum).toLowerCase()}</h2>
+            <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.95rem', textTransform: 'capitalize' }}>
+              {escuela.nivel} {escuela.direccion ? `• ${escuela.direccion}` : ''}
+            </p>
+          </div>
+          <button
+            onClick={() => setForceStartTour(true)}
+            style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', borderRadius: '12px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+          >
+            ❓ Guía
+          </button>
         </div>
       </header>
  
@@ -196,18 +227,18 @@ export default function EscuelaDashboard({ session }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1.2rem' }}>Roles y Cursos dictados</h3>
-        <button onClick={handleOpenCursoModal} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '0.6rem 1rem', borderRadius: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <button id="tour-curso-agregar" onClick={handleOpenCursoModal} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '0.6rem 1rem', borderRadius: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Agregar
         </button>
       </div>
 
       {cursos.length === 0 ? (
-        <div style={{ padding: '3rem 1rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border)', borderRadius: '16px' }}>
+        <div id="tour-cursos-lista" style={{ padding: '3rem 1rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border)', borderRadius: '16px' }}>
           <p style={{ color: 'var(--text-secondary)' }}>Aún no diste de alta ningún rol ni horario acá.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div id="tour-cursos-lista" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {cursos.map(c => (
             <div key={c.id} style={{ position: 'relative' }}>
               <Link to={`/cursos/${c.id}`} className="glass-card module-card" style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem', textDecoration: 'none' }}>
@@ -339,6 +370,15 @@ export default function EscuelaDashboard({ session }) {
           </div>
         </div>
       )}
+      <OnboardingTour
+        steps={escuelaDashTourSteps}
+        storageKey="tour_escueladash_completed"
+        welcomeTitle="¡Cursos y Cargos! 📝"
+        welcomeText="Te guiamos paso a paso para dar de alta tus materias, cargos y asignaciones horarias."
+        welcomeIcon="📝"
+        forceStart={forceStartTour}
+        onTourEnd={() => setForceStartTour(false)}
+      />
     </div>
   );
 }

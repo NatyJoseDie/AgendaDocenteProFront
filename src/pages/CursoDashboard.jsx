@@ -5,6 +5,7 @@ import { ExportPDF } from '../services/pdfService';
 import '../components/Modal.css';
 import '../components/Chips.css';
 import EventoAcademicoModal from '../components/EventoAcademicoModal';
+import OnboardingTour from '../components/OnboardingTour';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -29,6 +30,65 @@ export default function CursoDashboard({ session }) {
   const [intensificaciones, setIntensificaciones] = useState([]);
   const [activeTab, setActiveTab] = useState('menu');
   const [showEventoModal, setShowEventoModal] = useState(false);
+  const [forceStartTour, setForceStartTour] = useState(false);
+
+  const cursoPlanillasTourSteps = [
+    {
+      target: '#tour-curso-header',
+      title: 'Panel del Curso 📚',
+      content: 'Este es el centro de control de tu curso. Desde aquí administras la lista de alumnos y todas las planillas docentes.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-planilla-asistencia',
+      title: 'Planilla de Asistencia ⏱️',
+      content: 'Registra el presente, ausente o tardanza diaria de tus alumnos con un solo clic de forma rápida y sencilla.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-planilla-nomina',
+      title: 'Nómina y Escaneo OCR 📷',
+      content: 'Gestiona la lista de tus estudiantes. ¡Puedes escanear listas impresas sacándoles una foto con la cámara usando IA!',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-planilla-seguimiento',
+      title: 'Seguimiento Continuo 📝',
+      content: 'Lleva el registro continuo de Trabajos Prácticos, evaluaciones parciales y valoraciones conceptuales de cada alumno.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-planilla-libro',
+      title: 'Libro de Temas 📖',
+      content: 'Firma y registra los contenidos dictados en cada módulo o clase para tener tu libro de temas al día.',
+      position: 'top'
+    },
+    {
+      target: '#tour-planilla-planificaciones',
+      title: 'Planificaciones PDF 📁',
+      content: 'Sube y consulta las planificaciones anuales y secuencias didácticas de esta materia en formato PDF.',
+      position: 'top'
+    },
+    {
+      target: '#tour-planilla-sabana',
+      title: 'Sábana de Notas y Actas 📊',
+      content: 'Planilla de calificaciones oficiales. Carga valoraciones pedagógicas (TEA, TEP, TED) o notas numéricas por trimestre/cuatrimestre.',
+      position: 'top'
+    },
+    {
+      target: '#tour-planilla-intensificacion',
+      title: 'Intensificación de Saberes 🔄',
+      content: 'Sección para hacer el seguimiento y cierre de alumnos en período de intensificación o recuperación.',
+      position: 'top'
+    },
+    {
+      target: '#tour-planilla-fechas',
+      title: 'Fechas Importantes 📆',
+      content: 'Agenda exámenes, salidas o actos escolares asociados directamente a este curso para que figuren en tu almanaque.',
+      position: 'top'
+    }
+  ];
+
   const [eventoData, setEventoData] = useState({
     tipo: 'Examen',
     titulo: '',
@@ -526,7 +586,7 @@ export default function CursoDashboard({ session }) {
           {activeTab === 'menu' ? 'Volver a Escuelas' : 'Volver al Curso'}
         </button>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div id="tour-curso-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '2.5rem', color: '#fff', textTransform: 'capitalize', letterSpacing: '3px' }}>
               {(curso.anio_o_grado + (curso.division ? ` ${curso.division}` : '')).toLowerCase().replace(/([º°oa])([0-9])/gi, '$1 $2')}
@@ -535,6 +595,12 @@ export default function CursoDashboard({ session }) {
               {curso.materia || 'Rol General'}
             </p>
           </div>
+          <button
+            onClick={() => setForceStartTour(true)}
+            style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', borderRadius: '12px', padding: '6px 12px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+          >
+            ❓ Guía de Planillas
+          </button>
         </div>
       </header>
 
@@ -603,7 +669,7 @@ export default function CursoDashboard({ session }) {
           }}>
             
             {/* FILA 1: FLUJO DIARIO */}
-            <Link to={`/asistencia/${id}`} style={{ textDecoration: 'none' }}>
+            <Link id="tour-planilla-asistencia" to={`/asistencia/${id}`} style={{ textDecoration: 'none' }}>
               <div className="glass-card animate-slide-up" style={{ 
                 padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px',
                 borderTop: '5px solid var(--primary)', background: 'linear-gradient(180deg, rgba(79, 70, 229, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
@@ -616,7 +682,7 @@ export default function CursoDashboard({ session }) {
               </div>
             </Link>
 
-            <div onClick={() => setActiveTab('nomina')} className="glass-card animate-slide-up" style={{ 
+            <div id="tour-planilla-nomina" onClick={() => setActiveTab('nomina')} className="glass-card animate-slide-up" style={{ 
               padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px', cursor: 'pointer',
               borderTop: '5px solid #6366f1', background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
               boxShadow: '0 10px 25px rgba(0,0,0,0.3)', transition: '0.3s transform'
@@ -627,7 +693,7 @@ export default function CursoDashboard({ session }) {
               <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Nómina</h4>
             </div>
 
-            <div onClick={() => setActiveTab('seguimiento')} className="glass-card animate-slide-up" style={{ 
+            <div id="tour-planilla-seguimiento" onClick={() => setActiveTab('seguimiento')} className="glass-card animate-slide-up" style={{ 
               padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px', cursor: 'pointer',
               borderTop: '5px solid #10b981', background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
               boxShadow: '0 10px 25px rgba(0,0,0,0.3)', transition: '0.3s transform'
@@ -639,7 +705,7 @@ export default function CursoDashboard({ session }) {
             </div>
 
             {/* FILA 2: GESTIÓN Y CIERRES */}
-            <Link to={`/libro-temas?curso=${id}`} style={{ textDecoration: 'none' }}>
+            <Link id="tour-planilla-libro" to={`/libro-temas?curso=${id}`} style={{ textDecoration: 'none' }}>
               <div className="glass-card animate-slide-up" style={{ 
                 padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px',
                 borderTop: '5px solid var(--purple)', background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
@@ -652,7 +718,7 @@ export default function CursoDashboard({ session }) {
               </div>
             </Link>
 
-            <Link to={`/planificaciones?curso=${id}`} style={{ textDecoration: 'none' }}>
+            <Link id="tour-planilla-planificaciones" to={`/planificaciones?curso=${id}`} style={{ textDecoration: 'none' }}>
               <div className="glass-card animate-slide-up" style={{ 
                 padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px',
                 borderTop: '5px solid #3b82f6', background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
@@ -665,7 +731,7 @@ export default function CursoDashboard({ session }) {
               </div>
             </Link>
 
-            <div onClick={() => setActiveTab('notas')} className="glass-card animate-slide-up" style={{ 
+            <div id="tour-planilla-sabana" onClick={() => setActiveTab('notas')} className="glass-card animate-slide-up" style={{ 
               padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px', cursor: 'pointer',
               borderTop: '5px solid #f59e0b', background: 'linear-gradient(180deg, rgba(245, 158, 11, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
               boxShadow: '0 10px 25px rgba(0,0,0,0.3)', transition: '0.3s transform'
@@ -677,7 +743,7 @@ export default function CursoDashboard({ session }) {
             </div>
 
             {/* FILA 3: CIERRES */}
-            <div onClick={() => setActiveTab('intensificacion')} className="glass-card animate-slide-up" style={{ 
+            <div id="tour-planilla-intensificacion" onClick={() => setActiveTab('intensificacion')} className="glass-card animate-slide-up" style={{ 
                 padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px', cursor: 'pointer',
                 borderTop: '5px solid var(--danger)', background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.1) 0%, rgba(30, 41, 59, 0.9) 100%)', borderRadius: '30px',
                 boxShadow: '0 10px 25px rgba(0,0,0,0.3)', transition: '0.3s transform'
@@ -688,7 +754,7 @@ export default function CursoDashboard({ session }) {
               <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Intensificación</h4>
             </div>
             {/* FILA FINAL: FECHAS IMPORTANTES (ESTRELLA DEL SHOW - ANCHO COMPLETO) */}
-            <div onClick={() => setShowEventoModal(true)} className="glass-card animate-slide-up" style={{ 
+            <div id="tour-planilla-fechas" onClick={() => setShowEventoModal(true)} className="glass-card animate-slide-up" style={{ 
                 gridColumn: '1 / -1', padding: '1.8rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', 
                 background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.25) 0%, rgba(30, 41, 59, 1) 100%)', border: '1px solid var(--purple)', borderRadius: '30px', 
                 cursor: 'pointer', boxShadow: '0 15px 40px rgba(124, 58, 237, 0.3)', marginTop: '0.5rem'
@@ -2910,6 +2976,15 @@ export default function CursoDashboard({ session }) {
         cursoId={id}
         docenteId={docenteId}
         cursoNombre={`${curso?.anio_o_grado || ''} ${curso?.division || ''}`}
+      />
+      <OnboardingTour
+        steps={cursoPlanillasTourSteps}
+        storageKey="tour_curso_planillas_completed"
+        welcomeTitle="¡Guía de Planillas Docentes! 📊"
+        welcomeText="Te acompañamos a recorrer cada una de las planillas del curso para que sepas exactamente cómo utilizarlas."
+        welcomeIcon="📊"
+        forceStart={forceStartTour}
+        onTourEnd={() => setForceStartTour(false)}
       />
     </div>
   );

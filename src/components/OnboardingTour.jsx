@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import './OnboardingTour.css';
 
-export default function OnboardingTour({ forceStart, onTourEnd }) {
+export default function OnboardingTour({
+  steps: customSteps,
+  storageKey = 'onboarding_completed',
+  welcomeTitle = '¡Te damos la bienvenida! 👋',
+  welcomeText = '¿Te gustaría realizar un recorrido rápido e interactivo de 1 minuto para conocer tu nueva agenda?',
+  welcomeIcon = '🚀',
+  forceStart,
+  onTourEnd
+}) {
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(-1); // -1 is Welcome Modal
   const [coords, setCoords] = useState(null);
 
-  const steps = [
+  const defaultSteps = [
     {
       target: '#tour-profile',
       title: 'Tu Perfil Docente 🎒',
@@ -39,13 +47,15 @@ export default function OnboardingTour({ forceStart, onTourEnd }) {
     }
   ];
 
+  const steps = customSteps && customSteps.length > 0 ? customSteps : defaultSteps;
+
   useEffect(() => {
-    const completed = localStorage.getItem('onboarding_completed');
+    const completed = localStorage.getItem(storageKey);
     if (!completed || forceStart) {
       setActive(true);
       setStepIndex(-1); // Start with Welcome Modal
     }
-  }, [forceStart]);
+  }, [forceStart, storageKey]);
 
   // Track target coordinates
   useEffect(() => {
@@ -104,7 +114,7 @@ export default function OnboardingTour({ forceStart, onTourEnd }) {
   };
 
   const handleFinish = () => {
-    localStorage.setItem('onboarding_completed', 'true');
+    localStorage.setItem(storageKey, 'true');
     setActive(false);
     setStepIndex(-1);
     if (onTourEnd) onTourEnd();
@@ -174,9 +184,9 @@ export default function OnboardingTour({ forceStart, onTourEnd }) {
       {/* Welcome Dialog */}
       {stepIndex === -1 && (
         <div className="tour-welcome-card glass-card animate-scale-in">
-          <div className="tour-welcome-icon">🚀</div>
-          <h2>¡Te damos la bienvenida! 👋</h2>
-          <p>¿Te gustaría realizar un recorrido rápido e interactivo de 1 minuto para conocer tu nueva agenda?</p>
+          <div className="tour-welcome-icon">{welcomeIcon}</div>
+          <h2>{welcomeTitle}</h2>
+          <p>{welcomeText}</p>
           <div className="tour-welcome-actions">
             <button className="tour-btn-skip" onClick={handleSkip}>Ahora no</button>
             <button className="tour-btn-start" onClick={() => setStepIndex(0)}>Empezar</button>

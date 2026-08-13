@@ -29,18 +29,32 @@ function App() {
       setIsPWA(true);
     }
 
+    const safetyTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 4000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+      clearTimeout(safetyTimeout);
+    }).catch((err) => {
+      console.error("Auth session error:", err);
+      setLoading(false);
+      clearTimeout(safetyTimeout);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
+      clearTimeout(safetyTimeout);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {

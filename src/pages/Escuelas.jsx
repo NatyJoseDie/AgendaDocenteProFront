@@ -3,14 +3,37 @@ import { EscuelasAPI, PerfilAPI } from '../services/api';
 import { checkPlanLimit } from '../constants/plans';
 import { Link } from 'react-router-dom';
 import '../components/Modal.css';
+import OnboardingTour from '../components/OnboardingTour';
 
 export default function Escuelas({ session }) {
   const [escuelas, setEscuelas] = useState([]);
   const [docente, setDocente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [forceStartTour, setForceStartTour] = useState(false);
   const docenteId = session.user.id;
-  
+
+  const escuelasTourSteps = [
+    {
+      target: '#tour-escuela-header',
+      title: 'Gestión de Instituciones 🏫',
+      content: 'Aquí administras todas las escuelas o colegios en los que das clase. Cada escuela agrupará tus cursos y cargos.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-escuela-agregar',
+      title: 'Alta de Colegio ➕',
+      content: 'Toca en "+ Agregar" para registrar una nueva institución con su nombre, nivel (Inicial, Primaria, Secundaria, etc.) y dirección.',
+      position: 'bottom'
+    },
+    {
+      target: '#tour-escuelas-lista',
+      title: 'Ingreso a tus Cursos 🚪',
+      content: 'Al hacer clic en cualquier escuela registrada, ingresarás a su panel para ver y agregar tus cursos o roles.',
+      position: 'top'
+    }
+  ];
+
   const [formData, setFormData] = useState({
     nombre: '',
     numero: '',
@@ -101,14 +124,22 @@ export default function Escuelas({ session }) {
   return (
     <div className="app-container animate-fade-in">
       <header className="page-header" style={{ marginBottom: '1.5rem' }}>
-        <div>
+        <div id="tour-escuela-header">
           <Link to="/dashboard" style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '5px', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Volver
           </Link>
-          <h2 style={{ fontSize: '1.8rem' }}>Mis escuelas</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ fontSize: '1.8rem', margin: 0 }}>Mis escuelas</h2>
+            <button
+              onClick={() => setForceStartTour(true)}
+              style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', borderRadius: '12px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              ❓ Guía
+            </button>
+          </div>
         </div>
-        <button className="btn-primary" onClick={handleOpenModal} style={{ padding: '0.8rem 1.2rem' }}>
+        <button id="tour-escuela-agregar" className="btn-primary" onClick={handleOpenModal} style={{ padding: '0.8rem 1.2rem' }}>
           + Agregar
         </button>
       </header>
@@ -116,12 +147,12 @@ export default function Escuelas({ session }) {
       {loading ? (
         <p className="animate-pulse" style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '3rem' }}>Cargando escuelas...</p>
       ) : escuelas.length === 0 ? (
-        <div className="glass-card" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+        <div id="tour-escuelas-lista" className="glass-card" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
           <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Aún no agregaste escuelas</h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Da de alta tu primer colegio para empezar a organizar tus cursos.</p>
         </div>
       ) : (
-        <div className="modules-grid" style={{ gridTemplateColumns: '1fr' }}>
+        <div id="tour-escuelas-lista" className="modules-grid" style={{ gridTemplateColumns: '1fr' }}>
           {escuelas.map((escuela) => {
             // Lógica para no duplicar el "Nº" si el usuario ya lo escribió en el nombre o en el número
             const tieneNum = escuela.numero ? (escuela.numero.includes('N') || escuela.nombre.includes('N') ? ` ${escuela.numero}` : ` Nº ${escuela.numero}`) : '';
@@ -194,6 +225,15 @@ export default function Escuelas({ session }) {
           </div>
         </div>
       )}
+      <OnboardingTour
+        steps={escuelasTourSteps}
+        storageKey="tour_escuelas_completed"
+        welcomeTitle="¡Guía de Escuelas! 🏫"
+        welcomeText="Aprende rápidamente cómo dar de alta tus colegios e instituciones."
+        welcomeIcon="🏫"
+        forceStart={forceStartTour}
+        onTourEnd={() => setForceStartTour(false)}
+      />
     </div>
   );
 }
