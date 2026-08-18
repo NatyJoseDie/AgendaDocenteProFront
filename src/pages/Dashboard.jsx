@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI } from '../services/api';
@@ -15,6 +15,8 @@ export default function Dashboard({ session }) {
   const [daysLeft, setDaysLeft] = useState(null);
   const [forceStartTour, setForceStartTour] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 58, right: 12 });
+  const configBtnRef = useRef(null);
   const [exporting, setExporting] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -122,7 +124,13 @@ export default function Dashboard({ session }) {
 
         {/* Botón config */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <button id="tour-config" onClick={() => setShowConfig(!showConfig)}
+          <button id="tour-config" ref={configBtnRef} onClick={() => {
+            if (!showConfig && configBtnRef.current) {
+              const rect = configBtnRef.current.getBoundingClientRect();
+              setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+            }
+            setShowConfig(prev => !prev);
+          }}
             style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.15)', background: showConfig ? '#8b5cf6' : 'rgba(255,255,255,0.05)', padding: 0, transition: 'background 0.2s' }}>
             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke={showConfig ? '#fff' : 'rgba(255,255,255,0.6)'} strokeWidth="2.5">
               <circle cx="12" cy="12" r="3"/>
@@ -134,7 +142,7 @@ export default function Dashboard({ session }) {
           {showConfig && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowConfig(false)} />
-              <div className="animate-scale-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, right: `${menuPos.right}px`, zIndex: 9999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
 
                 <Link to="/inicio" onClick={() => setShowConfig(false)}
