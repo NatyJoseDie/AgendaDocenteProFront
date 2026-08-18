@@ -134,7 +134,7 @@ export default function Dashboard({ session }) {
           {showConfig && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowConfig(false)} />
-              <div className="animate-scale-in" style={{ position: 'fixed', top: '58px', right: '12px', zIndex: 999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div className="animate-scale-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
 
                 <Link to="/inicio" onClick={() => setShowConfig(false)}
