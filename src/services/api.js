@@ -732,3 +732,46 @@ export const OCRAPI = {
     return await response.json();
   }
 };
+
+// 💳 PAGOS & MERCADO PAGO 💳
+export const PagosAPI = {
+  crearPreferencia: async (plan, ciclo = 'anual') => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const response = await fetch(`${BACKEND_URL}/pagos/crear-preferencia`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ plan, ciclo })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al iniciar pago');
+    }
+
+    return await response.json();
+  },
+
+  getEstado: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const response = await fetch(`${BACKEND_URL}/pagos/estado`, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al obtener estado del plan');
+    }
+
+    return await response.json();
+  }
+};
+

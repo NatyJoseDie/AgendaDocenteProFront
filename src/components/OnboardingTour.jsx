@@ -132,10 +132,10 @@ export default function OnboardingTour({
     if (isMobile) {
       return {
         position: 'fixed',
-        bottom: '0px',
-        left: '0px',
-        right: '0px',
-        width: '100%',
+        bottom: '95px',
+        left: '12px',
+        right: '12px',
+        width: 'calc(100% - 24px)',
         zIndex: 10001
       };
     }

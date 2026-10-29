@@ -410,7 +410,7 @@ export default function Landing({ session }) {
           <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <span className="section-label">MEMBRESÍAS 2026</span>
             <h2 className="section-title-alt">Elegí tu camino digital</h2>
-            <p className="section-desc-alt">Un solo pago anual, organización para todo el ciclo lectivo.</p>
+            <p className="section-desc-alt">Precios especiales de lanzamiento válidos por los primeros 6 meses.</p>
           </header>
 
           <style>
@@ -465,7 +465,7 @@ export default function Landing({ session }) {
                 <span className="featured-badge-elite"><Star size={14} style={{ marginRight: '5px' }} /> EL MÁS ELEGIDO</span>
                 <div className="card-header-elite">
                   <h3>Plan Profesional</h3>
-                  <div className="price-tag-elite">$10.000 <span>/ año</span></div>
+                  <div className="price-tag-elite">$24.000 <span>/ año</span></div><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $5.000 / mes</span><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $3.500 / mes</span>
                 </div>
                 <ul className="feats-list-elite">
                   <li><Rocket size={18} className="icon-price" /> Hasta 10 Escuelas / Cursos</li>
@@ -488,7 +488,7 @@ export default function Landing({ session }) {
               <div className="pricing-card-elite premium-elite">
                 <div className="card-header-elite">
                   <h3>Plan Premium</h3>
-                  <div className="price-tag-elite">$15.000 <span>/ año</span></div>
+                  <div className="price-tag-elite">$24.000 <span>/ año</span></div><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $5.000 / mes</span>
                 </div>
                 <ul className="feats-list-elite">
                   <li><Crown size={18} className="icon-price" /> TODO ILIMITADO - NIVEL ELITE</li>
@@ -746,3 +746,4 @@ export default function Landing({ session }) {
     </div>
   );
 }
+

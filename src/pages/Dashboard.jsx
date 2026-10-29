@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI } from '../services/api';
+import { getSubscriptionStatus } from '../constants/plans';
 import '../components/Chips.css';
 import OnboardingTour from '../components/OnboardingTour';
 
@@ -15,13 +16,14 @@ export default function Dashboard({ session }) {
   const [daysLeft, setDaysLeft] = useState(null);
   const [forceStartTour, setForceStartTour] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 58, right: 12 });
+  const [menuPos, setMenuPos] = useState({ top: 58, left: 0 });
   const configBtnRef = useRef(null);
   const [exporting, setExporting] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const subStatus = getSubscriptionStatus(docente);
   const [sendingFeedback, setSendingFeedback] = useState(false);
 
   useEffect(() => {
@@ -108,8 +110,8 @@ export default function Dashboard({ session }) {
               style={{ width: '36px', height: '36px', borderRadius: '9px', border: '1.5px solid rgba(255,255,255,0.15)', objectFit: 'cover', display: 'block' }}
               onError={e => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=8b5cf6&color=fff`; }}
             />
-            <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', background: docente?.is_premium ? '#10b981' : '#f59e0b', color: '#fff', fontSize: '0.45rem', padding: '1px 2px', borderRadius: '3px', fontWeight: 900, border: '1px solid #111', whiteSpace: 'nowrap', lineHeight: 1 }}>
-              {docente?.subscription_plan?.toUpperCase() || 'FREE'}
+            <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', background: subStatus.isAdmin ? 'linear-gradient(90deg, #ec4899, #8b5cf6)' : subStatus.isReadOnly ? '#ef4444' : subStatus.isVipBeta ? '#6366f1' : docente?.is_premium ? '#10b981' : '#f59e0b', color: '#fff', fontSize: '0.45rem', padding: '1px 3px', borderRadius: '3px', fontWeight: 900, border: '1px solid #111', whiteSpace: 'nowrap', lineHeight: 1 }}>
+              {subStatus.label}
             </span>
           </div>
           <div style={{ minWidth: 0, overflow: 'hidden' }}>
@@ -127,7 +129,11 @@ export default function Dashboard({ session }) {
           <button id="tour-config" ref={configBtnRef} onClick={() => {
             if (!showConfig && configBtnRef.current) {
               const rect = configBtnRef.current.getBoundingClientRect();
-              setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+              const menuWidth = 210;
+              setMenuPos({
+                top: rect.bottom + 8,
+                left: rect.right - menuWidth
+              });
             }
             setShowConfig(prev => !prev);
           }}
@@ -142,7 +148,7 @@ export default function Dashboard({ session }) {
           {showConfig && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowConfig(false)} />
-              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, right: `${menuPos.right}px`, zIndex: 9999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
 
                 <Link to="/inicio" onClick={() => setShowConfig(false)}
@@ -187,6 +193,44 @@ export default function Dashboard({ session }) {
           )}
         </div>
       </header>
+
+      {/* ── BANNER MODO SOLO LECTURA (Prueba vencida) ── */}
+      {subStatus.isReadOnly && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.18))',
+          border: '1px solid rgba(245, 158, 11, 0.5)',
+          borderRadius: '14px',
+          padding: '14px 18px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '14px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ flex: '1 1 280px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 800, fontSize: '0.95rem', marginBottom: '4px' }}>
+              <span>🔒 Período de prueba finalizado</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.4 }}>
+              Tus cursos, alumnos y notas están <strong>resguardados por 30 días</strong> en modo solo lectura. Para continuar tomando asistencia y generar planillas oficiales:
+            </p>
+          </div>
+          <Link to="/suscripcion" style={{
+            background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+            color: '#fff',
+            padding: '10px 18px',
+            borderRadius: '10px',
+            fontWeight: 800,
+            fontSize: '0.88rem',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+          }}>
+            Activar Plan PRO (.500/mes)
+          </Link>
+        </div>
+      )}
 
       {/* ── TÍTULO ── */}
       <div style={{ marginBottom: '24px' }}>
@@ -285,3 +329,4 @@ export default function Dashboard({ session }) {
     </div>
   );
 }
+
