@@ -151,6 +151,14 @@ export default function Dashboard({ session }) {
               <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
 
+                {subStatus.isAdmin && (
+                  <Link to="/admin" onClick={() => setShowConfig(false)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#f59e0b', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>👑</span>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 900 }}>Panel de Dueña</span>
+                  </Link>
+                )}
+
                 <Link to="/inicio" onClick={() => setShowConfig(false)}
                   style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#fff', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#38bdf8" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -329,4 +337,5 @@ export default function Dashboard({ session }) {
     </div>
   );
 }
+
 

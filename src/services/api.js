@@ -775,3 +775,49 @@ export const PagosAPI = {
   }
 };
 
+
+// 👑 PANEL ADMINISTRATIVO (DUEÑA) 👑
+export const AdminAPI = {
+  getMetricas: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const response = await fetch(`${BACKEND_URL}/admin/metricas`, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al obtener métricas');
+    }
+
+    return await response.json();
+  },
+
+  modificarDocente: async (docenteId, nuevoPlan, diasExtra) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const response = await fetch(`${BACKEND_URL}/admin/modificar-docente`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        docente_id: docenteId,
+        nuevo_plan: nuevoPlan,
+        dias_extra: diasExtra
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al modificar docente');
+    }
+
+    return await response.json();
+  }
+};

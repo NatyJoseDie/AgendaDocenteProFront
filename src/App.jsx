@@ -16,6 +16,7 @@ import Licencias from './pages/Licencias';
 import Calendario from './pages/Calendario';
 import Contactos from './pages/Contactos';
 import Suscripcion from './pages/Suscripcion';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -137,6 +138,10 @@ function App() {
             path="/suscripcion" 
             element={session ? <Suscripcion session={session} /> : <Navigate to="/" />} 
           />
+                    <Route 
+            path="/admin" 
+            element={session ? <AdminDashboard session={session} /> : <Navigate to="/" />} 
+          />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         {session && <BottomNav />}
@@ -146,3 +151,4 @@ function App() {
 }
 
 export default App;
+
