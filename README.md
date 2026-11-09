@@ -68,6 +68,25 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
 - 4 files changed, 429 insertions(+)
 - create mode 100644 src/pages/AdminDashboard.jsx
 
+### 📅 9 de Noviembre de 2026 — Centro de notificaciones y Web Push
+
+- Se agregó el centro de notificaciones autenticado en la navegación inferior, con
+  carga, contador de no leídas, reintento y marcado como leída.
+- Desde la configuración del Dashboard se puede activar Push explícitamente. El
+  permiso solo se solicita después de elegir la acción; si el navegador no lo admite
+  o se deniega, la agenda sigue disponible.
+- La clave pública VAPID se obtiene del backend. La suscripción se registra con la
+  sesión vigente de Supabase; no se incluye una clave privada en el frontend.
+- Al desactivar Push o cerrar sesión se intenta desuscribir el dispositivo y se
+  notifica la baja al backend antes de cerrar la sesión. No se eliminan dispositivos
+  asociados a otras cuentas.
+- El service worker maneja la recepción y el clic en los avisos; los destinos se
+  limitan al mismo origen y la caché queda limitada a recursos públicos estáticos.
+- En iPhone/iPad puede ser necesario instalar la web en la pantalla de inicio y abrir
+  la app instalada.
+- **Pendiente:** probar el flujo autenticado de activación, entrega, navegación y baja
+  en HTTPS con dispositivos de prueba, incluido iOS.
+
 ---
 
 ## 👩‍💻 Administradora / Fundadora

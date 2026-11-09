@@ -838,19 +838,6 @@ export const AdminAPI = {
   }
 };
 
-const getAuthHeaders = async (headers = {}) => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) throw error;
-
-  const token = session?.access_token;
-  if (!token) throw new Error('Tu sesión expiró. Iniciá sesión nuevamente.');
-
-  return {
-    ...headers,
-    Authorization: `Bearer ${token}`,
-  };
-};
-
 export const NotificacionesAPI = {
   getAll: async () => {
     const response = await fetch(`${BACKEND_URL}/notificaciones?limite=20`, {
