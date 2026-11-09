@@ -712,7 +712,23 @@ export const FeedbackAPI = {
 };
 
 // ─── OCR PROFESIONAL (BACKEND) ─────────────────────────────
-const BACKEND_URL = 'http://localhost:3000/api';
+const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/+$/, '');
+
+const getAuthHeaders = async (headers = {}, expectedUserId) => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) throw error;
+
+  const token = session?.access_token;
+  if (!token) throw new Error('Tu sesión expiró. Iniciá sesión nuevamente.');
+  if (expectedUserId && session.user.id !== expectedUserId) {
+    throw new Error('La sesión cambió. Volvé a intentar la operación con la cuenta actual.');
+  }
+
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  };
+};
 
 export const OCRAPI = {
   processImage: async (imageFile) => {
@@ -861,5 +877,162 @@ export const NotificacionesAPI = {
     }
 
     return await response.json();
+  },
+};
+
+const PUSH_OWNERS_STORAGE_KEY = 'agenda-docente-push-owners';
+
+const readPushOwners = () => {
+  const savedOwners = window.localStorage.getItem(PUSH_OWNERS_STORAGE_KEY);
+  if (!savedOwners) return [];
+
+  const owners = JSON.parse(savedOwners);
+  if (!Array.isArray(owners) || owners.some(owner => (
+    typeof owner?.endpoint !== 'string' || typeof owner?.userId !== 'string'
+  ))) {
+    throw new Error('No se pudo verificar a qué cuenta pertenece esta suscripción Push.');
+  }
+  return owners;
+};
+
+const savePushOwners = (owners) => {
+  try {
+    window.localStorage.setItem(PUSH_OWNERS_STORAGE_KEY, JSON.stringify(owners));
+  } catch (error) {
+    throw new Error(`No se pudo guardar el estado local de la suscripción Push: ${error.message}`);
+  }
+};
+
+const pushResponseError = async (response, fallback) => {
+  let message = `${fallback} (HTTP ${response.status}).`;
+  try {
+    const data = await response.json();
+    message = data.error || data.message || message;
+  } catch {
+    // El servidor puede devolver una respuesta no JSON en errores de infraestructura.
+  }
+
+  const error = new Error(message);
+  if (response.status === 409) error.code = 'PUSH_SUBSCRIPTION_OWNED_BY_ANOTHER_ACCOUNT';
+  return error;
+};
+
+export const PushNotificationsAPI = {
+  getPublicKey: async () => {
+    const response = await fetch(`${BACKEND_URL}/notificaciones/push/vapid-public-key`);
+
+    if (!response.ok) {
+      let errorMessage = `No se pudo obtener la clave pública de notificaciones (HTTP ${response.status}).`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        // El backend puede devolver una respuesta no JSON en errores de infraestructura.
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    if (typeof data?.publicKey !== 'string' || !data.publicKey) {
+      throw new Error('El backend no devolvió una clave pública VAPID válida.');
+    }
+    return data.publicKey;
+  },
+
+  registerSubscription: async (subscription, userId) => {
+    if (!userId) throw new Error('No se pudo determinar la cuenta para registrar este dispositivo.');
+    const response = await fetch(`${BACKEND_URL}/notificaciones/push/suscripciones`, {
+      method: 'POST',
+      headers: await getAuthHeaders({ 'Content-Type': 'application/json' }, userId),
+      body: JSON.stringify(subscription),
+    });
+
+    if (!response.ok) throw await pushResponseError(response, 'No se pudo registrar este dispositivo');
+
+    const result = await response.json();
+    if (result?.registered !== true) {
+      throw new Error('El backend no confirmó el registro de este dispositivo.');
+    }
+    const owners = readPushOwners().filter(owner => owner.endpoint !== subscription.endpoint);
+    owners.push({ endpoint: subscription.endpoint, userId });
+    try {
+      savePushOwners(owners);
+    } catch (storageError) {
+      try {
+        await PushNotificationsAPI.removeSubscription(subscription.endpoint, userId);
+      } catch (cleanupError) {
+        throw new Error(`${storageError.message} Además, no se pudo revertir el registro del servidor: ${cleanupError.message}`);
+      }
+      throw storageError;
+    }
+    return result;
+  },
+
+  removeSubscription: async (endpoint, userId) => {
+    if (!userId) throw new Error('No se pudo determinar la cuenta para dar de baja este dispositivo.');
+    const response = await fetch(`${BACKEND_URL}/notificaciones/push/suscripciones`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders({ 'Content-Type': 'application/json' }, userId),
+      body: JSON.stringify({ endpoint }),
+    });
+
+    if (!response.ok) throw await pushResponseError(response, 'No se pudo dar de baja este dispositivo');
+    const result = await response.json();
+    if (typeof result?.deleted !== 'boolean') {
+      throw new Error('El backend no confirmó la baja de este dispositivo.');
+    }
+    return result;
+  },
+
+  getCurrentSubscription: async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    const registration = await navigator.serviceWorker.getRegistration();
+    return registration?.pushManager.getSubscription() || null;
+  },
+
+  getDeviceStatus: async (userId) => {
+    const subscription = await PushNotificationsAPI.getCurrentSubscription();
+    const owners = readPushOwners();
+    const owner = subscription && owners.find(item => item.endpoint === subscription.endpoint);
+    if (subscription && owner?.userId === userId) return 'enabled';
+    if (subscription) return 'unlinked';
+    if (owners.some(item => item.userId === userId)) return 'pending-removal';
+    return 'disabled';
+  },
+
+  unsubscribeCurrentDevice: async (userId) => {
+    if (!userId) throw new Error('No se pudo determinar la cuenta para dar de baja este dispositivo.');
+
+    const subscription = await PushNotificationsAPI.getCurrentSubscription();
+    const owners = readPushOwners();
+    const ownedEndpoints = owners.filter(owner => owner.userId === userId);
+    if (ownedEndpoints.length === 0) return false;
+
+    const failures = [];
+    const removedEndpoints = [];
+    for (const { endpoint } of ownedEndpoints) {
+      let unsubscribeError;
+      if (subscription?.endpoint === endpoint) {
+        try {
+          await subscription.unsubscribe();
+        } catch (error) {
+          unsubscribeError = error;
+          failures.push(`No se pudo desuscribir el navegador: ${error.message}`);
+        }
+      }
+
+      try {
+        await PushNotificationsAPI.removeSubscription(endpoint, userId);
+        if (!unsubscribeError) removedEndpoints.push(endpoint);
+      } catch (error) {
+        failures.push(`No se pudo avisar al servidor: ${error.message}`);
+      }
+    }
+
+    if (removedEndpoints.length > 0) {
+      savePushOwners(owners.filter(owner => !removedEndpoints.includes(owner.endpoint)));
+    }
+    if (failures.length > 0) throw new Error(failures.join(' '));
+    return true;
   },
 };

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI } from '../services/api';
+import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI, PushNotificationsAPI } from '../services/api';
 import { getSubscriptionStatus } from '../constants/plans';
 import '../components/Chips.css';
 import OnboardingTour from '../components/OnboardingTour';
+import PushNotificationsSettings from '../components/PushNotificationsSettings';
 
 export default function Dashboard({ session }) {
   const [escuelas, setEscuelas] = useState([]);
@@ -18,6 +19,7 @@ export default function Dashboard({ session }) {
   const [showConfig, setShowConfig] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 58, left: 0 });
   const configBtnRef = useRef(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -77,8 +79,25 @@ export default function Dashboard({ session }) {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    setLoggingOut(true);
+    try {
+      try {
+        await PushNotificationsAPI.unsubscribeCurrentDevice(docenteId);
+      } catch (pushError) {
+        const shouldContinue = window.confirm(
+          `No se pudo completar la baja de notificaciones Push: ${pushError.message}\n\n¿Querés cerrar sesión igualmente?`
+        );
+        if (!shouldContinue) return;
+      }
+
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/');
+    } catch (error) {
+      window.alert(`No se pudo cerrar sesión: ${error.message}`);
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleSendFeedback = async () => {
@@ -129,7 +148,7 @@ export default function Dashboard({ session }) {
           <button id="tour-config" ref={configBtnRef} onClick={() => {
             if (!showConfig && configBtnRef.current) {
               const rect = configBtnRef.current.getBoundingClientRect();
-              const menuWidth = 210;
+              const menuWidth = Math.min(340, window.innerWidth - 24);
               setMenuPos({
                 top: rect.bottom + 8,
                 left: rect.right - menuWidth
@@ -148,7 +167,7 @@ export default function Dashboard({ session }) {
           {showConfig && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowConfig(false)} />
-              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: 'min(340px, calc(100vw - 24px))', maxHeight: 'calc(100dvh - 76px)', overflowY: 'auto', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
 
                 {subStatus.isAdmin && (
@@ -158,6 +177,7 @@ export default function Dashboard({ session }) {
                     <span style={{ fontSize: '0.88rem', fontWeight: 900 }}>Panel de Dueña</span>
                   </Link>
                 )}
+                <PushNotificationsSettings userId={docenteId} />
 
                 <Link to="/inicio" onClick={() => setShowConfig(false)}
                   style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#fff', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
@@ -191,10 +211,10 @@ export default function Dashboard({ session }) {
 
                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
 
-                <button onClick={handleLogout}
-                  style={{ width: '100%', border: 'none', background: 'rgba(239,68,68,0.06)', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', color: '#ef4444', cursor: 'pointer', borderRadius: '10px', textAlign: 'left' }}>
+                <button onClick={handleLogout} disabled={loggingOut}
+                  style={{ width: '100%', border: 'none', background: 'rgba(239,68,68,0.06)', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', color: '#ef4444', cursor: loggingOut ? 'wait' : 'pointer', borderRadius: '10px', textAlign: 'left', opacity: loggingOut ? 0.65 : 1 }}>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>Cerrar Sesión</span>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>{loggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>
                 </button>
               </div>
             </>
@@ -337,5 +357,4 @@ export default function Dashboard({ session }) {
     </div>
   );
 }
-
 

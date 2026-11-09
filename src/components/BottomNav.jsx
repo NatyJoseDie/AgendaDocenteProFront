@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { NotificacionesAPI } from '../services/api';
 import './BottomNav.css';
 
@@ -13,7 +13,8 @@ const RUTAS_SIN_NAV = [
 ];
 
 export default function BottomNav({ session }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
@@ -22,10 +23,28 @@ export default function BottomNav({ session }) {
   const [markingId, setMarkingId] = useState(null);
   const [markError, setMarkError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const openedFromPushRef = useRef(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.get('notificaciones') !== '1') return;
+
+    params.delete('notificaciones');
+    openedFromPushRef.current = true;
+    setPanelOpen(true);
+    navigate({
+      pathname,
+      search: params.toString() ? `?${params.toString()}` : '',
+    }, { replace: true });
+  }, [navigate, pathname, search]);
 
   useEffect(() => {
     let active = true;
-    setPanelOpen(false);
+    if (openedFromPushRef.current) {
+      openedFromPushRef.current = false;
+    } else {
+      setPanelOpen(false);
+    }
     setNotifications([]);
     setUnreadCount(0);
     setNotificationsLoading(true);
