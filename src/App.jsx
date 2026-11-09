@@ -144,11 +144,10 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-        {session && <BottomNav />}
+        {session && <BottomNav session={session} />}
       </div>
     </Router>
   );
 }
 
 export default App;
-

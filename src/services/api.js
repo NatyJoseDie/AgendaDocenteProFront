@@ -821,3 +821,45 @@ export const AdminAPI = {
     return await response.json();
   }
 };
+
+const getAuthHeaders = async (headers = {}) => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) throw error;
+
+  const token = session?.access_token;
+  if (!token) throw new Error('Tu sesión expiró. Iniciá sesión nuevamente.');
+
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  };
+};
+
+export const NotificacionesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${BACKEND_URL}/notificaciones?limite=20`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al obtener notificaciones');
+    }
+
+    return await response.json();
+  },
+
+  markAsRead: async (id) => {
+    const response = await fetch(`${BACKEND_URL}/notificaciones/${encodeURIComponent(id)}/leida`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al marcar la notificación como leída');
+    }
+
+    return await response.json();
+  },
+};
