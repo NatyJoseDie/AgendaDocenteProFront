@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI, PushNotificationsAPI } from '../services/api';
-import { getSubscriptionStatus } from '../constants/plans';
+import { getSubscriptionStatus, formatPrecio, getPlanPrecio } from '../constants/plans';
+import usePlanes from '../hooks/usePlanes';
 import '../components/Chips.css';
 import OnboardingTour from '../components/OnboardingTour';
 import PushNotificationsSettings from '../components/PushNotificationsSettings';
+import NotificationBell from '../components/NotificationBell';
 
 export default function Dashboard({ session }) {
   const [escuelas, setEscuelas] = useState([]);
@@ -14,10 +16,11 @@ export default function Dashboard({ session }) {
   const navigate = useNavigate();
 
   const [docente, setDocente] = useState(null);
+  const [profileError, setProfileError] = useState(null);
   const [daysLeft, setDaysLeft] = useState(null);
   const [forceStartTour, setForceStartTour] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 58, left: 0 });
+  const [menuPos, setMenuPos] = useState({ top: 96, left: 0 });
   const configBtnRef = useRef(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -26,23 +29,36 @@ export default function Dashboard({ session }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const subStatus = getSubscriptionStatus(docente);
+  const isAdmin = docente?.is_admin === true;
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const { planes } = usePlanes();
+  const proMensual = getPlanPrecio(planes, 'pro', 'mensual')?.precio_vigente ?? 4500;
 
   useEffect(() => {
+    let cancelled = false;
     window.addEventListener('beforeinstallprompt', (e) => { setDeferredPrompt(e); });
     if (docenteId) {
-      PerfilAPI.getProfile(docenteId).then(data => {
+      setDocente(null);
+      setProfileError(null);
+      PerfilAPI.getProfile().then(data => {
+        if (cancelled) return;
         setDocente(data);
         if (data?.trial_ends_at) {
           const diff = new Date(data.trial_ends_at) - new Date();
           const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
           setDaysLeft(days > 0 ? days : 0);
         }
+      }).catch(error => {
+        if (!cancelled) {
+          console.error('Error al cargar el perfil:', error);
+          setProfileError(error.message);
+        }
       });
       EscuelasAPI.getByDocente(docenteId).then(data => setEscuelas(data || []));
       CursosAPI.getByDocente(docenteId).then(data => setCursosHoy(data || []));
       BackupAPI.createSnapshot(docenteId);
     }
+    return () => { cancelled = true; };
   }, [docenteId]);
 
   const handleRestoreAuto = async () => {
@@ -119,18 +135,20 @@ export default function Dashboard({ session }) {
   return (
     <div className="app-container animate-fade-in" style={{ paddingBottom: '90px', minHeight: '100vh', color: '#fff', boxSizing: 'border-box' }}>
 
+      {profileError && <p role="alert" style={{ color: '#fca5a5' }}>No se pudo cargar tu perfil: {profileError}</p>}
+
       {/* ── HEADER ── */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
 
         {/* Avatar + saludo */}
-        <div id="tour-profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-          <div style={{ position: 'relative', flexShrink: 0, width: '36px', height: '36px' }}>
+        <div id="tour-profile" style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
             <img src={avatarUrl} alt="Perfil"
               style={{ width: '36px', height: '36px', borderRadius: '9px', border: '1.5px solid rgba(255,255,255,0.15)', objectFit: 'cover', display: 'block' }}
               onError={e => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=8b5cf6&color=fff`; }}
             />
-            <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', background: subStatus.isAdmin ? 'linear-gradient(90deg, #ec4899, #8b5cf6)' : subStatus.isReadOnly ? '#ef4444' : subStatus.isVipBeta ? '#6366f1' : docente?.is_premium ? '#10b981' : '#f59e0b', color: '#fff', fontSize: '0.45rem', padding: '1px 3px', borderRadius: '3px', fontWeight: 900, border: '1px solid #111', whiteSpace: 'nowrap', lineHeight: 1 }}>
-              {subStatus.label}
+            <span style={{ background: isAdmin ? 'linear-gradient(90deg, #ec4899, #8b5cf6)' : subStatus.isReadOnly ? '#ef4444' : subStatus.isVipBeta ? '#6366f1' : docente?.is_premium ? '#10b981' : '#f59e0b', color: '#fff', fontSize: '0.55rem', padding: '3px 6px', borderRadius: '6px', fontWeight: 900, whiteSpace: 'nowrap', lineHeight: 1 }}>
+              {isAdmin ? 'FUNDADORA 👑' : subStatus.label}
             </span>
           </div>
           <div style={{ minWidth: 0, overflow: 'hidden' }}>
@@ -143,16 +161,21 @@ export default function Dashboard({ session }) {
           </div>
         </div>
 
-        {/* Botón config */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        {/* Acciones header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <NotificationBell />
+          <div style={{ position: 'relative', flexShrink: 0 }}>
           <button id="tour-config" ref={configBtnRef} onClick={() => {
             if (!showConfig && configBtnRef.current) {
               const rect = configBtnRef.current.getBoundingClientRect();
               const menuWidth = Math.min(340, window.innerWidth - 24);
-              setMenuPos({
-                top: rect.bottom + 8,
-                left: rect.right - menuWidth
-              });
+              const top = Math.min(rect.bottom + 8, Math.max(10, window.innerHeight - 80));
+              let left = rect.right - menuWidth;
+
+              if (left < 10) left = 10;
+              if (left + menuWidth > window.innerWidth - 10) left = window.innerWidth - menuWidth - 10;
+
+              setMenuPos({ top, left });
             }
             setShowConfig(prev => !prev);
           }}
@@ -167,16 +190,21 @@ export default function Dashboard({ session }) {
           {showConfig && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowConfig(false)} />
-              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: 'min(340px, calc(100vw - 24px))', maxHeight: 'calc(100dvh - 76px)', overflowY: 'auto', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: 'min(340px, calc(100vw - 24px))', maxHeight: `max(0px, calc(100dvh - ${menuPos.top}px - 10px))`, overflowY: 'auto', boxSizing: 'border-box', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
 
-                {subStatus.isAdmin && (
+                {isAdmin && (
                   <Link to="/admin" onClick={() => setShowConfig(false)}
                     style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#f59e0b', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', marginBottom: '4px' }}>
                     <span style={{ fontSize: '1.1rem' }}>👑</span>
                     <span style={{ fontSize: '0.88rem', fontWeight: 900 }}>Panel de Dueña</span>
                   </Link>
                 )}
+                <Link to="/suscripcion" onClick={() => setShowConfig(false)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#fff', borderRadius: '10px', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', marginBottom: '4px' }}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#818cf8" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#c7d2fe' }}>Mi suscripción / Planes</span>
+                </Link>
                 <PushNotificationsSettings userId={docenteId} />
 
                 <Link to="/inicio" onClick={() => setShowConfig(false)}
@@ -219,6 +247,7 @@ export default function Dashboard({ session }) {
               </div>
             </>
           )}
+          </div>
         </div>
       </header>
 
@@ -255,7 +284,7 @@ export default function Dashboard({ session }) {
             whiteSpace: 'nowrap',
             boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
           }}>
-            Activar Plan PRO (.500/mes)
+            Renovar ahora
           </Link>
         </div>
       )}

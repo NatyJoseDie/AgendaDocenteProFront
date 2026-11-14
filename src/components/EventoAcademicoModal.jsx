@@ -37,21 +37,24 @@ export default function EventoAcademicoModal({ isOpen, onClose, cursoId, docente
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validación: Si es Examen o TP, el curso es estrictamente obligatorio
+    if ((formData.tipo === 'Examen' || formData.tipo === 'TP') && !formData.curso_id) {
+      alert('⚠️ Para registrar un Examen o TP debes seleccionar un Curso Obligatorio.');
+      return;
+    }
+
     setLoading(true);
     try {
-      let payload = {
-        ...formData,
-        docente_id: docenteId,
-        color: COLORES[formData.tipo] || '#64748b'
-      };
-      
+      const userId = docenteId || (await CalendarioAPI.getCurrentUserId?.());
+
       // Lógica de Endpoints según Protocolo Natalia
       if (formData.tipo === 'Salida') {
         const payloadSalida = {
-          docente_id: docenteId,
-          curso_id: formData.curso_id || null, // Permite nulo según esquema
-          nombre_proyecto: formData.titulo, // Mapeo obligatorio
-          destino: formData.titulo, // Lo usamos como destino provisorio
+          docente_id: userId,
+          curso_id: formData.curso_id || null,
+          nombre_proyecto: formData.titulo,
+          destino: formData.titulo,
           fecha_salida: formData.fecha,
           recordatorio_habilitado: formData.alarma,
           dias_previos_aviso: formData.dias_previos,
@@ -59,7 +62,19 @@ export default function EventoAcademicoModal({ isOpen, onClose, cursoId, docente
         };
         await CalendarioAPI.createSalida(payloadSalida);
       } else {
-        // Carga de Examen/TP/Acto/Admin: POST /api/eventos
+        // Payload limpio — solo los campos que acepta eventos_academicos
+        // (NO enviamos alarma/dias_previos que son solo campos locales del form)
+        const payload = {
+          docente_id: userId,
+          curso_id: formData.curso_id ? formData.curso_id : null,
+          titulo: formData.titulo,
+          descripcion: formData.descripcion || null,
+          tipo: formData.tipo,
+          fecha: formData.fecha,
+          alarma: formData.alarma,
+          dias_previos: formData.dias_previos,
+          color: COLORES[formData.tipo] || '#64748b'
+        };
         await CalendarioAPI.createAcademic(payload);
       }
 
@@ -154,11 +169,20 @@ export default function EventoAcademicoModal({ isOpen, onClose, cursoId, docente
                       />
                     ) : (
                       <select
+                        required
                         value={formData.curso_id}
                         onChange={(e) => setFormData({ ...formData, curso_id: e.target.value })}
-                        style={{ width: '100%', padding: '1rem', borderRadius: '15px', background: '#1e293b', border: '1px solid #334155', color: '#fff', fontSize: '0.9rem' }}
+                        style={{
+                          width: '100%',
+                          padding: '1rem',
+                          borderRadius: '15px',
+                          background: '#1e293b',
+                          border: !formData.curso_id ? '1.5px solid var(--danger)' : '1px solid #334155',
+                          color: '#fff',
+                          fontSize: '0.9rem'
+                        }}
                       >
-                        <option value="" style={{ background: '#1e293b', color: '#fff' }}>Seleccionar curso...</option>
+                        <option value="" style={{ background: '#1e293b', color: '#fff' }}>Seleccionar curso (obligatorio)...</option>
                         {cursos.map(c => (
                           <option key={c.id} value={c.id} style={{ background: '#1e293b', color: '#fff' }}>
                             {c.anio_o_grado} {c.division} - {c.materia} {c.escuelas?.nombre ? `(${c.escuelas.nombre})` : ''}

@@ -554,7 +554,23 @@ export default function Attendance({ session }) {
                 {tableData.filas.map(({ alumno, asistencias: asMap }, idx) => (
                   <tr key={alumno.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                     <td style={{ padding: '12px', fontSize: '0.85rem', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                      {alumno.apellido}, {alumno.nombre}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{alumno.apellido}, {alumno.nombre}</span>
+                        {(alumno.es_recursante || alumno.condicion_estudiante === 'recursante') && (
+                          <span style={{
+                            background: '#EF4444',
+                            color: '#fff',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.65rem',
+                            fontWeight: 900
+                          }}>R</span>
+                        )}
+                      </div>
                     </td>
                     {tableData.dias.map(d => (
                       <td key={d} style={{ textAlign: 'center', padding: '10px' }}>

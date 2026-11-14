@@ -36,8 +36,8 @@ export default function Calendario({ session }) {
   const loadData = async () => {
     const dId = session?.user?.id;
     try {
-      // Cargamos TODO de la vista maestra (Efemérides + Personales)
-      const dataEventos = await CalendarioAPI.getMaestro();
+      // Cargamos TODO: Efemérides (con el año seleccionado) + Eventos Académicos
+      const dataEventos = await CalendarioAPI.getMaestro(selectedYear);
       setEventos(dataEventos || []);
       
       if (dId) {
@@ -105,6 +105,13 @@ export default function Calendario({ session }) {
   if (view === 'anual') {
     return (
       <div className="app-container animate-fade-in" style={{ minHeight: '100vh', backgroundColor: '#0f172a', padding: '2.5rem 1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
+        <EventoAcademicoModal
+          isOpen={showModal}
+          onClose={() => { setShowModal(false); loadData(); }}
+          docenteId={session?.user?.id}
+          cursos={cursos}
+        />
+
         <header className="calendario-header">
           <Link to="/dashboard" className="calendario-back-link" style={{ color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, opacity: 0.8 }}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>

@@ -1,6 +1,24 @@
 import { supabase } from '../supabaseClient';
+import { PAID_PLAN_KEYS, PLAN_CICLOS } from '../constants/plans';
 
-// ─── ESCUELAS ──────────────────────────────────────────────
+const saveByNaturalKey = async (table, record, keyFields) => {
+  let lookup = supabase.from(table).select('id');
+  for (const field of keyFields) {
+    lookup = lookup.eq(field, record[field]);
+  }
+
+  const { data: existing, error: lookupError } = await lookup.limit(1).maybeSingle();
+  if (lookupError) throw lookupError;
+
+  const query = existing
+    ? supabase.from(table).update(record).eq('id', existing.id)
+    : supabase.from(table).insert([record]);
+  const { data, error } = await query.select().single();
+  if (error) throw error;
+  return data;
+};
+
+// â”€â”€â”€ ESCUELAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const EscuelasAPI = {
   getByDocente: async (docenteId) => {
     const { data, error } = await supabase
@@ -28,14 +46,14 @@ export const EscuelasAPI = {
     return data[0];
   },
   delete: async (id) => {
-    // Borrado lógico
+    // Borrado lÃ³gico
     const { error } = await supabase.from('escuelas').update({ activo: false }).eq('id', id);
     if (error) throw error;
     return true;
   }
 };
 
-// ─── CURSOS & HORARIOS ─────────────────────────────────────
+// â”€â”€â”€ CURSOS & HORARIOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const CursosAPI = {
   getAll: async (docenteId) => {
     // Alias para compatibilidad con Calendario y otras vistas maestras
@@ -101,14 +119,14 @@ export const CursosAPI = {
     return curso;
   },
   delete: async (id) => {
-    // Borrado lógico
+    // Borrado lÃ³gico
     const { error } = await supabase.from('cursos').update({ activo: false }).eq('id', id);
     if (error) throw error;
     return true;
   }
 };
 
-// ─── ALUMNOS ───────────────────────────────────────────────
+// â”€â”€â”€ ALUMNOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const AlumnosAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -145,7 +163,7 @@ export const AlumnosAPI = {
         docente_id: alumnoData.docente_id
       };
       const { error: condError } = await supabase.from('condiciones_especiales').insert([condicionToInsert]);
-      if (condError) console.error("Error al guardar condición especial:", condError);
+      if (condError) console.error("Error al guardar condiciÃ³n especial:", condError);
     }
 
     return alumno;
@@ -208,7 +226,7 @@ export const AsistenciasAPI = {
     return data;
   },
   getEstadisticas: async (cursoId) => {
-    // Simulamos el endpoint de estadísticas sumando las faltas 'A'
+    // Simulamos el endpoint de estadÃ­sticas sumando las faltas 'A'
     const { data, error } = await supabase
       .from('asistencias')
       .select('alumno_id, estado')
@@ -231,7 +249,7 @@ export const AsistenciasAPI = {
   },
   getResumenMensual: async (cursoId, mes, anio) => {
     // Simulamos el endpoint del backend /api/asistencias/resumen-mensual
-    // En una implementación real con Supabase esto podría ser un RPC o una consulta filtrada
+    // En una implementaciÃ³n real con Supabase esto podrÃ­a ser un RPC o una consulta filtrada
     const lastDay = new Date(anio, mes, 0).getDate(); 
     const endDate = `${anio}-${String(mes).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
@@ -261,7 +279,7 @@ export const AsistenciasAPI = {
   }
 };
 
-// ─── CALIFICACIONES ────────────────────────────────────────
+// â”€â”€â”€ CALIFICACIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const CalificacionesAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -272,17 +290,16 @@ export const CalificacionesAPI = {
     return data;
   },
   upsert: async (calificacionData) => {
-    const { data, error } = await supabase
-      .from('calificaciones')
-      .upsert([calificacionData], { onConflict: 'alumno_id, curso_id, periodo' })
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    return saveByNaturalKey('calificaciones', calificacionData, [
+      'alumno_id',
+      'curso_id',
+      'periodo',
+      'tipo'
+    ]);
   }
 };
 
-// ─── INTENSIFICACIONES ──────────────────────────────────────
+// â”€â”€â”€ INTENSIFICACIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const IntensificacionesAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -293,38 +310,40 @@ export const IntensificacionesAPI = {
     return data;
   },
   upsert: async (intensifData) => {
-    const { data, error } = await supabase
-      .from('intensificaciones')
-      .upsert([intensifData], { onConflict: 'alumno_id, curso_id, periodo_intensifica' })
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    return saveByNaturalKey('intensificaciones', intensifData, [
+      'alumno_id',
+      'curso_id',
+      'periodo',
+      'semestre'
+    ]);
   }
 };
 
-// ─── PLANILLA OFICIAL (PROVINCIA) ──────────────────────────  
+// â”€â”€â”€ PLANILLA OFICIAL (PROVINCIA) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  
 export const PlanillaOficialAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
-      .from('v_planilla_oficial')
-      .select('*, alumnos(apellido, nombre)')
+      .from('planilla_oficial')
+      .select('*')
       .eq('curso_id', cursoId);
     if (error) throw error;
-    return data;
+    return data.map((row) => ({
+      ...row,
+      observaciones: row.observaciones ?? row.observaciones_manuales ?? ''
+    }));
   },
   upsert: async (gradeData) => {
-    const { data, error } = await supabase
-      .from('planilla_oficial')
-      .upsert([gradeData], { onConflict: 'alumno_id, curso_id' })
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const record = { ...gradeData };
+    if (Object.prototype.hasOwnProperty.call(record, 'observaciones')) {
+      record.observaciones_manuales = record.observaciones;
+      delete record.observaciones;
+    }
+
+    return saveByNaturalKey('planilla_oficial', record, ['alumno_id', 'curso_id']);
   }
 };
 
-// ─── SEGUIMIENTO DIARIO (TPs y NOTAS) ──────────────────────
+// â”€â”€â”€ SEGUIMIENTO DIARIO (TPs y NOTAS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const SeguimientoAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -337,22 +356,52 @@ export const SeguimientoAPI = {
   upsert: async (seguimientoData) => {
     const { data, error } = await supabase
       .from('seguimiento_diario')
-      .upsert([seguimientoData], { onConflict: 'alumno_id, tema_id' })
+      .upsert(seguimientoData, { onConflict: 'alumno_id, tema_id' })
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
+  },
+  update: async (actividadId, patch) => {
+    // Si la actividad tiene id numÃ©rico o existe en seguimiento_diario
+    const { data, error } = await supabase
+      .from('seguimiento_diario')
+      .update(patch)
+      .eq('tema_id', actividadId);
+    if (error) {
+      console.warn("SeguimientoAPI.update:", error.message);
+    }
+    return data;
+  },
+  createActividad: async (actData) => {
+    return {
+      id: actData.id || `act_${Date.now()}`,
+      nombre: actData.nombre,
+      tipo: actData.tipo || 'nota',
+      fecha: actData.fecha || new Date().toISOString().split('T')[0]
+    };
+  },
+  deleteActividad: async (actividadId) => {
+    const { error } = await supabase
+      .from('seguimiento_diario')
+      .delete()
+      .eq('tema_id', actividadId);
+    if (error) {
+      console.warn("SeguimientoAPI.deleteActividad:", error.message);
+    }
+    return true;
   },
   saveMasivo: async (seguimientoArray) => {
     const { data, error } = await supabase
       .from('seguimiento_diario')
-      .upsert(seguimientoArray, { onConflict: 'alumno_id, tema_id' });
+      .upsert(seguimientoArray, { onConflict: 'alumno_id, tema_id' })
+      .select();
     if (error) throw error;
     return data;
   }
 };
 
-// ─── LIBRO DE TEMAS (PLAN DE CLASE) ────────────────────────
+// â”€â”€â”€ LIBRO DE TEMAS (PLAN DE CLASE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const LibroTemasAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -389,7 +438,7 @@ export const LibroTemasAPI = {
   }
 };
 
-// ─── LICENCIAS ─────────────────────────────────────────────
+// â”€â”€â”€ LICENCIAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const LicenciasAPI = {
   getByDocente: async (docenteId) => {
     const { data, error } = await supabase
@@ -439,17 +488,55 @@ export const LicenciasAPI = {
   }
 };
 
-// ─── EVENTOS CALENDARIO (Feriados y Eventos) ────────────────
+// â”€â”€â”€ EVENTOS CALENDARIO (Feriados y Eventos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const CalendarioAPI = {
-  getMaestro: async () => {
-    // Lectura UNIFICADA desde la vista (Regla de Oro)
-    const { data, error } = await supabase.from('v_calendario_maestro').select('*');
-    if (error) throw error;
-    return data;
+  getCurrentUserId: async () => {
+    return (await supabase.auth.getUser())?.data?.user?.id;
+  },
+  getMaestro: async (yearParam) => {
+    const currentYear = yearParam || new Date().getFullYear();
+
+    const [efemRes, acadRes] = await Promise.all([
+      supabase.from('efemerides_nacionales').select('*'),
+      supabase.from('eventos_academicos').select('*')
+    ]);
+
+    if (efemRes.error) throw efemRes.error;
+    if (acadRes.error) throw acadRes.error;
+
+    const efemList = (efemRes.data || []).map(ef => {
+      const mesStr = String(ef.mes).padStart(2, '0');
+      const diaStr = String(ef.dia).padStart(2, '0');
+      return {
+        id: `efem_${ef.id}`,
+        titulo: ef.titulo,
+        fecha: `${currentYear}-${mesStr}-${diaStr}`,
+        tipo: 'Feriado',
+        color: ef.color || '#ef4444',
+        es_feriado: ef.es_feriado !== false
+      };
+    });
+
+    const acadList = (acadRes.data || []).map(ac => ({
+      id: ac.id,
+      titulo: ac.titulo,
+      fecha: ac.fecha,
+      tipo: ac.tipo || 'Acto',
+      color: ac.color || '#f97316',
+      curso_id: ac.curso_id,
+      descripcion: ac.descripcion
+    }));
+
+    return [...efemList, ...acadList];
   },
   createAcademic: async (evento) => {
     // POST /api/eventos (Tabla academica unificada)
-    const { data, error } = await supabase.from('eventos_academicos').insert([evento]).select().single();
+    const cleaned = {
+      ...evento,
+      curso_id: evento.curso_id ? evento.curso_id : null,
+      docente_id: evento.docente_id || (await supabase.auth.getUser())?.data?.user?.id
+    };
+    const { data, error } = await supabase.from('eventos_academicos').insert([cleaned]).select().single();
     if (error) throw error;
     return data;
   },
@@ -483,7 +570,7 @@ export const CalendarioAPI = {
   }
 };
 
-// ─── SALIDAS EDUCATIVAS ─────────────────────────────────────
+// â”€â”€â”€ SALIDAS EDUCATIVAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const SalidasAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -511,7 +598,7 @@ export const SalidasAPI = {
 };
 
 
-// ─── CONTACTOS & COMUNICACIONES ─────────────────────────────
+// â”€â”€â”€ CONTACTOS & COMUNICACIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const ContactosAPI = {
   getByDocente: async (docenteId) => {
     const { data, error } = await supabase
@@ -551,12 +638,16 @@ export const ContactosAPI = {
   }
 };
 
-// ─── PERFIL DOCENTE ────────────────────────────────────────
+// â”€â”€â”€ PERFIL DOCENTE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const PerfilAPI = {
-  getProfile: async (docenteId) => {
-    const { data, error } = await supabase.from('docentes').select('*').eq('id', docenteId).single();
-    if (error) throw error;
-    return data;
+  getProfile: async () => {
+    const response = await fetch(`${BACKEND_URL}/docentes/me`, {
+      headers: await getAuthHeaders()
+    });
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudo obtener el perfil');
+    }
+    return response.json();
   },
   upsertProfile: async (profileData) => {
     const { data, error } = await supabase.from('docentes').upsert(profileData).select().single();
@@ -573,7 +664,7 @@ export const PerfilAPI = {
   }
 };
 
-// ─── PLANIFICACIONES (PDF) ─────────────────────────────────
+// â”€â”€â”€ PLANIFICACIONES (PDF) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const PlanificacionesAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -627,7 +718,7 @@ export const PlanificacionesAPI = {
 export const BackupAPI = {
   createSnapshot: async (docenteId) => {
     try {
-      // Recopilación masiva de TODO
+      // RecopilaciÃ³n masiva de TODO
       const [resEsc, resCur, resAlu, resAsis, resTemas, resNotas, resPlan, resCont] = await Promise.all([
         EscuelasAPI.getByDocente(docenteId),
         CursosAPI.getByDocente(docenteId),
@@ -654,11 +745,11 @@ export const BackupAPI = {
       const { error } = await supabase.from('copias_seguridad').insert({ docente_id: docenteId, datos: totalBackup });
 
       if (error) {
-        console.error('❌ Error de Supabase:', error.message);
+        console.error('âŒ Error de Supabase:', error.message);
         return;
       }
 
-      console.log('📦 Backup Total (JSON) guardado en la nube');
+      console.log('ðŸ“¦ Backup Total (JSON) guardado en la nube');
     } catch (e) {
       console.error('Error backup inesperado:', e);
     }
@@ -676,7 +767,7 @@ export const BackupAPI = {
     if (!copia) throw new Error('No hay copias disponibles');
     const b = copia.datos;
 
-    // Restauración Masiva (Upsert inteligente)
+    // RestauraciÃ³n Masiva (Upsert inteligente)
     if (b.escuelas) await supabase.from('escuelas').upsert(b.escuelas.map(x => ({ ...x, docente_id: docenteId })));
     if (b.cursos) await supabase.from('cursos').upsert(b.cursos.map(x => ({ ...x, docente_id: docenteId })));
     if (b.alumnos) await supabase.from('alumnos').upsert(b.alumnos.map(x => ({ ...x, docente_id: docenteId })));
@@ -711,7 +802,7 @@ export const FeedbackAPI = {
   }
 };
 
-// ─── OCR PROFESIONAL (BACKEND) ─────────────────────────────
+// â”€â”€â”€ OCR PROFESIONAL (BACKEND) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/+$/, '');
 
 const getAuthHeaders = async (headers = {}, expectedUserId) => {
@@ -719,9 +810,9 @@ const getAuthHeaders = async (headers = {}, expectedUserId) => {
   if (error) throw error;
 
   const token = session?.access_token;
-  if (!token) throw new Error('Tu sesión expiró. Iniciá sesión nuevamente.');
+  if (!token) throw new Error('Tu sesiÃ³n expirÃ³. IniciÃ¡ sesiÃ³n nuevamente.');
   if (expectedUserId && session.user.id !== expectedUserId) {
-    throw new Error('La sesión cambió. Volvé a intentar la operación con la cuenta actual.');
+    throw new Error('La sesiÃ³n cambiÃ³. VolvÃ© a intentar la operaciÃ³n con la cuenta actual.');
   }
 
   return {
@@ -730,28 +821,53 @@ const getAuthHeaders = async (headers = {}, expectedUserId) => {
   };
 };
 
+const buildApiError = async (response, fallback) => {
+  const body = await response.json().catch(() => ({}));
+  const error = new Error(body.error || body.details || fallback);
+  error.status = response.status;
+  error.code = body.code;
+  return error;
+};
+
 export const OCRAPI = {
-  processImage: async (imageFile) => {
+  processImage: async (imageFile, cursoId) => {
     const formData = new FormData();
     formData.append('image', imageFile);
+    if (cursoId) formData.append('curso_id', cursoId);
 
     const response = await fetch(`${BACKEND_URL}/ocr/process`, {
       method: 'POST',
+      headers: await getAuthHeaders(),
       body: formData
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.details || errorData.error || 'Error en el escaneo');
+      throw await buildApiError(response, 'Error en el escaneo');
     }
 
     return await response.json();
   }
 };
 
-// 💳 PAGOS & MERCADO PAGO 💳
+// 💲 PLANES Y PRECIOS (públicos, editables desde el panel de la dueña)
+export const PlanesAPI = {
+  getPlanes: async () => {
+    const response = await fetch(`${BACKEND_URL}/pagos/planes`);
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudieron cargar los precios');
+    }
+    const data = await response.json();
+    return Array.isArray(data?.planes) ? data.planes : [];
+  }
+};
+
+// ðŸ’³ PAGOS & MERCADO PAGO ðŸ’³
 export const PagosAPI = {
-  crearPreferencia: async (plan, ciclo = 'anual') => {
+  crearPreferencia: async (plan, ciclo = 'ciclo_lectivo') => {
+    if (!PAID_PLAN_KEYS.includes(plan) || !PLAN_CICLOS.includes(ciclo)) {
+      throw new Error('La combinación de plan y ciclo no es válida.');
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
 
@@ -792,35 +908,82 @@ export const PagosAPI = {
 };
 
 
-// 👑 PANEL ADMINISTRATIVO (DUEÑA) 👑
+// ðŸ‘‘ PANEL ADMINISTRATIVO (DUEÃ‘A) ðŸ‘‘
 export const AdminAPI = {
   getMetricas: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
     const response = await fetch(`${BACKEND_URL}/admin/metricas`, {
-      headers: {
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      }
+      headers: await getAuthHeaders()
     });
 
     if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Error al obtener métricas');
+      const err = await response.json().catch(() => ({}));
+      const fallback = response.status === 403
+        ? 'Acceso denegado: solo disponible para la administradora.'
+        : response.status === 401
+          ? 'Tu sesión expiró. Volvé a iniciar sesión.'
+          : 'Error al obtener métricas';
+      const error = new Error(err.error || fallback);
+      error.status = response.status;
+      throw error;
     }
 
-    return await response.json();
+    const data = await response.json();
+    const resumen = data?.resumen || {};
+    return {
+      resumen: {
+        totalRecaudado: Number(resumen.totalRecaudado) || 0,
+        totalPagos: Number(resumen.totalPagos) || 0,
+        totalDocentes: Number(resumen.totalDocentes) || 0,
+        countVip: Number(resumen.countVip) || 0,
+        countPro: Number(resumen.countPro) || 0,
+        countPremium: Number(resumen.countPremium) || 0,
+        countFree: Number(resumen.countFree) || 0,
+        countVencidos: Number(resumen.countVencidos) || 0,
+      },
+      docentes: Array.isArray(data?.docentes) ? data.docentes : [],
+      pagos: Array.isArray(data?.pagos) ? data.pagos : [],
+    };
+  },
+
+  getPrecios: async () => {
+    const response = await fetch(`${BACKEND_URL}/admin/precios`, {
+      headers: await getAuthHeaders()
+    });
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudieron obtener los precios');
+    }
+    const data = await response.json();
+    return {
+      planes: Array.isArray(data?.planes) ? data.planes : [],
+      recordatorio: data?.recordatorio || null
+    };
+  },
+
+  updatePrecios: async (payload) => {
+    const response = await fetch(`${BACKEND_URL}/admin/precios`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders())
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudieron guardar los precios');
+    }
+    const data = await response.json();
+    return {
+      planes: Array.isArray(data?.planes) ? data.planes : [],
+      recordatorio: data?.recordatorio || null
+    };
   },
 
   modificarDocente: async (docenteId, nuevoPlan, diasExtra) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
     const response = await fetch(`${BACKEND_URL}/admin/modificar-docente`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...(await getAuthHeaders())
       },
       body: JSON.stringify({
         docente_id: docenteId,
@@ -830,8 +993,7 @@ export const AdminAPI = {
     });
 
     if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Error al modificar docente');
+      throw await buildApiError(response, 'Error al modificar docente');
     }
 
     return await response.json();
@@ -839,32 +1001,37 @@ export const AdminAPI = {
 };
 
 export const NotificacionesAPI = {
-  getAll: async () => {
-    const response = await fetch(`${BACKEND_URL}/notificaciones?limite=20`, {
+  getAll: async (limite = 20) => {
+    const response = await fetch(`${BACKEND_URL}/notificaciones?limite=${limite}`, {
       headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al obtener notificaciones');
+      throw await buildApiError(response, 'No se pudieron obtener las notificaciones');
     }
 
-    return await response.json();
+    const data = await response.json();
+    return {
+      notificaciones: Array.isArray(data?.notificaciones) ? data.notificaciones : (Array.isArray(data) ? data : []),
+      noLeidas: Number(data?.noLeidas ?? data?.no_leidas ?? 0) || 0
+    };
   },
 
-  markAsRead: async (id) => {
+  marcarLeida: async (id) => {
     const response = await fetch(`${BACKEND_URL}/notificaciones/${encodeURIComponent(id)}/leida`, {
       method: 'PATCH',
       headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al marcar la notificación como leída');
+      throw await buildApiError(response, 'No se pudo marcar la notificación');
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data?.notificacion || data;
   },
+
+  markAsRead: async (id) => NotificacionesAPI.marcarLeida(id),
 };
 
 const PUSH_OWNERS_STORAGE_KEY = 'agenda-docente-push-owners';
@@ -877,7 +1044,7 @@ const readPushOwners = () => {
   if (!Array.isArray(owners) || owners.some(owner => (
     typeof owner?.endpoint !== 'string' || typeof owner?.userId !== 'string'
   ))) {
-    throw new Error('No se pudo verificar a qué cuenta pertenece esta suscripción Push.');
+    throw new Error('No se pudo verificar a quÃ© cuenta pertenece esta suscripciÃ³n Push.');
   }
   return owners;
 };
@@ -886,7 +1053,7 @@ const savePushOwners = (owners) => {
   try {
     window.localStorage.setItem(PUSH_OWNERS_STORAGE_KEY, JSON.stringify(owners));
   } catch (error) {
-    throw new Error(`No se pudo guardar el estado local de la suscripción Push: ${error.message}`);
+    throw new Error(`No se pudo guardar el estado local de la suscripciÃ³n Push: ${error.message}`);
   }
 };
 
@@ -909,7 +1076,7 @@ export const PushNotificationsAPI = {
     const response = await fetch(`${BACKEND_URL}/notificaciones/push/vapid-public-key`);
 
     if (!response.ok) {
-      let errorMessage = `No se pudo obtener la clave pública de notificaciones (HTTP ${response.status}).`;
+      let errorMessage = `No se pudo obtener la clave pÃºblica de notificaciones (HTTP ${response.status}).`;
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorData.message || errorMessage;
@@ -921,7 +1088,7 @@ export const PushNotificationsAPI = {
 
     const data = await response.json();
     if (typeof data?.publicKey !== 'string' || !data.publicKey) {
-      throw new Error('El backend no devolvió una clave pública VAPID válida.');
+      throw new Error('El backend no devolviÃ³ una clave pÃºblica VAPID vÃ¡lida.');
     }
     return data.publicKey;
   },
@@ -938,7 +1105,7 @@ export const PushNotificationsAPI = {
 
     const result = await response.json();
     if (result?.registered !== true) {
-      throw new Error('El backend no confirmó el registro de este dispositivo.');
+      throw new Error('El backend no confirmÃ³ el registro de este dispositivo.');
     }
     const owners = readPushOwners().filter(owner => owner.endpoint !== subscription.endpoint);
     owners.push({ endpoint: subscription.endpoint, userId });
@@ -948,7 +1115,7 @@ export const PushNotificationsAPI = {
       try {
         await PushNotificationsAPI.removeSubscription(subscription.endpoint, userId);
       } catch (cleanupError) {
-        throw new Error(`${storageError.message} Además, no se pudo revertir el registro del servidor: ${cleanupError.message}`);
+        throw new Error(`${storageError.message} AdemÃ¡s, no se pudo revertir el registro del servidor: ${cleanupError.message}`);
       }
       throw storageError;
     }
@@ -966,7 +1133,7 @@ export const PushNotificationsAPI = {
     if (!response.ok) throw await pushResponseError(response, 'No se pudo dar de baja este dispositivo');
     const result = await response.json();
     if (typeof result?.deleted !== 'boolean') {
-      throw new Error('El backend no confirmó la baja de este dispositivo.');
+      throw new Error('El backend no confirmÃ³ la baja de este dispositivo.');
     }
     return result;
   },
@@ -1023,3 +1190,7 @@ export const PushNotificationsAPI = {
     return true;
   },
 };
+
+
+
+

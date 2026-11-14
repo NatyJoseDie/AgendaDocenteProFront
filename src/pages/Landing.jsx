@@ -25,6 +25,8 @@ import {
   Star
 } from 'lucide-react';
 import FeatureSection from '../components/FeatureSection';
+import usePlanes from '../hooks/usePlanes';
+import { formatPrecio, getPlanPrecio } from '../constants/plans';
 
 const FaqItem = ({ q, a }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,6 +50,13 @@ export default function Landing({ session }) {
   const [isFinished, setIsFinished] = useState(false);
   const fullTitle = "Crea tu Agenda Docente Digital en simples pasos.";
   const pivotPoint = "Crea tu Agenda Docente ".length;
+  const { planes } = usePlanes();
+  const basicoMensual = getPlanPrecio(planes, 'basico', 'mensual')?.precio_vigente ?? 1500;
+  const basicoCiclo = getPlanPrecio(planes, 'basico', 'ciclo_lectivo')?.precio_vigente ?? 12000;
+  const proMensual = getPlanPrecio(planes, 'pro', 'mensual')?.precio_vigente ?? 4500;
+  const proCiclo = getPlanPrecio(planes, 'pro', 'ciclo_lectivo')?.precio_vigente ?? 36000;
+  const premiumMensual = getPlanPrecio(planes, 'premium', 'mensual')?.precio_vigente ?? 5500;
+  const premiumCiclo = getPlanPrecio(planes, 'premium', 'ciclo_lectivo')?.precio_vigente ?? 44000;
 
   React.useEffect(() => {
     let index = 0;
@@ -87,8 +96,8 @@ export default function Landing({ session }) {
       a: "Al marcar al alumno como aprobado en el período de intensificación, el sistema genera el acta de acreditación automática y actualiza su historial pedagógico, reflejando su nuevo estado académico de forma inmediata."
     },
     {
-      q: "¿Cómo es el período de prueba que ofrecen (Estrategia 30-30)?",
-      a: "Ofrecemos 30 días de REGALO con ACCESO TOTAL. Podés gestionar hasta 5 escuelas y 5 cursos con todas las funciones Pro habilitadas por un ciclo lectivo inicial. Al finalizar los 30 días, podés decidir tu plan o mantenerte en el gratuito."
+      q: "¿Cómo funciona el período de prueba?",
+      a: "La fecha de vencimiento de tu período de prueba se muestra en tu cuenta. Al finalizar, podés elegir un plan pago o continuar con el plan gratuito. El ciclo lectivo tiene su propia fecha de vencimiento, indicada al elegir el plan."
     },
     {
       q: "¿Realmente funciona el dictado por voz para pasar lista?",
@@ -410,7 +419,7 @@ export default function Landing({ session }) {
           <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <span className="section-label">MEMBRESÍAS 2026</span>
             <h2 className="section-title-alt">Elegí tu camino digital</h2>
-            <p className="section-desc-alt">Precios especiales de lanzamiento válidos por los primeros 6 meses.</p>
+            <p className="section-desc-alt">Precios especiales de lanzamiento válidos por los primeros 4 meses.</p>
           </header>
 
           <style>
@@ -429,8 +438,8 @@ export default function Landing({ session }) {
           </style>
 
           <div className="pricing-grid-elite">
-            {/* PLAN FREE - EL GANCHO LED */}
-            <motion.div 
+            {/* PLAN GRATUITO */}
+            <motion.div
               className="pricing-card-wrapper"
               initial={{ scale: 0.9, opacity: 0.5 }}
               whileInView={{ scale: 1, opacity: 1 }}
@@ -438,23 +447,47 @@ export default function Landing({ session }) {
               transition={{ duration: 0.5 }}
             >
               <div className="pricing-card-elite free-led">
-                <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> REGALO: 30 DÍAS FULL</span>
+                <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> PROBALO GRATIS</span>
                 <div className="card-header-elite">
-                  <h3>Plan Gratuito</h3>
+                  <h3>Gratuito</h3>
                   <div className="price-tag-elite">$0 <span>/ siempre</span></div>
                 </div>
                 <ul className="feats-list-elite">
-                  <li><Zap size={18} className="icon-price" /> Todas las funciones DESBLOQUEADAS</li>
-                  <li><Gift size={18} className="icon-price" /> 5 Escuelas/Cursos (30 días de REGALO)</li>
-                  <li><Home size={18} className="icon-price" /> Luego máximo de 2 Escuelas</li>
-                  <li><TrendingUp size={18} className="icon-price" /> Seguimiento Pedagógico Completo</li>
+                  <li><Home size={18} className="icon-price" /> 1 escuela</li>
+                  <li><Users size={18} className="icon-price" /> 2 cursos</li>
+                  <li><Zap size={18} className="icon-price" /> Sin OCR</li>
+                  <li><Cloud size={18} className="icon-price" /> Backups ✅</li>
                 </ul>
-                <Link to="/login" className="btn-card-elite secondary">Probar ahora gratis</Link>
+                <Link to="/login" className="btn-card-elite secondary">Gratis para siempre</Link>
               </div>
             </motion.div>
 
-            {/* PLAN PRO - EL RECOMENDADO */}
-            <motion.div 
+            {/* PLAN BÁSICO */}
+            <motion.div
+              className="pricing-card-wrapper"
+              initial={{ scale: 0.9, opacity: 0.5 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ amount: 0.8 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="pricing-card-elite" style={{ border: '1.5px solid rgba(34, 197, 94, 0.35)' }}>
+                <div className="card-header-elite">
+                  <h3>BÁSICO</h3>
+                  <div className="price-tag-elite">{formatPrecio(basicoCiclo)} <span>/ ciclo lectivo</span></div>
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o {formatPrecio(basicoMensual)} / mes</span>
+                </div>
+                <ul className="feats-list-elite">
+                  <li><Home size={18} className="icon-price" /> 3 escuelas</li>
+                  <li><Users size={18} className="icon-price" /> 5 cursos</li>
+                  <li><Zap size={18} className="icon-price" /> Sin OCR</li>
+                  <li><Cloud size={18} className="icon-price" /> Backups ✅</li>
+                </ul>
+                <Link to="/login" className="btn-card-elite secondary">Elegir BÁSICO</Link>
+              </div>
+            </motion.div>
+
+            {/* PLAN PRO */}
+            <motion.div
               className="pricing-card-wrapper"
               initial={{ scale: 0.9, opacity: 0.5 }}
               whileInView={{ scale: 1, opacity: 1 }}
@@ -464,21 +497,22 @@ export default function Landing({ session }) {
               <div className="pricing-card-elite featured-pro">
                 <span className="featured-badge-elite"><Star size={14} style={{ marginRight: '5px' }} /> EL MÁS ELEGIDO</span>
                 <div className="card-header-elite">
-                  <h3>Plan Profesional</h3>
-                  <div className="price-tag-elite">$24.000 <span>/ año</span></div><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $5.000 / mes</span><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $3.500 / mes</span>
+                  <h3>PRO</h3>
+                  <div className="price-tag-elite">{formatPrecio(proCiclo)} <span>/ ciclo lectivo</span></div>
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o {formatPrecio(proMensual)} / mes</span>
                 </div>
                 <ul className="feats-list-elite">
-                  <li><Rocket size={18} className="icon-price" /> Hasta 10 Escuelas / Cursos</li>
-                  <li><BarChart3 size={18} className="icon-price" /> Calificaciones e Intensificación</li>
-                  <li><PhoneCall size={18} className="icon-price" /> Libro de Temas y Contactos</li>
-                  <li><MessageCircle size={18} className="icon-price" /> Soporte por WhatsApp</li>
+                  <li><Home size={18} className="icon-price" /> 6 escuelas</li>
+                  <li><Users size={18} className="icon-price" /> 10 cursos</li>
+                  <li><Rocket size={18} className="icon-price" /> OCR en hasta 5 cursos</li>
+                  <li><Cloud size={18} className="icon-price" /> Backups ✅</li>
                 </ul>
                 <Link to="/login" className="btn-card-elite primary">Mejorar a PRO</Link>
               </div>
             </motion.div>
 
-            {/* PLAN PREMIUM - ELITE */}
-            <motion.div 
+            {/* PLAN PREMIUM */}
+            <motion.div
               className="pricing-card-wrapper"
               initial={{ scale: 0.9, opacity: 0.5 }}
               whileInView={{ scale: 1, opacity: 1 }}
@@ -487,14 +521,15 @@ export default function Landing({ session }) {
             >
               <div className="pricing-card-elite premium-elite">
                 <div className="card-header-elite">
-                  <h3>Plan Premium</h3>
-                  <div className="price-tag-elite">$24.000 <span>/ año</span></div><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $5.000 / mes</span>
+                  <h3>Premium</h3>
+                  <div className="price-tag-elite">{formatPrecio(premiumCiclo)} <span>/ ciclo lectivo</span></div>
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o {formatPrecio(premiumMensual)} / mes</span>
                 </div>
                 <ul className="feats-list-elite">
-                  <li><Crown size={18} className="icon-price" /> TODO ILIMITADO - NIVEL ELITE</li>
-                  <li><Infinity size={18} className="icon-price" /> Sin límite de Escuelas o Cursos</li>
-                  <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
-                  <li><ShieldCheck size={18} className="icon-price" /> Soporte Prioritario VIP 24/7</li>
+                  <li><Crown size={18} className="icon-price" /> Todo ilimitado</li>
+                  <li><Infinity size={18} className="icon-price" /> Escuelas y cursos sin límite</li>
+                  <li><Cloud size={18} className="icon-price" /> Backups ✅</li>
+                  <li><ShieldCheck size={18} className="icon-price" /> Soporte prioritario</li>
                 </ul>
                 <Link to="/login" className="btn-card-elite secondary-outline">Ser Premium</Link>
               </div>

@@ -1,0 +1,2002 @@
+From c53e322b816940141c3de02beeb2b1c685216fa3 Mon Sep 17 00:00:00 2001
+From: Devin AI <158243242+devin-ai-integration[bot]@users.noreply.github.com>
+Date: Wed, 11 Nov 2026 15:15:48 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?fix:=20men=C3=BA=20de=20configuraci=C3=B3n?=
+ =?UTF-8?q?=20scrolleable,=20acceso=20a=20planes,=20chip=20de=20plan=20y?=
+ =?UTF-8?q?=20panel=20de=20m=C3=A9tricas=20admin?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Natalia Barzotti <nbarzotti6@gmail.com>
+---
+ src/pages/AdminDashboard.jsx |  86 ++++++++++++++++++++++++++---
+ src/pages/Dashboard.jsx      | 104 ++++++++++++++++++++++++-----------
+ src/services/api.js          |  34 ++++++++++--
+ 3 files changed, 178 insertions(+), 46 deletions(-)
+
+diff --git a/src/pages/AdminDashboard.jsx b/src/pages/AdminDashboard.jsx
+index e7320eb..c578d21 100644
+--- a/src/pages/AdminDashboard.jsx
++++ b/src/pages/AdminDashboard.jsx
+@@ -28,7 +28,10 @@ export default function AdminDashboard({ session }) {
+       const res = await AdminAPI.getMetricas();
+       setData(res);
+     } catch (err) {
+-      setError(err.message || 'Error al cargar métricas de administración');
++      setError({
++        status: err.status,
++        message: err.message || 'Error al cargar métricas de administración',
++      });
+     } finally {
+       setLoading(false);
+     }
+@@ -67,15 +70,38 @@ export default function AdminDashboard({ session }) {
+   }
+ 
+   if (error) {
++    const sinPermiso = error.status === 403;
+     return (
+       <div className="app-container" style={{ textAlign: 'center', paddingTop: '4rem', color: '#fff' }}>
+-        <p style={{ color: '#ef4444' }}>Error: {error}</p>
+-        <button onClick={cargarDatos} className="btn-primary" style={{ marginTop: '1rem' }}>Reintentar</button>
++        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{sinPermiso ? '🔒' : '⚠️'}</div>
++        <p style={{ color: '#ef4444', fontWeight: 700 }}>
++          {sinPermiso ? 'Este panel está solo disponible para la administradora.' : `Error: ${error.message}`}
++        </p>
++        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1rem' }}>
++          {!sinPermiso && (
++            <button onClick={cargarDatos} className="btn-primary">Reintentar</button>
++          )}
++          <Link to="/dashboard" className="btn-secondary" style={{ textDecoration: 'none', padding: '10px 18px', borderRadius: '10px' }}>
++            Volver a mi Agenda
++          </Link>
++        </div>
+       </div>
+     );
+   }
+ 
+   const { resumen, docentes, pagos } = data || {};
++  const docentesPorId = new Map((docentes || []).map(d => [d.id, d]));
++  const formatMonto = (monto, moneda) =>
++    `${moneda && moneda !== 'ARS' ? `${moneda} ` : ''}$${Number(monto || 0).toLocaleString('es-AR')}`;
++
++  const totalDocentes = resumen?.totalDocentes || 0;
++  const distribucion = [
++    { key: 'vip', label: 'Pase VIP', count: resumen?.countVip || 0, color: '#818cf8' },
++    { key: 'pro', label: 'PRO', count: resumen?.countPro || 0, color: '#22c55e' },
++    { key: 'premium', label: 'Premium', count: resumen?.countPremium || 0, color: '#f472b6' },
++    { key: 'free', label: 'Free / Prueba', count: resumen?.countFree || 0, color: '#94a3b8' },
++    { key: 'vencidos', label: 'Vencidos', count: resumen?.countVencidos || 0, color: '#ef4444' },
++  ];
+ 
+   const docentesFiltrados = (docentes || []).filter(d => 
+     d.email?.toLowerCase().includes(busqueda.toLowerCase()) ||
+@@ -171,6 +197,30 @@ export default function AdminDashboard({ session }) {
+ 
+       </div>
+ 
++      {/* ── DISTRIBUCIÓN POR PLAN / ESTADO ── */}
++      <div className="glass-card" style={{ padding: '1.4rem', marginBottom: '2.5rem' }}>
++        <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Distribución por plan / estado</h3>
++        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
++          {distribucion.map(item => {
++            const pct = totalDocentes > 0 ? Math.round((item.count / totalDocentes) * 100) : 0;
++            return (
++              <div key={item.key}>
++                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '4px' }}>
++                  <span style={{ color: item.color, fontWeight: 800 }}>{item.label}</span>
++                  <span style={{ color: 'rgba(255,255,255,0.75)' }}>{item.count} <small>({pct}%)</small></span>
++                </div>
++                <div style={{ height: '8px', borderRadius: '6px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
++                  <div style={{ width: `${pct}%`, height: '100%', background: item.color, borderRadius: '6px' }} />
++                </div>
++              </div>
++            );
++          })}
++        </div>
++        <p style={{ margin: '12px 0 0', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
++          Sobre {totalDocentes} docentes registrados (la cuenta de administradora no suma en ninguna categoría).
++        </p>
++      </div>
++
+       {/* ── SELECTOR DE PESTAÑAS ── */}
+       <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+         <button
+@@ -313,7 +363,7 @@ export default function AdminDashboard({ session }) {
+         <div className="glass-card" style={{ padding: '1.5rem' }}>
+           <h3 style={{ margin: '0 0 1.2rem', fontSize: '1.2rem' }}>Transacciones de Mercado Pago</h3>
+ 
+-          {pagos?.length === 0 ? (
++          {!pagos?.length ? (
+             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
+               <p>Aún no se registraron cobros de Mercado Pago.</p>
+               <p style={{ fontSize: '0.85rem' }}>Apenas un docente pague un plan mensual o anual, aparecerá automáticamente aquí.</p>
+@@ -324,21 +374,35 @@ export default function AdminDashboard({ session }) {
+                 <thead>
+                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
+                     <th style={{ padding: '10px' }}>Fecha</th>
++                    <th style={{ padding: '10px' }}>Docente</th>
+                     <th style={{ padding: '10px' }}>Monto</th>
+                     <th style={{ padding: '10px' }}>Plan</th>
+                     <th style={{ padding: '10px' }}>Medio de Pago</th>
+                     <th style={{ padding: '10px' }}>ID Mercado Pago</th>
++                    <th style={{ padding: '10px' }}>Vence</th>
+                     <th style={{ padding: '10px' }}>Estado</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+-                  {pagos?.map(p => (
++                  {pagos.map(p => {
++                    const docente = docentesPorId.get(p.docente_id);
++                    return (
+                     <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                       <td style={{ padding: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                         {p.fecha_pago ? new Date(p.fecha_pago).toLocaleString('es-AR') : '-'}
+                       </td>
+-                      <td style={{ padding: '10px', fontWeight: 900, color: '#22c55e', fontSize: '1.05rem' }}>
+-                        ${Number(p.monto).toLocaleString('es-AR')}
++                      <td style={{ padding: '10px' }}>
++                        {docente ? (
++                          <>
++                            <div style={{ fontWeight: 700, color: '#fff' }}>{docente.nombre} {docente.apellido}</div>
++                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{docente.email}</div>
++                          </>
++                        ) : (
++                          <span style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace', fontSize: '0.75rem' }}>{p.docente_id || '-'}</span>
++                        )}
++                      </td>
++                      <td style={{ padding: '10px', fontWeight: 900, color: '#22c55e', fontSize: '1.05rem', whiteSpace: 'nowrap' }}>
++                        {formatMonto(p.monto, p.moneda)}
+                       </td>
+                       <td style={{ padding: '10px', fontWeight: 700, color: '#fff' }}>
+                         {p.plan?.toUpperCase()}
+@@ -349,13 +413,17 @@ export default function AdminDashboard({ session }) {
+                       <td style={{ padding: '10px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                         {p.mp_payment_id || '-'}
+                       </td>
++                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
++                        {p.expira_at ? new Date(p.expira_at).toLocaleDateString('es-AR') : '-'}
++                      </td>
+                       <td style={{ padding: '10px' }}>
+                         <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: '1px solid #22c55e' }}>
+                           Aprobado
+                         </span>
+                       </td>
+                     </tr>
+-                  ))}
++                    );
++                  })}
+                 </tbody>
+               </table>
+             </div>
+@@ -365,4 +433,4 @@ export default function AdminDashboard({ session }) {
+ 
+     </div>
+   );
+-}
++}
+diff --git a/src/pages/Dashboard.jsx b/src/pages/Dashboard.jsx
+index 65f7285..806fee1 100644
+--- a/src/pages/Dashboard.jsx
++++ b/src/pages/Dashboard.jsx
+@@ -1,4 +1,4 @@
+-import React, { useState, useEffect, useRef } from 'react';
++import React, { useState, useEffect, useRef, useCallback } from 'react';
+ import { supabase } from '../supabaseClient';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI } from '../services/api';
+@@ -6,9 +6,13 @@ import { getSubscriptionStatus } from '../constants/plans';
+ import '../components/Chips.css';
+ import OnboardingTour from '../components/OnboardingTour';
+ 
++const MENU_WIDTH = 230;
++const MENU_MARGIN = 8;
++const MENU_MIN_HEIGHT = 200;
++const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
++
+ export default function Dashboard({ session }) {
+   const [escuelas, setEscuelas] = useState([]);
+-  const [cursosHoy, setCursosHoy] = useState([]);
+   const docenteId = session?.user?.id;
+   const navigate = useNavigate();
+ 
+@@ -16,10 +20,9 @@ export default function Dashboard({ session }) {
+   const [daysLeft, setDaysLeft] = useState(null);
+   const [forceStartTour, setForceStartTour] = useState(false);
+   const [showConfig, setShowConfig] = useState(false);
+-  const [menuPos, setMenuPos] = useState({ top: 58, left: 0 });
++  const [menuPos, setMenuPos] = useState({ top: 58, left: 8, width: MENU_WIDTH, maxAvailable: 400 });
+   const configBtnRef = useRef(null);
+   const [exporting, setExporting] = useState(false);
+-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+   const [showFeedback, setShowFeedback] = useState(false);
+   const [rating, setRating] = useState(5);
+   const [comment, setComment] = useState('');
+@@ -27,7 +30,6 @@ export default function Dashboard({ session }) {
+   const [sendingFeedback, setSendingFeedback] = useState(false);
+ 
+   useEffect(() => {
+-    window.addEventListener('beforeinstallprompt', (e) => { setDeferredPrompt(e); });
+     if (docenteId) {
+       PerfilAPI.getProfile(docenteId).then(data => {
+         setDocente(data);
+@@ -38,11 +40,32 @@ export default function Dashboard({ session }) {
+         }
+       });
+       EscuelasAPI.getByDocente(docenteId).then(data => setEscuelas(data || []));
+-      CursosAPI.getByDocente(docenteId).then(data => setCursosHoy(data || []));
+       BackupAPI.createSnapshot(docenteId);
+     }
+   }, [docenteId]);
+ 
++  const updateMenuPos = useCallback(() => {
++    if (!configBtnRef.current) return;
++    const rect = configBtnRef.current.getBoundingClientRect();
++    const vw = window.innerWidth;
++    const vh = window.innerHeight;
++    const width = Math.min(MENU_WIDTH, vw - MENU_MARGIN * 2);
++    const left = clamp(rect.right - width, MENU_MARGIN, vw - width - MENU_MARGIN);
++    const top = clamp(rect.bottom + 8, MENU_MARGIN, Math.max(MENU_MARGIN, vh - MENU_MIN_HEIGHT - MENU_MARGIN));
++    setMenuPos({ top, left, width, maxAvailable: Math.max(vh - top - MENU_MARGIN * 2, 120) });
++  }, []);
++
++  useEffect(() => {
++    if (!showConfig) return;
++    updateMenuPos();
++    window.addEventListener('resize', updateMenuPos);
++    window.addEventListener('scroll', updateMenuPos, true);
++    return () => {
++      window.removeEventListener('resize', updateMenuPos);
++      window.removeEventListener('scroll', updateMenuPos, true);
++    };
++  }, [showConfig, updateMenuPos]);
++
+   const handleRestoreAuto = async () => {
+     if (!window.confirm('¿Deseas recuperar la última copia de seguridad automática?')) return;
+     try {
+@@ -73,7 +96,7 @@ export default function Dashboard({ session }) {
+       link.href = url;
+       link.download = `Respaldo_${new Date().toLocaleDateString()}.json`;
+       link.click();
+-    } catch (e) { alert('Error exportando'); } finally { setExporting(false); }
++    } catch { alert('Error exportando'); } finally { setExporting(false); }
+   };
+ 
+   const handleLogout = async () => {
+@@ -96,6 +119,11 @@ export default function Dashboard({ session }) {
+   const firstName = userName.split(' ')[0];
+   const avatarUrl = docente?.foto_perfil || session?.user?.user_metadata?.avatar_url
+     || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=8b5cf6&color=fff`;
++  const planBadgeBg = subStatus.isAdmin ? 'linear-gradient(90deg, #ec4899, #8b5cf6)'
++    : subStatus.isReadOnly ? '#ef4444'
++    : subStatus.isVipBeta ? '#6366f1'
++    : docente?.is_premium ? '#10b981'
++    : '#f59e0b';
+ 
+   return (
+     <div className="app-container animate-fade-in" style={{ paddingBottom: '90px', minHeight: '100vh', color: '#fff', boxSizing: 'border-box' }}>
+@@ -105,19 +133,23 @@ export default function Dashboard({ session }) {
+ 
+         {/* Avatar + saludo */}
+         <div id="tour-profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+-          <div style={{ position: 'relative', flexShrink: 0, width: '36px', height: '36px' }}>
++          <div style={{ flexShrink: 0, width: '36px', height: '36px' }}>
+             <img src={avatarUrl} alt="Perfil"
+               style={{ width: '36px', height: '36px', borderRadius: '9px', border: '1.5px solid rgba(255,255,255,0.15)', objectFit: 'cover', display: 'block' }}
+               onError={e => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=8b5cf6&color=fff`; }}
+             />
+-            <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', background: subStatus.isAdmin ? 'linear-gradient(90deg, #ec4899, #8b5cf6)' : subStatus.isReadOnly ? '#ef4444' : subStatus.isVipBeta ? '#6366f1' : docente?.is_premium ? '#10b981' : '#f59e0b', color: '#fff', fontSize: '0.45rem', padding: '1px 3px', borderRadius: '3px', fontWeight: 900, border: '1px solid #111', whiteSpace: 'nowrap', lineHeight: 1 }}>
+-              {subStatus.label}
+-            </span>
+           </div>
+-          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+-            <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontWeight: 600, lineHeight: 1.2 }}>
+-              {daysLeft !== null && !docente?.is_premium ? `Trial: ${daysLeft} días` : '¡Hola!'}
+-            </p>
++          <div style={{ minWidth: 0, overflow: 'hidden', flex: 1 }}>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
++              <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontWeight: 600, lineHeight: 1.2, whiteSpace: 'nowrap', flexShrink: 0 }}>
++                {daysLeft !== null && !docente?.is_premium ? `Trial: ${daysLeft} días` : '¡Hola!'}
++              </p>
++              {docente && (
++                <span title={subStatus.label} style={{ background: planBadgeBg, color: '#fff', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '6px', fontWeight: 900, lineHeight: 1.2, letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, maxWidth: '140px' }}>
++                  {subStatus.label}
++                </span>
++              )}
++            </div>
+             <h2 style={{ margin: 0, color: '#fff', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+               Bienvenido/a, <span className="text-gradient">{firstName}</span> 🎒
+             </h2>
+@@ -126,15 +158,8 @@ export default function Dashboard({ session }) {
+ 
+         {/* Botón config */}
+         <div style={{ position: 'relative', flexShrink: 0 }}>
+-          <button id="tour-config" ref={configBtnRef} onClick={() => {
+-            if (!showConfig && configBtnRef.current) {
+-              const rect = configBtnRef.current.getBoundingClientRect();
+-              const menuWidth = 210;
+-              setMenuPos({
+-                top: rect.bottom + 8,
+-                left: rect.right - menuWidth
+-              });
+-            }
++          <button id="tour-config" ref={configBtnRef} aria-haspopup="menu" aria-expanded={showConfig} onClick={() => {
++            if (!showConfig) updateMenuPos();
+             setShowConfig(prev => !prev);
+           }}
+             style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.15)', background: showConfig ? '#8b5cf6' : 'rgba(255,255,255,0.05)', padding: 0, transition: 'background 0.2s' }}>
+@@ -148,7 +173,7 @@ export default function Dashboard({ session }) {
+           {showConfig && (
+             <>
+               <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowConfig(false)} />
+-              <div className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: '210px', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
++              <div role="menu" className="animate-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999, width: `${menuPos.width}px`, maxHeight: `min(calc(100vh - ${menuPos.top}px - 16px), ${menuPos.maxAvailable}px)`, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                 <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Opciones</p>
+ 
+                 {subStatus.isAdmin && (
+@@ -159,22 +184,37 @@ export default function Dashboard({ session }) {
+                   </Link>
+                 )}
+ 
++                {!subStatus.isAdmin && (
++                  <Link to="/suscripcion" onClick={() => setShowConfig(false)}
++                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#c4b5fd', borderRadius: '10px', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', marginBottom: '4px', flexShrink: 0 }}>
++                    <span style={{ fontSize: '1.1rem' }}>💳</span>
++                    <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
++                      <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>Planes / Mi suscripción</span>
++                      {docente && (
++                        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
++                          Plan actual: {subStatus.label}
++                        </span>
++                      )}
++                    </span>
++                  </Link>
++                )}
++
+                 <Link to="/inicio" onClick={() => setShowConfig(false)}
+                   style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#fff', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
+                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#38bdf8" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                   <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>Ir al Sitio Web</span>
+                 </Link>
+ 
+-                <button onClick={() => { handleRestoreAuto(); setShowConfig(false); }}
++                <button onClick={() => { handleRestoreAuto(); setShowConfig(false); }} disabled={exporting}
+                   style={{ width: '100%', border: 'none', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', color: '#f97316', cursor: 'pointer', borderRadius: '10px', textAlign: 'left' }}>
+                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                   <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>Restaurar Nube</span>
+                 </button>
+ 
+-                <button onClick={handleExportJSON}
++                <button onClick={handleExportJSON} disabled={exporting}
+                   style={{ width: '100%', border: 'none', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', color: '#a3e635', cursor: 'pointer', borderRadius: '10px', textAlign: 'left' }}>
+                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+-                  <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>Exportar JSON</span>
++                  <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{exporting ? 'Exportando...' : 'Exportar JSON'}</span>
+                 </button>
+ 
+                 <button onClick={() => { setShowFeedback(true); setShowConfig(false); }}
+@@ -189,6 +229,7 @@ export default function Dashboard({ session }) {
+                   <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>Recorrido Guiado 🚀</span>
+                 </button>
+ 
++                <div style={{ position: 'sticky', bottom: '-10px', margin: '0 -10px -10px', padding: '0 10px 10px', background: '#1a1f2e', flexShrink: 0 }}>
+                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+ 
+                 <button onClick={handleLogout}
+@@ -196,6 +237,7 @@ export default function Dashboard({ session }) {
+                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                   <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>Cerrar Sesión</span>
+                 </button>
++                </div>
+               </div>
+             </>
+           )}
+@@ -235,7 +277,7 @@ export default function Dashboard({ session }) {
+             whiteSpace: 'nowrap',
+             boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+           }}>
+-            Activar Plan PRO (.500/mes)
++            Activar Plan PRO ($4.500/mes)
+           </Link>
+         </div>
+       )}
+@@ -337,5 +379,5 @@ export default function Dashboard({ session }) {
+     </div>
+   );
+ }
+-
+-
++
++
+diff --git a/src/services/api.js b/src/services/api.js
+index 6be2e05..dd655d5 100644
+--- a/src/services/api.js
++++ b/src/services/api.js
+@@ -773,8 +773,8 @@ export const PagosAPI = {
+ 
+     return await response.json();
+   }
+-};
+-
++};
++
+ 
+ // 👑 PANEL ADMINISTRATIVO (DUEÑA) 👑
+ export const AdminAPI = {
+@@ -789,11 +789,33 @@ export const AdminAPI = {
+     });
+ 
+     if (!response.ok) {
+-      const err = await response.json();
+-      throw new Error(err.error || 'Error al obtener métricas');
++      const err = await response.json().catch(() => ({}));
++      const fallback = response.status === 403
++        ? 'Acceso denegado: solo disponible para la administradora.'
++        : response.status === 401
++          ? 'Tu sesión expiró. Volvé a iniciar sesión.'
++          : 'Error al obtener métricas';
++      const error = new Error(err.error || fallback);
++      error.status = response.status;
++      throw error;
+     }
+ 
+-    return await response.json();
++    const data = await response.json();
++    const resumen = data?.resumen || {};
++    return {
++      resumen: {
++        totalRecaudado: Number(resumen.totalRecaudado) || 0,
++        totalPagos: Number(resumen.totalPagos) || 0,
++        totalDocentes: Number(resumen.totalDocentes) || 0,
++        countVip: Number(resumen.countVip) || 0,
++        countPro: Number(resumen.countPro) || 0,
++        countPremium: Number(resumen.countPremium) || 0,
++        countFree: Number(resumen.countFree) || 0,
++        countVencidos: Number(resumen.countVencidos) || 0,
++      },
++      docentes: Array.isArray(data?.docentes) ? data.docentes : [],
++      pagos: Array.isArray(data?.pagos) ? data.pagos : [],
++    };
+   },
+ 
+   modificarDocente: async (docenteId, nuevoPlan, diasExtra) => {
+@@ -820,4 +842,4 @@ export const AdminAPI = {
+ 
+     return await response.json();
+   }
+-};
++};
+-- 
+2.56.0
+
+
+From 687b58ef762e65b16c23ce7237296ea7519742e7 Mon Sep 17 00:00:00 2001
+From: Devin AI <158243242+devin-ai-integration[bot]@users.noreply.github.com>
+Date: Wed, 11 Nov 2026 17:21:17 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?feat:=20precios=20din=C3=A1micos,=20ciclo?=
+ =?UTF-8?q?=20lectivo,=20l=C3=ADmites=20por=20plan,=20OCR=20por=20curso,?=
+ =?UTF-8?q?=20precios=20en=20panel=20de=20due=C3=B1a=20y=20notificaciones?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Natalia Barzotti <nbarzotti6@gmail.com>
+---
+ MANUAL_USUARIO.md                   |  26 ++-
+ README.md                           |  41 ++--
+ src/components/NotificationBell.jsx |  92 +++++++++
+ src/components/PlanLimitModal.jsx   |  20 ++
+ src/components/PreciosAdmin.jsx     | 193 +++++++++++++++++++
+ src/constants/plans.js              |  84 ++++++---
+ src/hooks/usePlanes.js              |  24 +++
+ src/pages/AdminDashboard.jsx        |  12 +-
+ src/pages/CursoDashboard.jsx        |  25 ++-
+ src/pages/Dashboard.jsx             |  12 +-
+ src/pages/EscuelaDashboard.jsx      |  12 +-
+ src/pages/Escuelas.jsx              |  12 +-
+ src/pages/Landing.jsx               |  57 ++++--
+ src/pages/Suscripcion.jsx           | 282 +++++++++++-----------------
+ src/services/api.js                 |  96 +++++++++-
+ 15 files changed, 734 insertions(+), 254 deletions(-)
+ create mode 100644 src/components/NotificationBell.jsx
+ create mode 100644 src/components/PlanLimitModal.jsx
+ create mode 100644 src/components/PreciosAdmin.jsx
+ create mode 100644 src/hooks/usePlanes.js
+
+diff --git a/MANUAL_USUARIO.md b/MANUAL_USUARIO.md
+index 9178017..d0ff9ae 100644
+--- a/MANUAL_USUARIO.md
++++ b/MANUAL_USUARIO.md
+@@ -28,7 +28,7 @@ Gestionar a tus estudiantes es simple y potente:
+ 
+ - **Pestaña Nómina:** Es la lista central de tus alumnos.
+ - **Carga Manual:** Usá el botón `+ Agregar Manual` para registrar datos personales (DNI, Legajo, Fecha de Nacimiento) y del tutor (Email/Teléfono).
+-- **📷 Escaneo OCR (Futurista):** Tocá el botón `📷 ESCANEAR PLANILLA`. Podés sacarle una foto a tu planilla de papel y el sistema intentará extraer los nombres y apellidos automáticamente para precargarlos (Próximamente 🚀).
++- **📷 Escaneo OCR con IA:** Tocá el botón `📷 ESCANEAR PLANILLA`. Sacale una foto a tu planilla de papel y el sistema extrae los nombres y apellidos para precargarlos. Disponible en PRO (hasta 5 cursos distintos) y Premium (sin límite); no está incluido en el Plan Gratuito.
+ - **Situación Especial (PPI/CUD):** Si un alumno tiene un proyecto de inclusión, marcá el checkbox. Podrás detallar el tipo de condición y observaciones pedagógicas.
+ 
+ ---
+@@ -58,26 +58,24 @@ Si un alumno deja de asistir, no hace falta borrarlo:
+ ## 💎 6. Planes y Membresías
+ La agenda utiliza un modelo inteligente para asegurar que siempre tengas lo que necesitás según tu volumen de trabajo:
+ 
+-- **Plan Gratuito (Trial Natalia 30-30):** 
+-  - **Días 1-30:** Acceso total a todas las funciones (Asistencia, Notas, Temas, etc.) con capacidad para hasta **5 Escuelas y 5 Cursos**.
+-  - **Día 31+:** El acceso a funciones sigue siendo total, pero el límite de capacidad se ajusta a **2 Escuelas y 2 Cursos**.
+-- **Plan Profesional ($10.000 / año):** 
+-  - Ideal para docentes de un solo cargo o primaria. 
+-  - Capacidad ampliada hasta **10 Escuelas y 10 Cursos**. 
+-  - Todas las funciones habilitadas.
+-- **Plan Premium ($15.000 / año):** 
+-  - El plan defintivo para profesores con máxima carga horaria. 
+-  - **Capacidad ILIMITADA** de Escuelas y Cursos. 
+-  - Backups automáticos y Soporte Prioritario.
++- **Plan Gratuito:** **1 Escuela y 2 Cursos**, sin escaneo OCR. Incluye backups automáticos.
++- **Plan Profesional (PRO):** hasta **6 Escuelas y 10 Cursos**, OCR con IA en hasta **5 cursos distintos** y backups automáticos.
++- **Plan Premium:** Escuelas, Cursos y OCR **sin límite**, backups automáticos y **soporte prioritario**. Las cuentas VIP beta tienen los beneficios de Premium.
++
++**Formas de pago (Mercado Pago):**
++- **Mensual:** cubre 30 días.
++- **Ciclo lectivo (febrero a diciembre):** vence el 31/12. Si pagás entre octubre y diciembre, cubre hasta el 31/12 del año siguiente.
++
++**Precios:** se muestran siempre actualizados en la pantalla **💳 Planes / Mi suscripción** (menú ⚙️). Hasta el 29/04/2027 rige el precio promocional de lanzamiento (PRO $3.500/mes o $15.000 el ciclo lectivo; Premium $5.000/mes o $24.000 el ciclo lectivo). Después: PRO $4.500/mes o $36.000; Premium $5.500/mes o $44.000. Si se ajustan los precios, te llega un aviso en la campanita 🔔.
+ 
+ > [!IMPORTANT]
+-> **Seguridad de Datos:** La Agenda cuenta con "Cerrojos de Seguridad" (Triggers) en la base de datos que impiden la carga de datos por encima del límite del plan contratado tras el período de trial.
++> **Seguridad de Datos:** La Agenda cuenta con "Cerrojos de Seguridad" (Triggers) en la base de datos que impiden la carga de datos por encima del límite del plan contratado. Si llegás al límite, la app te muestra el aviso con un botón para ver los planes.
+ 
+ ---
+ 
+ ### 💡 Tips Pro:
+ - Usá el **Selector de Fecha** en Asistencia para cargar días pasados o corregir errores.
+-- **Modo Anual:** Aprovechá los planes anuales para olvidarte de facturas mensuales durante todo el ciclo lectivo.
++- **Ciclo lectivo:** Pagá una sola vez y olvidate de las cuotas mensuales hasta el 31/12.
+ - Recordá que la Agenda es **Mobile-First**, usala desde el navegador de tu celular para mayor comodidad en el aula.
+ 
+ ---
+diff --git a/README.md b/README.md
+index 210a62f..adfe6b3 100644
+--- a/README.md
++++ b/README.md
+@@ -26,19 +26,38 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
+   - `AdminAPI.getMetricas()` → métricas completas del negocio (solo Natalia).
+   - `AdminAPI.modificarDocente(id, plan, dias)` → super poderes de admin.
+ 
+-#### 💰 Precios de Lanzamiento (vigentes 6 meses desde hoy)
++#### 💰 Precios (editables desde el Panel de Dueña)
+ 
+-| Plan    | Mensual   | Anual      |
+-|---------|-----------|------------|
+-| PRO     | .500    | .000    |
+-| Premium | .000    | .000    |
++Los precios **no están hardcodeados en el frontend**: se leen de `GET /api/pagos/planes`
++(`PlanesAPI.getPlanes()`) y se editan en `/admin` → sección "💰 Precios" (`PUT /api/admin/precios`).
++Valores cargados al lanzar:
+ 
+-> Pasados 6 meses, los precios pasan a: PRO .000/mes – .000/año | Premium .500/mes – .000/año.
++| Plan    | Mensual (promo → normal) | Ciclo lectivo (promo → normal) |
++|---------|--------------------------|--------------------------------|
++| PRO     | $3.500 → $4.500          | $15.000 → $36.000              |
++| Premium | $5.000 → $5.500          | $24.000 → $44.000              |
+ 
+-#### 🔄 Toggle Mensual / Anual en Suscripción
++> La promo de lanzamiento vale hasta el 29/04/2027; después rige el precio normal.
+ 
+-- `src/pages/Suscripcion.jsx`: Se agregó selector de ciclo de facturación (mensual/anual) con el ahorro calculado automáticamente.
+-- `src/pages/Landing.jsx`: Cards de precios actualizadas con precios de lanzamiento reales y badge "Precio de Lanzamiento".
++#### 📅 Ciclos de pago
++
++- **Mensual:** 30 días desde la acreditación.
++- **Ciclo lectivo (feb–dic):** vence el 31/12. Si se paga entre octubre y diciembre, cubre hasta el 31/12 del año siguiente.
++
++#### 📦 Límites por plan
++
++| Plan     | Escuelas | Cursos | OCR con IA            | Backups automáticos | Soporte     |
++|----------|----------|--------|-----------------------|---------------------|-------------|
++| Gratuito | 1        | 2      | No                    | Sí                  | Estándar    |
++| PRO      | 6        | 10     | Hasta 5 cursos        | Sí                  | WhatsApp    |
++| Premium  | Sin límite | Sin límite | Sin límite      | Sí                  | Prioritario |
++
++Las VIP beta (`is_vip_beta`) cuentan como Premium.
++
++#### 🔄 Toggle Mensual / Ciclo lectivo en Suscripción
++
++- `src/pages/Suscripcion.jsx`: selector de ciclo (`mensual` / `ciclo_lectivo`) con precios del backend, precio tachado y "Promo hasta" cuando hay promoción.
++- `src/pages/Landing.jsx`: tarjetas Gratuito / PRO / Premium con precios dinámicos y límites reales.
+ 
+ #### 🔒 Modo Solo Lectura (Soft-Lock)
+ 
+@@ -64,7 +83,7 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
+ 
+ #### 🔁 Git Push — Deploy automático a Vercel
+ 
+-- commit: feat: Panel de Duena AdminDashboard, selector mensual/anual, modo solo lectura y logica VIP
++- commit: feat: Panel de Duena AdminDashboard, selector de ciclo, modo solo lectura y logica VIP
+ - 4 files changed, 429 insertions(+)
+ - create mode 100644 src/pages/AdminDashboard.jsx
+ 
+@@ -83,4 +102,4 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
+ - [ ] Probar pago real con Mercado Pago en producción.
+ - [ ] Configurar avisos automáticos por email/WhatsApp (días 120, 140, 150 del VIP).
+ - [ ] Invitar a los 10 docentes beta pioneros.
+-- [ ] Verificar webhook de MP en Render con URL pública.
++- [ ] Verificar webhook de MP en Render con URL pública.
+diff --git a/src/components/NotificationBell.jsx b/src/components/NotificationBell.jsx
+new file mode 100644
+index 0000000..c638701
+--- /dev/null
++++ b/src/components/NotificationBell.jsx
+@@ -0,0 +1,92 @@
++import React, { useCallback, useEffect, useState } from 'react';
++import { Link } from 'react-router-dom';
++import { NotificacionesAPI } from '../services/api';
++
++const TIPOS = {
++  ajuste_precios: { icon: '💲', color: '#f59e0b', link: '/suscripcion', linkLabel: 'Ver planes y precios' },
++};
++const TIPO_DEFAULT = { icon: '🔔', color: '#a78bfa' };
++
++export default function NotificationBell() {
++  const [open, setOpen] = useState(false);
++  const [items, setItems] = useState([]);
++  const [noLeidas, setNoLeidas] = useState(0);
++  const [loading, setLoading] = useState(false);
++  const [error, setError] = useState(null);
++
++  const cargar = useCallback(async () => {
++    try {
++      setLoading(true);
++      setError(null);
++      const data = await NotificacionesAPI.getAll(20);
++      setItems(data.notificaciones);
++      setNoLeidas(data.noLeidas);
++    } catch (err) {
++      setError(err.message || 'No se pudieron cargar las notificaciones');
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  useEffect(() => { cargar(); }, [cargar]);
++
++  const marcarLeida = async (n) => {
++    if (n.leida_at) return;
++    try {
++      const actualizada = await NotificacionesAPI.marcarLeida(n.id);
++      setItems(prev => prev.map(i => i.id === n.id ? { ...i, leida_at: actualizada?.leida_at || new Date().toISOString() } : i));
++      setNoLeidas(prev => Math.max(prev - 1, 0));
++    } catch (err) {
++      setError(err.message);
++    }
++  };
++
++  return (
++    <>
++      <button aria-label="Notificaciones" onClick={() => { setOpen(o => !o); if (!open) cargar(); }}
++        style={{ position: 'relative', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.15)', background: open ? '#8b5cf6' : 'rgba(255,255,255,0.05)', padding: 0, flexShrink: 0 }}>
++        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke={open ? '#fff' : 'rgba(255,255,255,0.6)'} strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
++        {noLeidas > 0 && (
++          <span style={{ position: 'absolute', top: '-5px', right: '-5px', minWidth: '18px', height: '18px', padding: '0 4px', borderRadius: '9px', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
++            {noLeidas > 9 ? '9+' : noLeidas}
++          </span>
++        )}
++      </button>
++
++      {open && (
++        <>
++          <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setOpen(false)} />
++          <div role="dialog" aria-label="Centro de notificaciones" style={{ position: 'fixed', top: '64px', right: '8px', left: 'auto', zIndex: 9999, width: 'min(340px, calc(100vw - 16px))', maxHeight: 'calc(100vh - 80px)', overflowY: 'auto', boxSizing: 'border-box', padding: '10px', background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', boxShadow: '0 16px 48px rgba(0,0,0,0.7)', color: '#fff' }}>
++            <p style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800, padding: '2px 8px 6px', margin: 0 }}>Notificaciones</p>
++            {loading && !items.length && <p style={{ padding: '8px', margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>Cargando...</p>}
++            {error && <p style={{ padding: '8px', margin: 0, color: '#fca5a5', fontSize: '0.85rem' }}>{error}</p>}
++            {!loading && !error && !items.length && <p style={{ padding: '8px', margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>No tenés notificaciones.</p>}
++            {items.map(n => {
++              const tipo = TIPOS[n.tipo] || TIPO_DEFAULT;
++              return (
++                <div key={n.id} onClick={() => marcarLeida(n)}
++                  style={{ padding: '10px', borderRadius: '10px', marginBottom: '4px', cursor: n.leida_at ? 'default' : 'pointer', background: n.leida_at ? 'rgba(255,255,255,0.02)' : 'rgba(139,92,246,0.1)', borderLeft: `3px solid ${n.leida_at ? 'transparent' : tipo.color}` }}>
++                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
++                    <span>{tipo.icon}</span>
++                    <div style={{ minWidth: 0 }}>
++                      <div style={{ fontWeight: n.leida_at ? 600 : 800, fontSize: '0.85rem' }}>{n.titulo}</div>
++                      {n.mensaje && <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4, marginTop: '2px' }}>{n.mensaje}</div>}
++                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
++                        {new Date(n.programada_para || n.created_at).toLocaleDateString('es-AR')}
++                      </div>
++                      {tipo.link && (
++                        <Link to={tipo.link} onClick={() => setOpen(false)} style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.78rem', fontWeight: 700, color: tipo.color }}>
++                          {tipo.linkLabel} →
++                        </Link>
++                      )}
++                    </div>
++                  </div>
++                </div>
++              );
++            })}
++          </div>
++        </>
++      )}
++    </>
++  );
++}
+diff --git a/src/components/PlanLimitModal.jsx b/src/components/PlanLimitModal.jsx
+new file mode 100644
+index 0000000..c40a5a4
+--- /dev/null
++++ b/src/components/PlanLimitModal.jsx
+@@ -0,0 +1,20 @@
++import React from 'react';
++import { Link } from 'react-router-dom';
++
++export default function PlanLimitModal({ message, onClose }) {
++  if (!message) return null;
++  return (
++    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.8)' }}>
++      <div role="alertdialog" onClick={e => e.stopPropagation()} className="glass-card" style={{ width: '100%', maxWidth: '380px', padding: '24px', borderRadius: '20px', background: '#1a1f2e', border: '1px solid rgba(245,158,11,0.4)', textAlign: 'center', color: '#fff' }}>
++        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔒</div>
++        <p style={{ margin: '0 0 20px', fontSize: '0.95rem', lineHeight: 1.5 }}>{message}</p>
++        <div style={{ display: 'flex', gap: '10px' }}>
++          <button className="btn-secondary" onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: '10px' }}>Cerrar</button>
++          <Link to="/suscripcion" className="btn-primary" style={{ flex: 2, padding: '11px', borderRadius: '10px', textDecoration: 'none', textAlign: 'center' }}>
++            💳 Ver planes
++          </Link>
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/PreciosAdmin.jsx b/src/components/PreciosAdmin.jsx
+new file mode 100644
+index 0000000..e715c62
+--- /dev/null
++++ b/src/components/PreciosAdmin.jsx
+@@ -0,0 +1,193 @@
++import React, { useCallback, useEffect, useState } from 'react';
++import { AdminAPI } from '../services/api';
++import { formatPrecio, formatFecha } from '../constants/plans';
++
++const ORDEN = ['pro_mensual', 'pro_ciclo_lectivo', 'premium_mensual', 'premium_ciclo_lectivo'];
++
++const toInputDate = (iso) => (iso ? new Date(iso).toISOString().slice(0, 10) : '');
++const toForm = (p) => ({
++  id: p.id,
++  titulo: p.titulo || p.id,
++  precio: p.precio ?? '',
++  precio_promocional: p.precio_promocional ?? '',
++  promo_hasta: toInputDate(p.promo_hasta),
++  activo: p.activo !== false,
++  en_promocion: !!p.en_promocion,
++  precio_vigente: p.precio_vigente,
++});
++const mesesDesde = (iso) => {
++  if (!iso) return null;
++  const d = new Date(iso);
++  const now = new Date();
++  return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
++};
++
++const inputStyle = { width: '100%', minWidth: '90px', padding: '6px 8px', fontSize: '0.85rem', boxSizing: 'border-box' };
++
++export default function PreciosAdmin() {
++  const [filas, setFilas] = useState([]);
++  const [recordatorio, setRecordatorio] = useState(null);
++  const [meses, setMeses] = useState('');
++  const [loading, setLoading] = useState(true);
++  const [saving, setSaving] = useState(false);
++  const [error, setError] = useState(null);
++  const [ok, setOk] = useState(null);
++
++  const aplicar = useCallback(({ planes, recordatorio: rec }) => {
++    const ordenados = [...planes].sort((a, b) => ORDEN.indexOf(a.id) - ORDEN.indexOf(b.id));
++    setFilas(ordenados.map(toForm));
++    setRecordatorio(rec);
++    setMeses(rec?.meses_recordatorio ?? '');
++  }, []);
++
++  const cargar = useCallback(async () => {
++    try {
++      setLoading(true);
++      setError(null);
++      aplicar(await AdminAPI.getPrecios());
++    } catch (err) {
++      setError(err.message);
++    } finally {
++      setLoading(false);
++    }
++  }, [aplicar]);
++
++  useEffect(() => { cargar(); }, [cargar]);
++
++  const update = (id, field, value) =>
++    setFilas(prev => prev.map(f => (f.id === id ? { ...f, [field]: value } : f)));
++
++  const guardar = async () => {
++    setError(null);
++    setOk(null);
++    const planes = [];
++    for (const f of filas) {
++      const precio = Number(f.precio);
++      if (f.precio === '' || !Number.isFinite(precio) || precio <= 0) {
++        setError(`${f.titulo}: el precio normal tiene que ser un número mayor a 0.`);
++        return;
++      }
++      const sinPromo = f.precio_promocional === '' || f.precio_promocional === null;
++      const promo = sinPromo ? null : Number(f.precio_promocional);
++      if (!sinPromo && (!Number.isFinite(promo) || promo <= 0)) {
++        setError(`${f.titulo}: el precio promocional tiene que ser un número mayor a 0 o quedar vacío.`);
++        return;
++      }
++      if (!sinPromo && !f.promo_hasta) {
++        setError(`${f.titulo}: indicá hasta cuándo dura la promo.`);
++        return;
++      }
++      planes.push({
++        id: f.id,
++        precio,
++        precio_promocional: promo,
++        promo_hasta: sinPromo || !f.promo_hasta ? null : new Date(`${f.promo_hasta}T23:59:59-03:00`).toISOString(),
++        activo: !!f.activo,
++      });
++    }
++    const payload = { planes };
++    if (meses !== '' && meses !== null) {
++      const m = Number(meses);
++      if (!Number.isInteger(m) || m < 1 || m > 24) {
++        setError('Los meses de recordatorio tienen que ser un entero entre 1 y 24.');
++        return;
++      }
++      payload.meses_recordatorio = m;
++    }
++    try {
++      setSaving(true);
++      aplicar(await AdminAPI.updatePrecios(payload));
++      setOk('¡Precios guardados!');
++    } catch (err) {
++      setError(err.message);
++    } finally {
++      setSaving(false);
++    }
++  };
++
++  const mesesPasados = mesesDesde(recordatorio?.ultimo_ajuste_at);
++
++  return (
++    <div className="glass-card" style={{ padding: '1.4rem', marginBottom: '2.5rem' }}>
++      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '1rem' }}>
++        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>💰 Precios</h3>
++        <button onClick={cargar} disabled={loading || saving} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '4px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
++          🔄 Recargar
++        </button>
++      </div>
++
++      {recordatorio?.ajuste_pendiente && (
++        <div role="alert" style={{ padding: '0.9rem 1rem', borderRadius: '12px', marginBottom: '1rem', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #f59e0b', color: '#fcd34d' }}>
++          <strong>⚠️ {mesesPasados !== null ? `Pasaron ${mesesPasados} ${mesesPasados === 1 ? 'mes' : 'meses'} desde el último ajuste.` : 'Hay un ajuste de precios pendiente.'}</strong>
++          <div style={{ fontSize: '0.82rem', marginTop: '4px', color: 'rgba(255,255,255,0.8)' }}>
++            Último ajuste: {formatFecha(recordatorio.ultimo_ajuste_at) || 'sin registro'} · Próximo ajuste: {formatFecha(recordatorio.proximo_ajuste_at) || '—'}
++          </div>
++        </div>
++      )}
++      {recordatorio && !recordatorio.ajuste_pendiente && (
++        <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', margin: '0 0 1rem' }}>
++          Último ajuste: {formatFecha(recordatorio.ultimo_ajuste_at) || 'sin registro'} · Próximo ajuste: {formatFecha(recordatorio.proximo_ajuste_at) || '—'}
++        </p>
++      )}
++
++      {loading ? (
++        <p style={{ color: 'var(--text-secondary)' }}>Cargando precios...</p>
++      ) : (
++        <>
++          <div style={{ overflowX: 'auto' }}>
++            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
++              <thead>
++                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
++                  <th style={{ padding: '8px' }}>Plan</th>
++                  <th style={{ padding: '8px' }}>Precio normal</th>
++                  <th style={{ padding: '8px' }}>Precio promo</th>
++                  <th style={{ padding: '8px' }}>Fin de promo</th>
++                  <th style={{ padding: '8px' }}>Activo</th>
++                  <th style={{ padding: '8px' }}>Vigente hoy</th>
++                </tr>
++              </thead>
++              <tbody>
++                {filas.map(f => (
++                  <tr key={f.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
++                    <td style={{ padding: '8px', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>{f.titulo}</td>
++                    <td style={{ padding: '8px' }}>
++                      <input type="number" min="1" step="100" className="input-field" style={inputStyle} value={f.precio} onChange={e => update(f.id, 'precio', e.target.value)} />
++                    </td>
++                    <td style={{ padding: '8px' }}>
++                      <input type="number" min="1" step="100" placeholder="Sin promo" className="input-field" style={inputStyle} value={f.precio_promocional} onChange={e => update(f.id, 'precio_promocional', e.target.value)} />
++                    </td>
++                    <td style={{ padding: '8px' }}>
++                      <input type="date" className="input-field" style={inputStyle} value={f.promo_hasta} onChange={e => update(f.id, 'promo_hasta', e.target.value)} />
++                    </td>
++                    <td style={{ padding: '8px', textAlign: 'center' }}>
++                      <input type="checkbox" checked={f.activo} onChange={e => update(f.id, 'activo', e.target.checked)} />
++                    </td>
++                    <td style={{ padding: '8px', whiteSpace: 'nowrap', color: f.en_promocion ? '#22c55e' : '#fff', fontWeight: 700 }}>
++                      {formatPrecio(f.precio_vigente)}{f.en_promocion ? ' (promo)' : ''}
++                    </td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </div>
++
++          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginTop: '1rem' }}>
++            <label style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)' }}>
++              Recordarme ajustar precios cada (meses, 1–24)
++              <input type="number" min="1" max="24" className="input-field" style={{ ...inputStyle, maxWidth: '100px', display: 'block', marginTop: '4px' }} value={meses} onChange={e => setMeses(e.target.value)} />
++            </label>
++            <button className="btn-primary" onClick={guardar} disabled={saving || !filas.length} style={{ padding: '10px 22px', borderRadius: '10px' }}>
++              {saving ? 'Guardando...' : '💾 Guardar precios'}
++            </button>
++          </div>
++          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', margin: '8px 0 0' }}>
++            Dejá el precio promo vacío para quitar la promoción.
++          </p>
++        </>
++      )}
++
++      {error && <p role="alert" style={{ color: '#fca5a5', fontSize: '0.85rem', margin: '10px 0 0' }}>{error}</p>}
++      {ok && <p style={{ color: '#22c55e', fontSize: '0.85rem', margin: '10px 0 0' }}>{ok}</p>}
++    </div>
++  );
++}
+diff --git a/src/constants/plans.js b/src/constants/plans.js
+index 6d4d007..e9dd5a8 100644
+--- a/src/constants/plans.js
++++ b/src/constants/plans.js
+@@ -1,43 +1,65 @@
++// Precios: NUNCA acá. Vienen del backend (GET /pagos/planes) y se editan desde /admin.
+ export const SUBSCRIPTION_PLANS = {
+   free: {
+     name: 'Plan Gratuito',
+     max_escuelas: 1,
+     max_cursos: 2,
++    max_cursos_ocr: 0,
+     features: [
+-      '🚀 Prueba completa de la app',
+-      '🏫 Hasta 1 Escuela y 2 Cursos',
+-      '👥 Carga de Alumnos y Asistencia',
+-      '📊 Calificaciones básicas'
++      '🏫 1 Escuela y 2 Cursos',
++      '👥 Alumnos, Asistencia y Calificaciones',
++      '☁️ Backups automáticos en la nube',
++      '🚫 Sin escaneo OCR'
+     ]
+   },
+   pro: {
+     name: 'Plan Profesional',
+-    max_escuelas: 10,
++    max_escuelas: 6,
+     max_cursos: 10,
++    max_cursos_ocr: 5,
+     features: [
+       '⭐ EL MÁS ELEGIDO POR DOCENTES',
+-      '🏫 Hasta 10 Escuelas / Cursos', 
+-      '📊 Calificaciones e Intensificación', 
++      '🏫 Hasta 6 Escuelas y 10 Cursos',
++      '📸 OCR con IA en hasta 5 cursos',
++      '📊 Calificaciones e Intensificación',
+       '📖 Libro de Temas y Contactos',
+-      '📄 Planillas Oficiales en PDF'
++      '📄 Planillas Oficiales en PDF',
++      '☁️ Backups automáticos en la nube'
+     ]
+   },
+   premium: {
+     name: 'Plan Premium',
+-    max_escuelas: 100,
+-    max_cursos: 100,
++    max_escuelas: null,
++    max_cursos: null,
++    max_cursos_ocr: null,
+     features: [
+-      '💎 TODO ILIMITADO - NIVEL ELITE', 
+-      '🏫 Sin límite de Escuelas o Cursos', 
+-      '📸 Digitalización OCR con IA',
+-      '☁️ Backups automáticos en la nube', 
+-      '🛡️ Soporte Prioritario VIP 24/7'
++      '💎 TODO ILIMITADO - NIVEL ELITE',
++      '🏫 Escuelas y Cursos sin límite',
++      '📸 OCR con IA sin límite de cursos',
++      '☁️ Backups automáticos en la nube',
++      '🛡️ Soporte prioritario'
+     ]
+   }
+ };
+ 
+ SUBSCRIPTION_PLANS.expert = SUBSCRIPTION_PLANS.premium;
+ 
++export const CICLOS = {
++  mensual: { label: 'Mensual', sufijo: '/ mes' },
++  ciclo_lectivo: { label: 'Ciclo lectivo', sufijo: '/ ciclo lectivo' }
++};
++
++export const getPlanPrecio = (planes, plan, ciclo) =>
++  (planes || []).find(p => p.id === `${plan}_${ciclo}` || (p.plan === plan && p.ciclo === ciclo)) || null;
++
++export const formatPrecio = (monto) =>
++  monto === null || monto === undefined || monto === '' || Number.isNaN(Number(monto))
++    ? '—'
++    : `$${Number(monto).toLocaleString('es-AR')}`;
++
++export const formatFecha = (iso) =>
++  iso ? new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
++
+ export const ADMIN_EMAILS = [
+   'nbarzotti6@gmail.com',
+   'natalia@agendadocente.com',
+@@ -122,6 +144,20 @@ export const getSubscriptionStatus = (docente) => {
+   };
+ };
+ 
++/**
++ * Plan efectivo para límites. Se decide por plan / subscription_plan
++ * (el backend pone is_premium=true también en PRO). VIP beta cuenta como Premium.
++ */
++export const getPlanKey = (docente) => {
++  if (!docente) return 'free';
++  if (isUserAdmin(docente.email) || docente.is_vip_beta) return 'premium';
++  if (getSubscriptionStatus(docente).isVipBeta) return 'premium';
++  const plan = String(docente.plan || docente.subscription_plan || '').toLowerCase();
++  if (plan === 'premium' || plan === 'expert') return 'premium';
++  if (plan === 'pro') return 'pro';
++  return 'free';
++};
++
+ /**
+  * Controla si el docente puede seguir creando escuelas o cursos
+  */
+@@ -132,7 +168,6 @@ export const checkPlanLimit = (docente, currentCount, type = 'cursos') => {
+ 
+   const status = getSubscriptionStatus(docente);
+ 
+-  // Si el período expiró, entra en Modo Solo Lectura
+   if (status.isReadOnly) {
+     return {
+       limited: true,
+@@ -141,21 +176,18 @@ export const checkPlanLimit = (docente, currentCount, type = 'cursos') => {
+     };
+   }
+ 
+-  // Si tiene Pase VIP o es Premium activo, no tiene límites
+-  if (status.isVipBeta || docente?.is_premium === true) {
+-    return { limited: false };
+-  }
+-
+-  const planKey = docente?.subscription_plan || 'free';
+-  const plan = SUBSCRIPTION_PLANS[planKey] || SUBSCRIPTION_PLANS.free;
++  const plan = SUBSCRIPTION_PLANS[getPlanKey(docente)];
+   const limit = type === 'escuelas' ? plan.max_escuelas : plan.max_cursos;
+ 
+-  if (currentCount >= limit) {
++  if (limit !== null && currentCount >= limit) {
+     return {
+       limited: true,
+-      message: `Has alcanzado el límite de ${limit} ${type} en tu ${plan.name}. ¡Pasate a PRO para continuar creciendo!`
++      message: `El ${plan.name} permite hasta ${limit} ${limit === 1 ? type.replace(/s$/, '') : type}. Mejorá tu plan para seguir creciendo.`
+     };
+   }
+ 
+   return { limited: false };
+-};
++};
++
++/** Error de Supabase por límite de plan (trigger con code 42501). */
++export const isPlanLimitError = (error) => error?.code === '42501';
+diff --git a/src/hooks/usePlanes.js b/src/hooks/usePlanes.js
+new file mode 100644
+index 0000000..793c609
+--- /dev/null
++++ b/src/hooks/usePlanes.js
+@@ -0,0 +1,24 @@
++import { useEffect, useState, useCallback } from 'react';
++import { PlanesAPI } from '../services/api';
++
++export default function usePlanes() {
++  const [planes, setPlanes] = useState([]);
++  const [loading, setLoading] = useState(true);
++  const [error, setError] = useState(null);
++
++  const cargar = useCallback(async () => {
++    try {
++      setLoading(true);
++      setError(null);
++      setPlanes(await PlanesAPI.getPlanes());
++    } catch (err) {
++      setError(err.message || 'No se pudieron cargar los precios');
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  useEffect(() => { cargar(); }, [cargar]);
++
++  return { planes, loading, error, recargar: cargar };
++}
+diff --git a/src/pages/AdminDashboard.jsx b/src/pages/AdminDashboard.jsx
+index c578d21..7a25148 100644
+--- a/src/pages/AdminDashboard.jsx
++++ b/src/pages/AdminDashboard.jsx
+@@ -1,7 +1,8 @@
+ import React, { useState, useEffect } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { AdminAPI } from '../services/api';
+-import { isUserAdmin } from '../constants/plans';
++import { isUserAdmin, formatPrecio, formatFecha } from '../constants/plans';
++import PreciosAdmin from '../components/PreciosAdmin';
+ 
+ export default function AdminDashboard({ session }) {
+   const navigate = useNavigate();
+@@ -92,7 +93,7 @@ export default function AdminDashboard({ session }) {
+   const { resumen, docentes, pagos } = data || {};
+   const docentesPorId = new Map((docentes || []).map(d => [d.id, d]));
+   const formatMonto = (monto, moneda) =>
+-    `${moneda && moneda !== 'ARS' ? `${moneda} ` : ''}$${Number(monto || 0).toLocaleString('es-AR')}`;
++    `${moneda && moneda !== 'ARS' ? `${moneda} ` : ''}${formatPrecio(monto || 0)}`;
+ 
+   const totalDocentes = resumen?.totalDocentes || 0;
+   const distribucion = [
+@@ -197,6 +198,9 @@ export default function AdminDashboard({ session }) {
+ 
+       </div>
+ 
++      {/* ── PRECIOS EDITABLES ── */}
++      <PreciosAdmin />
++
+       {/* ── DISTRIBUCIÓN POR PLAN / ESTADO ── */}
+       <div className="glass-card" style={{ padding: '1.4rem', marginBottom: '2.5rem' }}>
+         <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Distribución por plan / estado</h3>
+@@ -366,7 +370,7 @@ export default function AdminDashboard({ session }) {
+           {!pagos?.length ? (
+             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
+               <p>Aún no se registraron cobros de Mercado Pago.</p>
+-              <p style={{ fontSize: '0.85rem' }}>Apenas un docente pague un plan mensual o anual, aparecerá automáticamente aquí.</p>
++              <p style={{ fontSize: '0.85rem' }}>Apenas un docente pague un plan mensual o de ciclo lectivo, aparecerá automáticamente aquí.</p>
+             </div>
+           ) : (
+             <div style={{ overflowX: 'auto' }}>
+@@ -414,7 +418,7 @@ export default function AdminDashboard({ session }) {
+                         {p.mp_payment_id || '-'}
+                       </td>
+                       <td style={{ padding: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
+-                        {p.expira_at ? new Date(p.expira_at).toLocaleDateString('es-AR') : '-'}
++                        {p.expira_at ? formatFecha(p.expira_at) : '-'}
+                       </td>
+                       <td style={{ padding: '10px' }}>
+                         <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: '1px solid #22c55e' }}>
+diff --git a/src/pages/CursoDashboard.jsx b/src/pages/CursoDashboard.jsx
+index f1a94d0..74b7951 100644
+--- a/src/pages/CursoDashboard.jsx
++++ b/src/pages/CursoDashboard.jsx
+@@ -17,6 +17,8 @@ function useIsMobile() {
+   return isMobile;
+ }
+ 
++const OCR_UPGRADE_CODES = ['OCR_PLAN_REQUIRED', 'OCR_CURSOS_LIMIT'];
++
+ export default function CursoDashboard({ session }) {
+   const isMobile = useIsMobile();
+   const { id } = useParams();
+@@ -132,6 +134,7 @@ export default function CursoDashboard({ session }) {
+   const [showOCRModal, setShowOCRModal] = useState(false);
+   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+   const [ocrResults, setOcrResults] = useState([]); // Alumnos detectados temporalmente
++  const [ocrError, setOcrError] = useState(null); // { message, upgrade }
+   const fileInputRef = useRef(null);
+   const [editingAlumno, setEditingAlumno] = useState(null); 
+   const [editingCondicionId, setEditingCondicionId] = useState(null); // ID de la condición si existe
+@@ -175,10 +178,11 @@ export default function CursoDashboard({ session }) {
+     if (!file) return;
+     setIsProcessingOCR(true);
+     setOcrResults([]);
++    setOcrError(null);
+     
+     try {
+       // LLAMADA AL BACKEND PROFESIONAL (GOOGLE VISION)
+-      const { alumnos } = await OCRAPI.processImage(file);
++      const { alumnos } = await OCRAPI.processImage(file, id);
+       
+       // Mapeamos los resultados para que el usuario los confirme
+       const mappedResults = alumnos.map((al, index) => ({
+@@ -190,9 +194,13 @@ export default function CursoDashboard({ session }) {
+       setOcrResults(mappedResults);
+     } catch (error) {
+       console.error("Error OCR Profesional:", error);
+-      alert("Error al procesar la imagen con la IA del servidor. Asegurate de tener configurada la API de Google.");
++      setOcrError({
++        message: error.message || 'Error al procesar la imagen. Intentá de nuevo.',
++        upgrade: OCR_UPGRADE_CODES.includes(error.code),
++      });
+     } finally {
+       setIsProcessingOCR(false);
++      if (fileInputRef.current) fileInputRef.current.value = '';
+     }
+   };
+ 
+@@ -796,7 +804,7 @@ export default function CursoDashboard({ session }) {
+         <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem' }}>
+           {/* BOTÓN OCR ESCANEAR */}
+           <button 
+-            onClick={() => setShowOCRModal(true)}
++            onClick={() => { setOcrError(null); setShowOCRModal(true); }}
+             style={{ 
+               width: '100%', padding: '1rem', borderRadius: '16px', background: 'rgba(16, 185, 129, 0.1)', 
+               border: '1.5px dashed var(--success)', color: 'var(--success)',
+@@ -2485,6 +2493,17 @@ export default function CursoDashboard({ session }) {
+                  </div>
+                )}
+                
++               {ocrError && (
++                 <div role="alert" style={{ marginTop: '1rem', padding: '0.9rem 1rem', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#fca5a5', fontSize: '0.85rem', textAlign: 'left' }}>
++                   <p style={{ margin: 0, lineHeight: 1.4 }}>{ocrError.message}</p>
++                   {ocrError.upgrade && (
++                     <Link to="/suscripcion" className="btn-primary" style={{ display: 'inline-block', marginTop: '0.7rem', padding: '8px 14px', borderRadius: '10px', textDecoration: 'none', fontSize: '0.85rem' }}>
++                       💳 Ver planes
++                     </Link>
++                   )}
++                 </div>
++               )}
++
+                {!ocrResults.length && (
+                  <div style={{ marginTop: '1.5rem', textAlign: 'left', background: 'rgba(79, 70, 229, 0.05)', padding: '1rem', borderRadius: '15px', border: '1px solid rgba(79, 70, 229, 0.2)' }}>
+                     <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '0.4rem' }}>💡 Tip para profes:</p>
+diff --git a/src/pages/Dashboard.jsx b/src/pages/Dashboard.jsx
+index 806fee1..b2f6378 100644
+--- a/src/pages/Dashboard.jsx
++++ b/src/pages/Dashboard.jsx
+@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
+ import { supabase } from '../supabaseClient';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { EscuelasAPI, PerfilAPI, CursosAPI, BackupAPI, FeedbackAPI } from '../services/api';
+-import { getSubscriptionStatus } from '../constants/plans';
++import { getSubscriptionStatus, getPlanPrecio, formatPrecio } from '../constants/plans';
++import usePlanes from '../hooks/usePlanes';
++import NotificationBell from '../components/NotificationBell';
+ import '../components/Chips.css';
+ import OnboardingTour from '../components/OnboardingTour';
+ 
+@@ -27,6 +29,8 @@ export default function Dashboard({ session }) {
+   const [rating, setRating] = useState(5);
+   const [comment, setComment] = useState('');
+   const subStatus = getSubscriptionStatus(docente);
++  const { planes } = usePlanes();
++  const proMensual = getPlanPrecio(planes, 'pro', 'mensual');
+   const [sendingFeedback, setSendingFeedback] = useState(false);
+ 
+   useEffect(() => {
+@@ -156,6 +160,9 @@ export default function Dashboard({ session }) {
+           </div>
+         </div>
+ 
++        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: '8px' }}>
++          <NotificationBell />
++
+         {/* Botón config */}
+         <div style={{ position: 'relative', flexShrink: 0 }}>
+           <button id="tour-config" ref={configBtnRef} aria-haspopup="menu" aria-expanded={showConfig} onClick={() => {
+@@ -242,6 +249,7 @@ export default function Dashboard({ session }) {
+             </>
+           )}
+         </div>
++        </div>
+       </header>
+ 
+       {/* ── BANNER MODO SOLO LECTURA (Prueba vencida) ── */}
+@@ -277,7 +285,7 @@ export default function Dashboard({ session }) {
+             whiteSpace: 'nowrap',
+             boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+           }}>
+-            Activar Plan PRO ($4.500/mes)
++            {proMensual ? `Activar Plan PRO (${formatPrecio(proMensual.precio_vigente)}/mes)` : 'Activar Plan PRO'}
+           </Link>
+         </div>
+       )}
+diff --git a/src/pages/EscuelaDashboard.jsx b/src/pages/EscuelaDashboard.jsx
+index a2091dd..b35a321 100644
+--- a/src/pages/EscuelaDashboard.jsx
++++ b/src/pages/EscuelaDashboard.jsx
+@@ -1,6 +1,7 @@
+ import React, { useState, useEffect } from 'react';
+ import { EscuelasAPI, CursosAPI, PerfilAPI } from '../services/api';
+-import { checkPlanLimit } from '../constants/plans';
++import { checkPlanLimit, isPlanLimitError } from '../constants/plans';
++import PlanLimitModal from '../components/PlanLimitModal';
+ import { useParams, Link } from 'react-router-dom';
+ import '../components/Modal.css';
+ import OnboardingTour from '../components/OnboardingTour';
+@@ -21,6 +22,7 @@ export default function EscuelaDashboard({ session }) {
+   const [docente, setDocente] = useState(null);
+   const [loading, setLoading] = useState(true);
+   const [showCursoModal, setShowCursoModal] = useState(false);
++  const [planLimitMsg, setPlanLimitMsg] = useState(null);
+   const [forceStartTour, setForceStartTour] = useState(false);
+   const docenteId = session?.user?.id;
+ 
+@@ -83,7 +85,7 @@ export default function EscuelaDashboard({ session }) {
+     if (editingId) return;
+     const check = checkPlanLimit(docente, totalCursosCount, 'cursos');
+     if (check.limited) {
+-      alert(check.message);
++      setPlanLimitMsg(check.message);
+       return;
+     }
+     setShowCursoModal(true);
+@@ -147,6 +149,11 @@ export default function EscuelaDashboard({ session }) {
+       setHorarios([]);
+     } catch (error) {
+       console.error('Error:', error);
++      if (isPlanLimitError(error)) {
++        setShowCursoModal(false);
++        setPlanLimitMsg(error.message);
++        return;
++      }
+       alert('Error al procesar el curso o cargo');
+     }
+   };
+@@ -370,6 +377,7 @@ export default function EscuelaDashboard({ session }) {
+           </div>
+         </div>
+       )}
++      <PlanLimitModal message={planLimitMsg} onClose={() => setPlanLimitMsg(null)} />
+       <OnboardingTour
+         steps={escuelaDashTourSteps}
+         storageKey="tour_escueladash_completed"
+diff --git a/src/pages/Escuelas.jsx b/src/pages/Escuelas.jsx
+index 2910035..c6807fa 100644
+--- a/src/pages/Escuelas.jsx
++++ b/src/pages/Escuelas.jsx
+@@ -1,6 +1,7 @@
+ import React, { useState, useEffect } from 'react';
+ import { EscuelasAPI, PerfilAPI } from '../services/api';
+-import { checkPlanLimit } from '../constants/plans';
++import { checkPlanLimit, isPlanLimitError } from '../constants/plans';
++import PlanLimitModal from '../components/PlanLimitModal';
+ import { Link } from 'react-router-dom';
+ import '../components/Modal.css';
+ import OnboardingTour from '../components/OnboardingTour';
+@@ -10,6 +11,7 @@ export default function Escuelas({ session }) {
+   const [docente, setDocente] = useState(null);
+   const [loading, setLoading] = useState(true);
+   const [showModal, setShowModal] = useState(false);
++  const [planLimitMsg, setPlanLimitMsg] = useState(null);
+   const [forceStartTour, setForceStartTour] = useState(false);
+   const docenteId = session.user.id;
+ 
+@@ -65,7 +67,7 @@ export default function Escuelas({ session }) {
+     if (editingId) return; // Si estamos editando, pasamos
+     const check = checkPlanLimit(docente, escuelas.length, 'escuelas');
+     if (check.limited) {
+-      alert(check.message);
++      setPlanLimitMsg(check.message);
+       return;
+     }
+     setShowModal(true);
+@@ -93,6 +95,11 @@ export default function Escuelas({ session }) {
+       setFormData({ nombre: '', numero: '', nivel: 'primaria', direccion: '' });
+     } catch (error) {
+       console.error('Error al crear escuela:', error);
++      if (isPlanLimitError(error)) {
++        setShowModal(false);
++        setPlanLimitMsg(error.message);
++        return;
++      }
+       alert('Hubo un error al guardar. Verifica la consola.');
+     }
+   };
+@@ -225,6 +232,7 @@ export default function Escuelas({ session }) {
+           </div>
+         </div>
+       )}
++      <PlanLimitModal message={planLimitMsg} onClose={() => setPlanLimitMsg(null)} />
+       <OnboardingTour
+         steps={escuelasTourSteps}
+         storageKey="tour_escuelas_completed"
+diff --git a/src/pages/Landing.jsx b/src/pages/Landing.jsx
+index 104717e..eb66e07 100644
+--- a/src/pages/Landing.jsx
++++ b/src/pages/Landing.jsx
+@@ -19,12 +19,40 @@ import {
+   PhoneCall,
+   MessageCircle,
+   Crown,
+-  Infinity,
++  Infinity as InfinityIcon,
+   Cloud,
+   ShieldCheck,
+   Star
+ } from 'lucide-react';
+ import FeatureSection from '../components/FeatureSection';
++import usePlanes from '../hooks/usePlanes';
++import { getPlanPrecio, formatPrecio, formatFecha } from '../constants/plans';
++
++const PrecioLanding = ({ planes, loading, plan }) => {
++  const ciclo = getPlanPrecio(planes, plan, 'ciclo_lectivo');
++  const mensual = getPlanPrecio(planes, plan, 'mensual');
++  if (loading) return <div className="price-tag-elite"><span>Cargando precios...</span></div>;
++  if (!ciclo && !mensual) return <div className="price-tag-elite"><span>Consultá precios</span></div>;
++  const principal = ciclo || mensual;
++  const promo = [ciclo, mensual].find(p => p?.en_promocion && p?.promo_hasta);
++  return (
++    <>
++      {principal.en_promocion && (
++        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatPrecio(principal.precio)}</span>
++      )}
++      <div className="price-tag-elite">{formatPrecio(principal.precio_vigente)} <span>/ {ciclo ? 'ciclo lectivo' : 'mes'}</span></div>
++      {ciclo && mensual && (
++        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
++          o {formatPrecio(mensual.precio_vigente)} / mes
++          {mensual.en_promocion && <> (antes <s>{formatPrecio(mensual.precio)}</s>)</>}
++        </span>
++      )}
++      {promo && (
++        <span style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 700 }}>Promo hasta {formatFecha(promo.promo_hasta)}</span>
++      )}
++    </>
++  );
++};
+ 
+ const FaqItem = ({ q, a }) => {
+   const [isOpen, setIsOpen] = useState(false);
+@@ -44,6 +72,7 @@ const FaqItem = ({ q, a }) => {
+ };
+ 
+ export default function Landing({ session }) {
++  const { planes, loading: loadingPlanes } = usePlanes();
+   const [displayedTitle, setDisplayedTitle] = useState("");
+   const [isFinished, setIsFinished] = useState(false);
+   const fullTitle = "Crea tu Agenda Docente Digital en simples pasos.";
+@@ -88,7 +117,7 @@ export default function Landing({ session }) {
+     },
+     {
+       q: "¿Cómo es el período de prueba que ofrecen (Estrategia 30-30)?",
+-      a: "Ofrecemos 30 días de REGALO con ACCESO TOTAL. Podés gestionar hasta 5 escuelas y 5 cursos con todas las funciones Pro habilitadas por un ciclo lectivo inicial. Al finalizar los 30 días, podés decidir tu plan o mantenerte en el gratuito."
++      a: "El Plan Gratuito es para siempre: 1 escuela y 2 cursos, con backups automáticos. Cuando necesites más, pasás a PRO (6 escuelas, 10 cursos y OCR con IA en hasta 5 cursos) o a Premium (todo sin límite), pagando mensual o por ciclo lectivo."
+     },
+     {
+       q: "¿Realmente funciona el dictado por voz para pasar lista?",
+@@ -438,16 +467,16 @@ export default function Landing({ session }) {
+               transition={{ duration: 0.5 }}
+             >
+               <div className="pricing-card-elite free-led">
+-                <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> REGALO: 30 DÍAS FULL</span>
++                <span className="offer-badge-led"><Gift size={14} style={{ marginRight: '5px' }} /> GRATIS PARA SIEMPRE</span>
+                 <div className="card-header-elite">
+                   <h3>Plan Gratuito</h3>
+                   <div className="price-tag-elite">$0 <span>/ siempre</span></div>
+                 </div>
+                 <ul className="feats-list-elite">
+-                  <li><Zap size={18} className="icon-price" /> Todas las funciones DESBLOQUEADAS</li>
+-                  <li><Gift size={18} className="icon-price" /> 5 Escuelas/Cursos (30 días de REGALO)</li>
+-                  <li><Home size={18} className="icon-price" /> Luego máximo de 2 Escuelas</li>
+-                  <li><TrendingUp size={18} className="icon-price" /> Seguimiento Pedagógico Completo</li>
++                  <li><Home size={18} className="icon-price" /> 1 Escuela y 2 Cursos</li>
++                  <li><TrendingUp size={18} className="icon-price" /> Asistencia, Calificaciones y Seguimiento</li>
++                  <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
++                  <li><Zap size={18} className="icon-price" /> Sin escaneo OCR</li>
+                 </ul>
+                 <Link to="/login" className="btn-card-elite secondary">Probar ahora gratis</Link>
+               </div>
+@@ -465,12 +494,14 @@ export default function Landing({ session }) {
+                 <span className="featured-badge-elite"><Star size={14} style={{ marginRight: '5px' }} /> EL MÁS ELEGIDO</span>
+                 <div className="card-header-elite">
+                   <h3>Plan Profesional</h3>
+-                  <div className="price-tag-elite">$24.000 <span>/ año</span></div><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $5.000 / mes</span><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $3.500 / mes</span>
++                  <PrecioLanding planes={planes} loading={loadingPlanes} plan="pro" />
+                 </div>
+                 <ul className="feats-list-elite">
+-                  <li><Rocket size={18} className="icon-price" /> Hasta 10 Escuelas / Cursos</li>
++                  <li><Rocket size={18} className="icon-price" /> Hasta 6 Escuelas y 10 Cursos</li>
++                  <li><FileText size={18} className="icon-price" /> OCR con IA en hasta 5 cursos</li>
+                   <li><BarChart3 size={18} className="icon-price" /> Calificaciones e Intensificación</li>
+                   <li><PhoneCall size={18} className="icon-price" /> Libro de Temas y Contactos</li>
++                  <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
+                   <li><MessageCircle size={18} className="icon-price" /> Soporte por WhatsApp</li>
+                 </ul>
+                 <Link to="/login" className="btn-card-elite primary">Mejorar a PRO</Link>
+@@ -488,13 +519,13 @@ export default function Landing({ session }) {
+               <div className="pricing-card-elite premium-elite">
+                 <div className="card-header-elite">
+                   <h3>Plan Premium</h3>
+-                  <div className="price-tag-elite">$24.000 <span>/ año</span></div><span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>o $5.000 / mes</span>
++                  <PrecioLanding planes={planes} loading={loadingPlanes} plan="premium" />
+                 </div>
+                 <ul className="feats-list-elite">
+                   <li><Crown size={18} className="icon-price" /> TODO ILIMITADO - NIVEL ELITE</li>
+-                  <li><Infinity size={18} className="icon-price" /> Sin límite de Escuelas o Cursos</li>
++                  <li><InfinityIcon size={18} className="icon-price" /> Escuelas, Cursos y OCR sin límite</li>
+                   <li><Cloud size={18} className="icon-price" /> Backups automáticos en la nube</li>
+-                  <li><ShieldCheck size={18} className="icon-price" /> Soporte Prioritario VIP 24/7</li>
++                  <li><ShieldCheck size={18} className="icon-price" /> Soporte prioritario</li>
+                 </ul>
+                 <Link to="/login" className="btn-card-elite secondary-outline">Ser Premium</Link>
+               </div>
+@@ -746,4 +777,4 @@ export default function Landing({ session }) {
+     </div>
+   );
+ }
+-
++
+diff --git a/src/pages/Suscripcion.jsx b/src/pages/Suscripcion.jsx
+index 623ec89..7b3544c 100644
+--- a/src/pages/Suscripcion.jsx
++++ b/src/pages/Suscripcion.jsx
+@@ -1,12 +1,43 @@
+ import React, { useState, useEffect } from 'react';
+ import { Link } from 'react-router-dom';
+-import { SUBSCRIPTION_PLANS } from '../constants/plans';
++import { SUBSCRIPTION_PLANS, CICLOS, getPlanPrecio, formatPrecio, formatFecha } from '../constants/plans';
+ import { PagosAPI } from '../services/api';
++import usePlanes from '../hooks/usePlanes';
++
++const PLANES_PAGOS = [
++  { key: 'pro', color: 'var(--primary)', destacado: true, cta: 'Mejorar a PRO' },
++  { key: 'premium', color: 'var(--purple)', destacado: false, cta: 'Ser Premium' },
++];
++
++function PrecioPlan({ precio, ciclo }) {
++  if (!precio) {
++    return <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: '0.6rem 0 1.5rem' }}>Precio no disponible</div>;
++  }
++  return (
++    <div style={{ marginBottom: '1.5rem' }}>
++      {precio.en_promocion && (
++        <div style={{ color: 'var(--text-secondary)', textDecoration: 'line-through', fontSize: '1rem' }}>
++          {formatPrecio(precio.precio)}
++        </div>
++      )}
++      <div style={{ fontSize: '2.2rem', fontWeight: 900 }}>
++        {formatPrecio(precio.precio_vigente)}
++        <small style={{ fontWeight: 400, fontSize: '1rem' }}> {CICLOS[ciclo].sufijo}</small>
++      </div>
++      {precio.en_promocion && precio.promo_hasta && (
++        <p style={{ color: '#22c55e', fontSize: '0.82rem', fontWeight: 700, margin: '4px 0 0' }}>
++          🔥 Promo hasta {formatFecha(precio.promo_hasta)}
++        </p>
++      )}
++    </div>
++  );
++}
+ 
+ export default function Suscripcion() {
+-  const [ciclo, setCiclo] = useState('anual'); // 'mensual' | 'anual'
++  const [ciclo, setCiclo] = useState('ciclo_lectivo'); // 'mensual' | 'ciclo_lectivo'
+   const [loadingPlan, setLoadingPlan] = useState(null);
+   const [feedback, setFeedback] = useState(null);
++  const { planes, loading: loadingPrecios, error: errorPrecios, recargar } = usePlanes();
+ 
+   useEffect(() => {
+     const params = new URLSearchParams(window.location.search);
+@@ -17,7 +48,7 @@ export default function Suscripcion() {
+     if (status === 'success') {
+       setFeedback({
+         tipo: 'success',
+-        mensaje: `🎉 ¡Felicitaciones! Tu pago fue aprobado y tu plan ${plan?.toUpperCase() || 'PRO'} (${cicloParam || 'anual'}) está activo.`,
++        mensaje: `🎉 ¡Felicitaciones! Tu pago fue aprobado y tu plan ${plan?.toUpperCase() || 'PRO'} (${CICLOS[cicloParam]?.label || 'Ciclo lectivo'}) está activo.`,
+       });
+     } else if (status === 'failure') {
+       setFeedback({
+@@ -49,6 +80,19 @@ export default function Suscripcion() {
+     }
+   };
+ 
++  const hayPromo = planes.some(p => p.en_promocion);
++  const cicloBtn = (value) => ({
++    background: ciclo === value ? 'linear-gradient(90deg, #6366f1, #8b5cf6)' : 'transparent',
++    color: ciclo === value ? '#fff' : 'var(--text-secondary)',
++    border: 'none',
++    padding: '10px 22px',
++    borderRadius: '24px',
++    fontWeight: 800,
++    fontSize: '0.9rem',
++    cursor: 'pointer',
++    transition: 'all 0.2s ease',
++  });
++
+   return (
+     <div className="app-container animate-fade-in" style={{ paddingBottom: '7rem', maxWidth: '960px', margin: '0 auto' }}>
+       <header style={{ marginBottom: '1.8rem', textAlign: 'center', marginTop: '1rem' }}>
+@@ -57,85 +101,27 @@ export default function Suscripcion() {
+           Volver al Inicio
+         </Link>
+ 
+-        {/* BADGE DE LANZAMIENTO */}
+-        <div style={{ marginBottom: '1rem' }}>
+-          <span style={{
+-            background: 'linear-gradient(90deg, #6366f1, #ec4899)',
+-            color: '#fff',
+-            padding: '6px 16px',
+-            borderRadius: '20px',
+-            fontSize: '0.75rem',
+-            fontWeight: 800,
+-            letterSpacing: '0.5px',
+-            display: 'inline-flex',
+-            alignItems: 'center',
+-            gap: '6px',
+-            boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)'
+-          }}>
+-            🚀 PRECIO LANZAMIENTO — VÁLIDO POR 6 MESES
+-          </span>
+-        </div>
++        {hayPromo && (
++          <div style={{ marginBottom: '1rem' }}>
++            <span style={{ background: 'linear-gradient(90deg, #6366f1, #ec4899)', color: '#fff', padding: '6px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)' }}>
++              🚀 PRECIO PROMOCIONAL DE LANZAMIENTO
++            </span>
++          </div>
++        )}
+ 
+         <h1 className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 900 }}>Elegí tu Plan</h1>
+         <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Llevá tu organización docente al siguiente nivel.</p>
+ 
+-        {/* SELECTOR MENSUAL / ANUAL */}
+-        <div style={{
+-          display: 'inline-flex',
+-          background: 'rgba(255, 255, 255, 0.05)',
+-          padding: '6px',
+-          borderRadius: '30px',
+-          border: '1px solid rgba(255, 255, 255, 0.1)',
+-          marginTop: '1.5rem',
+-          gap: '8px'
+-        }}>
+-          <button
+-            onClick={() => setCiclo('mensual')}
+-            style={{
+-              background: ciclo === 'mensual' ? 'var(--primary)' : 'transparent',
+-              color: ciclo === 'mensual' ? '#fff' : 'var(--text-secondary)',
+-              border: 'none',
+-              padding: '10px 22px',
+-              borderRadius: '24px',
+-              fontWeight: 800,
+-              fontSize: '0.9rem',
+-              cursor: 'pointer',
+-              transition: 'all 0.2s ease',
+-            }}
+-          >
+-            Facturación Mensual
+-          </button>
+-
+-          <button
+-            onClick={() => setCiclo('anual')}
+-            style={{
+-              background: ciclo === 'anual' ? 'linear-gradient(90deg, #6366f1, #8b5cf6)' : 'transparent',
+-              color: ciclo === 'anual' ? '#fff' : 'var(--text-secondary)',
+-              border: 'none',
+-              padding: '10px 22px',
+-              borderRadius: '24px',
+-              fontWeight: 800,
+-              fontSize: '0.9rem',
+-              cursor: 'pointer',
+-              transition: 'all 0.2s ease',
+-              display: 'inline-flex',
+-              alignItems: 'center',
+-              gap: '6px'
+-            }}
+-          >
+-            Facturación Anual
+-            <span style={{
+-              background: '#22c55e',
+-              color: '#000',
+-              fontSize: '0.7rem',
+-              fontWeight: 900,
+-              padding: '2px 8px',
+-              borderRadius: '10px'
+-            }}>
+-              AHORRÁ HASTA 64% 🎁
+-            </span>
+-          </button>
++        {/* SELECTOR MENSUAL / CICLO LECTIVO */}
++        <div style={{ display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.05)', padding: '6px', borderRadius: '30px', border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '1.5rem', gap: '8px' }}>
++          <button onClick={() => setCiclo('mensual')} style={cicloBtn('mensual')}>Mensual</button>
++          <button onClick={() => setCiclo('ciclo_lectivo')} style={cicloBtn('ciclo_lectivo')}>Ciclo lectivo</button>
+         </div>
++        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '10px auto 0', maxWidth: '520px', lineHeight: 1.5 }}>
++          {ciclo === 'mensual'
++            ? 'El plan mensual cubre 30 días desde la acreditación del pago.'
++            : 'El ciclo lectivo (febrero a diciembre) vence el 31/12. Si pagás entre octubre y diciembre, cubre hasta el 31/12 del año siguiente.'}
++        </p>
+       </header>
+ 
+       {feedback && (
+@@ -153,40 +139,18 @@ export default function Suscripcion() {
+         </div>
+       )}
+ 
+-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+-        <style>
+-          {`
+-            @keyframes pulse-led {
+-              0% { box-shadow: 0 0 5px var(--primary); }
+-              50% { box-shadow: 0 0 20px var(--primary), 0 0 30px var(--secondary); }
+-              100% { box-shadow: 0 0 5px var(--primary); }
+-            }
+-            @keyframes badge-pulse {
+-              0% { transform: scale(1) translateX(-50%); }
+-              50% { transform: scale(1.08) translateX(-48%); opacity: 0.9; }
+-              100% { transform: scale(1) translateX(-50%); }
+-            }
+-          `}
+-        </style>
++      {errorPrecios && (
++        <div style={{ padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid #ef4444', color: '#fca5a5' }}>
++          {errorPrecios}{' '}
++          <button onClick={recargar} className="btn-secondary" style={{ marginLeft: '8px', padding: '4px 12px' }}>Reintentar</button>
++        </div>
++      )}
+ 
+-        {/* PLAN FREE */}
+-        <div className="glass-card" style={{ 
+-          padding: '2rem', display: 'flex', flexDirection: 'column', 
+-          border: '1px solid var(--primary)', position: 'relative',
+-          animation: 'pulse-led 3s infinite ease-in-out' 
+-        }}>
+-          <span style={{ 
+-            position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', 
+-            background: 'linear-gradient(90deg, #f59e0b, #ef4444)', color: '#fff', 
+-            padding: '4px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 900,
+-            animation: 'badge-pulse 2s infinite ease-in-out', boxShadow: '0 0 15px rgba(245, 158, 11, 0.5)',
+-            whiteSpace: 'nowrap'
+-          }}>
+-            🎁 REGALO: 30 DÍAS FULL
+-          </span>
++      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
++        {/* PLAN GRATUITO */}
++        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.08)' }}>
+           <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS.free.name}</h3>
+-          <div style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.2rem' }}>$0 <small style={{ fontWeight: 400, fontSize: '1rem' }}>/ siempre</small></div>
+-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>Para probar la plataforma sin compromiso</p>
++          <div style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '1.5rem' }}>$0 <small style={{ fontWeight: 400, fontSize: '1rem' }}>/ siempre</small></div>
+           <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
+             {SUBSCRIPTION_PLANS.free.features.map(f => (
+               <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+@@ -195,71 +159,43 @@ export default function Suscripcion() {
+               </li>
+             ))}
+           </ul>
+-          <button className="btn-secondary" style={{ width: '100%', opacity: 0.5, cursor: 'default' }}>Tu plan actual</button>
+         </div>
+ 
+-        {/* PLAN PRO */}
+-        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', border: '2px solid var(--primary)', position: 'relative', background: 'linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(0,0,0,0))' }}>
+-          <span style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900 }}>MÁS ELEGIDO</span>
+-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS.pro.name}</h3>
+-
+-          <div style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.2rem' }}>
+-            {ciclo === 'mensual' ? '$3.500' : '$15.000'}
+-            <small style={{ fontWeight: 400, fontSize: '1rem' }}>{ciclo === 'mensual' ? ' / mes' : ' / año'}</small>
+-          </div>
+-
+-          <p style={{ color: ciclo === 'anual' ? '#22c55e' : 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '1.5rem', fontWeight: ciclo === 'anual' ? 700 : 400 }}>
+-            {ciclo === 'anual' ? '🔥 ¡Ahorrás 64%! Equivale a $1.250 / mes' : 'Facturado mensualmente sin permanencia'}
+-          </p>
+-
+-          <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
+-            {SUBSCRIPTION_PLANS.pro.features.map(f => (
+-              <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+-                {f}
+-              </li>
+-            ))}
+-          </ul>
+-          <button 
+-            className="btn-primary" 
+-            style={{ width: '100%' }} 
+-            disabled={loadingPlan !== null}
+-            onClick={() => handlePagar('pro')}
+-          >
+-            {loadingPlan === `pro_${ciclo}` ? 'Conectando con Mercado Pago...' : `Mejorar a PRO (${ciclo === 'mensual' ? '$3.500' : '$15.000'})`}
+-          </button>
+-        </div>
+-
+-        {/* PLAN PREMIUM */}
+-        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.05)' }}>
+-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS.premium.name}</h3>
+-
+-          <div style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.2rem' }}>
+-            {ciclo === 'mensual' ? '$5.000' : '$24.000'}
+-            <small style={{ fontWeight: 400, fontSize: '1rem' }}>{ciclo === 'mensual' ? ' / mes' : ' / año'}</small>
+-          </div>
+-
+-          <p style={{ color: ciclo === 'anual' ? '#a855f7' : 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '1.5rem', fontWeight: ciclo === 'anual' ? 700 : 400 }}>
+-            {ciclo === 'anual' ? '💎 ¡Ahorrás 60%! Equivale a $2.000 / mes' : 'Facturado mensualmente sin permanencia'}
+-          </p>
+-
+-          <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
+-            {SUBSCRIPTION_PLANS.premium.features.map(f => (
+-              <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--purple)" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+-                {f}
+-              </li>
+-            ))}
+-          </ul>
+-          <button 
+-            className="btn-secondary" 
+-            style={{ width: '100%', border: '1px solid var(--purple)', color: 'var(--purple)' }} 
+-            disabled={loadingPlan !== null}
+-            onClick={() => handlePagar('premium')}
+-          >
+-            {loadingPlan === `premium_${ciclo}` ? 'Conectando con Mercado Pago...' : `Ser Premium (${ciclo === 'mensual' ? '$5.000' : '$24.000'})`}
+-          </button>
+-        </div>
++        {PLANES_PAGOS.map(({ key, color, destacado, cta }) => {
++          const precio = getPlanPrecio(planes, key, ciclo);
++          const disponible = precio && precio.activo !== false;
++          return (
++            <div key={key} className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', position: 'relative', border: destacado ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)', background: destacado ? 'linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(0,0,0,0))' : undefined }}>
++              {destacado && (
++                <span style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900, whiteSpace: 'nowrap' }}>MÁS ELEGIDO</span>
++              )}
++              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS[key].name}</h3>
++              {loadingPrecios ? (
++                <div style={{ color: 'var(--text-secondary)', margin: '0.6rem 0 1.5rem' }}>Cargando precio...</div>
++              ) : (
++                <PrecioPlan precio={disponible ? precio : null} ciclo={ciclo} />
++              )}
++              <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
++                {SUBSCRIPTION_PLANS[key].features.map(f => (
++                  <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
++                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
++                    {f}
++                  </li>
++                ))}
++              </ul>
++              <button
++                className={destacado ? 'btn-primary' : 'btn-secondary'}
++                style={{ width: '100%', ...(destacado ? {} : { border: `1px solid ${color}`, color }) }}
++                disabled={loadingPlan !== null || loadingPrecios || !disponible}
++                onClick={() => handlePagar(key)}
++              >
++                {loadingPlan === `${key}_${ciclo}`
++                  ? 'Conectando con Mercado Pago...'
++                  : disponible ? `${cta} (${formatPrecio(precio.precio_vigente)})` : cta}
++              </button>
++            </div>
++          );
++        })}
+       </div>
+ 
+       <div className="glass-card" style={{ marginTop: '3rem', padding: '1.5rem', textAlign: 'center' }}>
+@@ -269,4 +205,4 @@ export default function Suscripcion() {
+       </div>
+     </div>
+   );
+-}
++}
+diff --git a/src/services/api.js b/src/services/api.js
+index dd655d5..c3254e6 100644
+--- a/src/services/api.js
++++ b/src/services/api.js
+@@ -714,28 +714,83 @@ export const FeedbackAPI = {
+ // ─── OCR PROFESIONAL (BACKEND) ─────────────────────────────
+ const BACKEND_URL = 'http://localhost:3000/api';
+ 
++const getAuthHeaders = async () => {
++  const { data: { session } } = await supabase.auth.getSession();
++  const token = session?.access_token;
++  return token ? { 'Authorization': `Bearer ${token}` } : {};
++};
++
++const buildApiError = async (response, fallback) => {
++  const body = await response.json().catch(() => ({}));
++  const error = new Error(body.error || body.details || fallback);
++  error.status = response.status;
++  error.code = body.code;
++  return error;
++};
++
+ export const OCRAPI = {
+-  processImage: async (imageFile) => {
++  processImage: async (imageFile, cursoId) => {
+     const formData = new FormData();
+     formData.append('image', imageFile);
++    if (cursoId) formData.append('curso_id', cursoId);
+ 
+     const response = await fetch(`${BACKEND_URL}/ocr/process`, {
+       method: 'POST',
++      headers: await getAuthHeaders(),
+       body: formData
+     });
+ 
+     if (!response.ok) {
+-      const errorData = await response.json();
+-      throw new Error(errorData.details || errorData.error || 'Error en el escaneo');
++      throw await buildApiError(response, 'Error en el escaneo');
+     }
+ 
+     return await response.json();
+   }
+ };
+ 
++// 💲 PLANES Y PRECIOS (públicos, editables desde el panel de la dueña)
++export const PlanesAPI = {
++  getPlanes: async () => {
++    const response = await fetch(`${BACKEND_URL}/pagos/planes`);
++    if (!response.ok) {
++      throw await buildApiError(response, 'No se pudieron cargar los precios');
++    }
++    const data = await response.json();
++    return Array.isArray(data?.planes) ? data.planes : [];
++  }
++};
++
++// 🔔 CENTRO DE NOTIFICACIONES
++export const NotificacionesAPI = {
++  getAll: async (limite = 20) => {
++    const response = await fetch(`${BACKEND_URL}/notificaciones?limite=${limite}`, {
++      headers: await getAuthHeaders()
++    });
++    if (!response.ok) {
++      throw await buildApiError(response, 'No se pudieron obtener las notificaciones');
++    }
++    const data = await response.json();
++    return {
++      notificaciones: Array.isArray(data?.notificaciones) ? data.notificaciones : [],
++      noLeidas: Number(data?.noLeidas) || 0
++    };
++  },
++
++  marcarLeida: async (id) => {
++    const response = await fetch(`${BACKEND_URL}/notificaciones/${id}/leida`, {
++      method: 'PATCH',
++      headers: await getAuthHeaders()
++    });
++    if (!response.ok) {
++      throw await buildApiError(response, 'No se pudo marcar la notificación');
++    }
++    return (await response.json()).notificacion;
++  }
++};
++
+ // 💳 PAGOS & MERCADO PAGO 💳
+ export const PagosAPI = {
+-  crearPreferencia: async (plan, ciclo = 'anual') => {
++  crearPreferencia: async (plan, ciclo = 'ciclo_lectivo') => {
+     const { data: { session } } = await supabase.auth.getSession();
+     const token = session?.access_token;
+ 
+@@ -818,6 +873,39 @@ export const AdminAPI = {
+     };
+   },
+ 
++  getPrecios: async () => {
++    const response = await fetch(`${BACKEND_URL}/admin/precios`, {
++      headers: await getAuthHeaders()
++    });
++    if (!response.ok) {
++      throw await buildApiError(response, 'No se pudieron obtener los precios');
++    }
++    const data = await response.json();
++    return {
++      planes: Array.isArray(data?.planes) ? data.planes : [],
++      recordatorio: data?.recordatorio || null
++    };
++  },
++
++  updatePrecios: async (payload) => {
++    const response = await fetch(`${BACKEND_URL}/admin/precios`, {
++      method: 'PUT',
++      headers: {
++        'Content-Type': 'application/json',
++        ...(await getAuthHeaders())
++      },
++      body: JSON.stringify(payload)
++    });
++    if (!response.ok) {
++      throw await buildApiError(response, 'No se pudieron guardar los precios');
++    }
++    const data = await response.json();
++    return {
++      planes: Array.isArray(data?.planes) ? data.planes : [],
++      recordatorio: data?.recordatorio || null
++    };
++  },
++
+   modificarDocente: async (docenteId, nuevoPlan, diasExtra) => {
+     const { data: { session } } = await supabase.auth.getSession();
+     const token = session?.access_token;
+-- 
+2.56.0

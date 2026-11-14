@@ -1,4 +1,4 @@
-# 📚 Agenda Docente PRO — Frontend
+﻿# 📚 Agenda Docente PRO — Frontend
 
 **Stack:** React + Vite | **Deploy:** Vercel  
 **Repositorio Backend:** [agendadocentebackPRO](https://github.com/NatyJoseDie/agendadocentebackPRO)
@@ -26,19 +26,38 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
   - `AdminAPI.getMetricas()` → métricas completas del negocio (solo Natalia).
   - `AdminAPI.modificarDocente(id, plan, dias)` → super poderes de admin.
 
-#### 💰 Precios de Lanzamiento (vigentes 6 meses desde hoy)
+#### 💰 Precios (editables desde el Panel de Dueña)
 
-| Plan    | Mensual   | Anual      |
-|---------|-----------|------------|
-| PRO     | .500    | .000    |
-| Premium | .000    | .000    |
+Los precios **no están hardcodeados en el frontend**: se leen de `GET /api/pagos/planes`
+(`PlanesAPI.getPlanes()`) y se editan en `/admin` → sección "💰 Precios" (`PUT /api/admin/precios`).
+Valores cargados al lanzar:
 
-> Pasados 6 meses, los precios pasan a: PRO .000/mes – .000/año | Premium .500/mes – .000/año.
+| Plan    | Mensual (promo → normal) | Ciclo lectivo (promo → normal) |
+|---------|--------------------------|--------------------------------|
+| PRO     | $3.500 → $4.500          | $15.000 → $36.000              |
+| Premium | $5.000 → $5.500          | $24.000 → $44.000              |
 
-#### 🔄 Toggle Mensual / Anual en Suscripción
+> La promo de lanzamiento vale hasta el 29/04/2027; después rige el precio normal.
 
-- `src/pages/Suscripcion.jsx`: Se agregó selector de ciclo de facturación (mensual/anual) con el ahorro calculado automáticamente.
-- `src/pages/Landing.jsx`: Cards de precios actualizadas con precios de lanzamiento reales y badge "Precio de Lanzamiento".
+#### 📅 Ciclos de pago
+
+- **Mensual:** 30 días desde la acreditación.
+- **Ciclo lectivo (feb–dic):** vence el 31/12. Si se paga entre octubre y diciembre, cubre hasta el 31/12 del año siguiente.
+
+#### 📦 Límites por plan
+
+| Plan     | Escuelas | Cursos | OCR con IA            | Backups automáticos | Soporte     |
+|----------|----------|--------|-----------------------|---------------------|-------------|
+| Gratuito | 1        | 2      | No                    | Sí                  | Estándar    |
+| PRO      | 6        | 10     | Hasta 5 cursos        | Sí                  | WhatsApp    |
+| Premium  | Sin límite | Sin límite | Sin límite      | Sí                  | Prioritario |
+
+Las VIP beta (`is_vip_beta`) cuentan como Premium.
+
+#### 🔄 Toggle Mensual / Ciclo lectivo en Suscripción
+
+- `src/pages/Suscripcion.jsx`: selector de ciclo (`mensual` / `ciclo_lectivo`) con precios del backend, precio tachado y "Promo hasta" cuando hay promoción.
+- `src/pages/Landing.jsx`: tarjetas Gratuito / PRO / Premium con precios dinámicos y límites reales.
 
 #### 🔒 Modo Solo Lectura (Soft-Lock)
 
@@ -64,7 +83,7 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
 
 #### 🔁 Git Push — Deploy automático a Vercel
 
-- commit: feat: Panel de Duena AdminDashboard, selector mensual/anual, modo solo lectura y logica VIP
+- commit: feat: Panel de Duena AdminDashboard, selector de ciclo, modo solo lectura y logica VIP
 - 4 files changed, 429 insertions(+)
 - create mode 100644 src/pages/AdminDashboard.jsx
 
@@ -86,6 +105,14 @@ Aplicación web para docentes que permite gestionar asistencias, alumnos, escuel
   la app instalada.
 - **Pendiente:** probar el flujo autenticado de activación, entrega, navegación y baja
   en HTTPS con dispositivos de prueba, incluido iOS.
+
+### 📅 Noviembre de 2026 — Precios dinámicos, ciclo lectivo, límites y notificaciones
+
+- Precios dinámicos desde backend (`GET /api/pagos/planes`, admin `GET/PUT /api/admin/precios`) con promo/precio vigente y recordatorio de ajuste.
+- Ciclo de cobro `ciclo_lectivo` (feb–dic, vence 31/12; regla especial oct–dic cubre hasta 31/12 del año siguiente) y selector Mensual / Ciclo lectivo.
+- Límites por plan en front: Gratuito 1 escuela/2 cursos sin OCR; PRO 6/10 con OCR en 5 cursos; Premium sin límite. VIP beta como Premium. Modal de límite (incluye 42501) con acceso a `/suscripcion`.
+- OCR envía `curso_id` y Bearer; errores del backend (incl. `OCR_PLAN_REQUIRED`, `OCR_CURSOS_LIMIT`) se muestran en el modal con acceso a planes.
+- Panel de dueña: sección **💰 Precios** editable. Campanita de notificaciones en Dashboard con soporte para `ajuste_precios`.
 
 ---
 

@@ -1,0 +1,54 @@
+.subscription-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.subscription-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+.subscription-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.subscription-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.subscription-features svg {
+  flex: 0 0 18px;
+}
+
+.subscription-button {
+  flex: 0 0 auto;
+  min-height: 66px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+@media (max-width: 1050px) {
+  .subscription-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .subscription-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

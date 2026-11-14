@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AdminAPI } from '../services/api';
-import { isUserAdmin } from '../constants/plans';
+import PreciosAdmin from '../components/PreciosAdmin';
 
-export default function AdminDashboard({ session }) {
-  const navigate = useNavigate();
-  const userEmail = session?.user?.email;
-
+export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('docentes'); // 'docentes' | 'pagos'
+  const [tab, setTab] = useState('docentes'); // 'docentes' | 'pagos' | 'precios'
   const [busqueda, setBusqueda] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
-
-  // Protección de ruta: Solo para Natalia
-  useEffect(() => {
-    if (userEmail && !isUserAdmin(userEmail)) {
-      navigate('/dashboard');
-    }
-  }, [userEmail, navigate]);
 
   const cargarDatos = async () => {
     try {
@@ -39,8 +29,8 @@ export default function AdminDashboard({ session }) {
   }, []);
 
   const handleModificar = async (docenteId, nuevoPlan, diasExtra, nombre) => {
-    const confirmMsg = nuevoPlan 
-      ? `¿Deseas cambiar el plan de ${nombre} a ${nuevoPlan.toUpperCase()} por 1 año?`
+    const confirmMsg = nuevoPlan
+      ? `¿Deseas cambiar el plan de ${nombre} a ${nuevoPlan.toUpperCase()} según la suscripción vigente?`
       : `¿Deseas agregarle ${diasExtra} días de regalo a ${nombre}?`;
 
     if (!window.confirm(confirmMsg)) return;
@@ -204,6 +194,22 @@ export default function AdminDashboard({ session }) {
         >
           💳 Historial de Pagos ({pagos?.length || 0})
         </button>
+
+        <button
+          onClick={() => setTab('precios')}
+          style={{
+            background: tab === 'precios' ? 'var(--primary)' : 'transparent',
+            color: tab === 'precios' ? '#fff' : 'var(--text-secondary)',
+            border: 'none',
+            padding: '8px 18px',
+            borderRadius: '20px',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            cursor: 'pointer'
+          }}
+        >
+          💰 Precios
+        </button>
       </div>
 
       {/* ── TAB 1: LISTA DE DOCENTES ── */}
@@ -290,7 +296,7 @@ export default function AdminDashboard({ session }) {
                               +30 Días
                             </button>
                             <button
-                              onClick={() => handleModificar(d.id, 'pro', 365, d.nombre)}
+                              onClick={() => handleModificar(d.id, 'pro', 30, d.nombre)}
                               disabled={actionLoading === d.id}
                               style={{ background: 'rgba(34, 197, 94, 0.2)', border: '1px solid #22c55e', color: '#86efac', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
                             >
@@ -316,7 +322,7 @@ export default function AdminDashboard({ session }) {
           {pagos?.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
               <p>Aún no se registraron cobros de Mercado Pago.</p>
-              <p style={{ fontSize: '0.85rem' }}>Apenas un docente pague un plan mensual o anual, aparecerá automáticamente aquí.</p>
+              <p style={{ fontSize: '0.85rem' }}>Apenas un docente pague un plan mensual o de ciclo lectivo, aparecerá automáticamente aquí.</p>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -362,6 +368,9 @@ export default function AdminDashboard({ session }) {
           )}
         </div>
       )}
+
+      {/* TAB PRECIOS */}
+      {tab === 'precios' && <PreciosAdmin />}
 
     </div>
   );

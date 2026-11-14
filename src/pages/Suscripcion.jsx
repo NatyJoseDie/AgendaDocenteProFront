@@ -1,24 +1,101 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { SUBSCRIPTION_PLANS } from '../constants/plans';
-import { PagosAPI } from '../services/api';
+import { SUBSCRIPTION_PLANS, CICLOS, PAID_PLAN_KEYS, PLAN_CICLOS, getPlanPrecio, formatPrecio, formatFecha } from '../constants/plans';
+import { PagosAPI, PerfilAPI } from '../services/api';
+import usePlanes from '../hooks/usePlanes';
+import './Suscripcion.css';
 
-export default function Suscripcion() {
-  const [ciclo, setCiclo] = useState('anual'); // 'mensual' | 'anual'
+const PLANES_PAGOS = [
+  { key: 'basico', color: '#22c55e', destacado: false, cta: 'Elegir BÁSICO' },
+  { key: 'pro', color: 'var(--primary)', destacado: true, cta: 'Mejorar a PRO' },
+  { key: 'premium', color: 'var(--purple)', destacado: false, cta: 'Ser Premium' },
+];
+
+function PrecioPlan({ precio, ciclo }) {
+  if (!precio) {
+    return <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: '0.6rem 0 1.5rem' }}>Precio no disponible</div>;
+  }
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      {precio.en_promocion && (
+        <div style={{ color: 'var(--text-secondary)', textDecoration: 'line-through', fontSize: '1rem' }}>
+          {formatPrecio(precio.precio)}
+        </div>
+      )}
+      <div style={{ fontSize: 'clamp(1.7rem, 2.5vw, 2.2rem)', fontWeight: 900, lineHeight: 1.2 }}>
+        {formatPrecio(precio.precio_vigente)}
+        <small style={{ display: 'block', fontWeight: 400, fontSize: '0.9rem', marginTop: '0.25rem', color: 'var(--text-secondary)' }}>{CICLOS[ciclo].sufijo}</small>
+      </div>
+      {precio.en_promocion && precio.promo_hasta && (
+        <p style={{ color: '#22c55e', fontSize: '0.82rem', fontWeight: 700, margin: '4px 0 0' }}>
+          🔥 Promo hasta {formatFecha(precio.promo_hasta)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function Suscripcion({ session }) {
+  const [ciclo, setCiclo] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cicloParam = params.get('ciclo');
+    return PLAN_CICLOS.includes(cicloParam) ? cicloParam : 'mensual';
+  });
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const { planes, loading: loadingPrecios, error: errorPrecios, recargar } = usePlanes();
+  const docenteId = session?.user?.id;
 
   useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
     const plan = params.get('plan');
     const cicloParam = params.get('ciclo');
 
     if (status === 'success') {
-      setFeedback({
-        tipo: 'success',
-        mensaje: `🎉 ¡Felicitaciones! Tu pago fue aprobado y tu plan ${plan?.toUpperCase() || 'PRO'} (${cicloParam || 'anual'}) está activo.`,
-      });
+      if (PAID_PLAN_KEYS.includes(plan) && PLAN_CICLOS.includes(cicloParam)) {
+        setCiclo(cicloParam);
+        Promise.all([
+          PagosAPI.getEstado(),
+          docenteId ? PerfilAPI.getProfile() : Promise.reject(new Error('No se pudo identificar la sesión.'))
+        ]).then(([estado, perfil]) => {
+          if (cancelled) return;
+          const pago = estado?.ultimoPago;
+          const trialEndsAt = new Date(perfil?.trial_ends_at).getTime();
+          const paymentExpiresAt = new Date(pago?.expira_at).getTime();
+          const approved = pago?.estado === 'approved'
+            && pago?.plan === `${plan}_${cicloParam}`
+            && estado?.plan === plan
+            && perfil?.plan === plan
+            && Number.isFinite(trialEndsAt)
+            && trialEndsAt > Date.now()
+            && Number.isFinite(paymentExpiresAt)
+            && paymentExpiresAt > Date.now();
+
+          setFeedback(approved
+            ? {
+                tipo: 'success',
+                mensaje: `🎉 El backend confirmó tu plan ${plan.toUpperCase()} (${CICLOS[cicloParam].label}) activo hasta el ${formatFecha(cicloParam === 'ciclo_lectivo' ? pago.expira_at : perfil.trial_ends_at)}.`,
+              }
+            : {
+                tipo: 'warning',
+                mensaje: '⏳ Mercado Pago regresó a la app, pero todavía no se confirmó la activación del plan. La cuenta se actualizará cuando el backend procese el pago.',
+              });
+        }).catch((error) => {
+          if (!cancelled) {
+            setFeedback({
+              tipo: 'error',
+              mensaje: `No se pudo verificar la activación real del pago: ${error.message}`,
+            });
+          }
+        });
+      } else {
+        setFeedback({
+          tipo: 'warning',
+          mensaje: 'No se pudo verificar el plan y el ciclo de esta operación. Revisá el estado de tu suscripción antes de volver a pagar.',
+        });
+      }
     } else if (status === 'failure') {
       setFeedback({
         tipo: 'error',
@@ -30,7 +107,9 @@ export default function Suscripcion() {
         mensaje: '⏳ Tu pago está pendiente de acreditación. Apenas impacte, tu cuenta se actualizará automáticamente.',
       });
     }
-  }, []);
+
+    return () => { cancelled = true; };
+  }, [docenteId]);
 
   const handlePagar = async (planKey) => {
     try {
@@ -49,93 +128,47 @@ export default function Suscripcion() {
     }
   };
 
+  const hayPromo = planes.some(p => p.en_promocion);
+  const cicloBtn = (value) => ({
+    background: ciclo === value ? 'linear-gradient(90deg, #6366f1, #8b5cf6)' : 'transparent',
+    color: ciclo === value ? '#fff' : 'var(--text-secondary)',
+    border: 'none',
+    padding: '10px 22px',
+    borderRadius: '24px',
+    fontWeight: 800,
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  });
+
   return (
-    <div className="app-container animate-fade-in" style={{ paddingBottom: '7rem', maxWidth: '960px', margin: '0 auto' }}>
+    <div className="app-container animate-fade-in" style={{ paddingBottom: '7rem', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ marginBottom: '1.8rem', textAlign: 'center', marginTop: '1rem' }}>
         <Link to="/dashboard" style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '1rem' }}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           Volver al Inicio
         </Link>
 
-        {/* BADGE DE LANZAMIENTO */}
-        <div style={{ marginBottom: '1rem' }}>
-          <span style={{
-            background: 'linear-gradient(90deg, #6366f1, #ec4899)',
-            color: '#fff',
-            padding: '6px 16px',
-            borderRadius: '20px',
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            letterSpacing: '0.5px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)'
-          }}>
-            🚀 PRECIO LANZAMIENTO — VÁLIDO POR 6 MESES
-          </span>
-        </div>
+        {hayPromo && (
+          <div style={{ marginBottom: '1rem' }}>
+            <span style={{ background: 'linear-gradient(90deg, #6366f1, #ec4899)', color: '#fff', padding: '6px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)' }}>
+              🚀 PRECIO PROMOCIONAL DE LANZAMIENTO
+            </span>
+          </div>
+        )}
 
         <h1 className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 900 }}>Elegí tu Plan</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Llevá tu organización docente al siguiente nivel.</p>
 
-        {/* SELECTOR MENSUAL / ANUAL */}
-        <div style={{
-          display: 'inline-flex',
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '6px',
-          borderRadius: '30px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          marginTop: '1.5rem',
-          gap: '8px'
-        }}>
-          <button
-            onClick={() => setCiclo('mensual')}
-            style={{
-              background: ciclo === 'mensual' ? 'var(--primary)' : 'transparent',
-              color: ciclo === 'mensual' ? '#fff' : 'var(--text-secondary)',
-              border: 'none',
-              padding: '10px 22px',
-              borderRadius: '24px',
-              fontWeight: 800,
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            Facturación Mensual
-          </button>
-
-          <button
-            onClick={() => setCiclo('anual')}
-            style={{
-              background: ciclo === 'anual' ? 'linear-gradient(90deg, #6366f1, #8b5cf6)' : 'transparent',
-              color: ciclo === 'anual' ? '#fff' : 'var(--text-secondary)',
-              border: 'none',
-              padding: '10px 22px',
-              borderRadius: '24px',
-              fontWeight: 800,
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            Facturación Anual
-            <span style={{
-              background: '#22c55e',
-              color: '#000',
-              fontSize: '0.7rem',
-              fontWeight: 900,
-              padding: '2px 8px',
-              borderRadius: '10px'
-            }}>
-              AHORRÁ HASTA 64% 🎁
-            </span>
-          </button>
+        <div style={{ display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.05)', padding: '6px', borderRadius: '30px', border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '1.5rem', gap: '8px' }}>
+          <button onClick={() => setCiclo('mensual')} style={cicloBtn('mensual')}>Mensual</button>
+          <button onClick={() => setCiclo('ciclo_lectivo')} style={cicloBtn('ciclo_lectivo')}>Ciclo lectivo</button>
         </div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '10px auto 0', maxWidth: '520px', lineHeight: 1.5 }}>
+          {ciclo === 'mensual'
+            ? 'El plan mensual cubre 30 días desde la acreditación del pago.'
+            : 'El ciclo lectivo vence el 31/12. Si pagás entre octubre y diciembre, cubre hasta el 31/12 del mismo año.'}
+        </p>
       </header>
 
       {feedback && (
@@ -153,113 +186,64 @@ export default function Suscripcion() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-        <style>
-          {`
-            @keyframes pulse-led {
-              0% { box-shadow: 0 0 5px var(--primary); }
-              50% { box-shadow: 0 0 20px var(--primary), 0 0 30px var(--secondary); }
-              100% { box-shadow: 0 0 5px var(--primary); }
-            }
-            @keyframes badge-pulse {
-              0% { transform: scale(1) translateX(-50%); }
-              50% { transform: scale(1.08) translateX(-48%); opacity: 0.9; }
-              100% { transform: scale(1) translateX(-50%); }
-            }
-          `}
-        </style>
+      {errorPrecios && (
+        <div style={{ padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid #ef4444', color: '#fca5a5' }}>
+          {errorPrecios}{' '}
+          <button onClick={recargar} className="btn-secondary" style={{ marginLeft: '8px', padding: '4px 12px' }}>Reintentar</button>
+        </div>
+      )}
 
-        {/* PLAN FREE */}
-        <div className="glass-card" style={{ 
-          padding: '2rem', display: 'flex', flexDirection: 'column', 
-          border: '1px solid var(--primary)', position: 'relative',
-          animation: 'pulse-led 3s infinite ease-in-out' 
-        }}>
-          <span style={{ 
-            position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', 
-            background: 'linear-gradient(90deg, #f59e0b, #ef4444)', color: '#fff', 
-            padding: '4px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 900,
-            animation: 'badge-pulse 2s infinite ease-in-out', boxShadow: '0 0 15px rgba(245, 158, 11, 0.5)',
-            whiteSpace: 'nowrap'
-          }}>
-            🎁 REGALO: 30 DÍAS FULL
-          </span>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS.free.name}</h3>
-          <div style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.2rem' }}>$0 <small style={{ fontWeight: 400, fontSize: '1rem' }}>/ siempre</small></div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>Para probar la plataforma sin compromiso</p>
-          <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
+      <div className="subscription-grid">
+        <div className="glass-card subscription-card" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Gratuito</h3>
+          <div style={{ fontSize: '2rem', fontWeight: 900, lineHeight: 1.2, marginBottom: '1.5rem' }}>
+            $0 <small style={{ display: 'block', fontWeight: 400, fontSize: '0.9rem', marginTop: '0.25rem', color: 'var(--text-secondary)' }}>/ siempre</small>
+          </div>
+          <ul className="subscription-features">
             {SUBSCRIPTION_PLANS.free.features.map(f => (
-              <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+              <li key={f}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--green)" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 {f}
               </li>
             ))}
           </ul>
-          <button className="btn-secondary" style={{ width: '100%', opacity: 0.5, cursor: 'default' }}>Tu plan actual</button>
         </div>
 
-        {/* PLAN PRO */}
-        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', border: '2px solid var(--primary)', position: 'relative', background: 'linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(0,0,0,0))' }}>
-          <span style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900 }}>MÁS ELEGIDO</span>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS.pro.name}</h3>
-
-          <div style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.2rem' }}>
-            {ciclo === 'mensual' ? '$3.500' : '$15.000'}
-            <small style={{ fontWeight: 400, fontSize: '1rem' }}>{ciclo === 'mensual' ? ' / mes' : ' / año'}</small>
-          </div>
-
-          <p style={{ color: ciclo === 'anual' ? '#22c55e' : 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '1.5rem', fontWeight: ciclo === 'anual' ? 700 : 400 }}>
-            {ciclo === 'anual' ? '🔥 ¡Ahorrás 64%! Equivale a $1.250 / mes' : 'Facturado mensualmente sin permanencia'}
-          </p>
-
-          <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
-            {SUBSCRIPTION_PLANS.pro.features.map(f => (
-              <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                {f}
-              </li>
-            ))}
-          </ul>
-          <button 
-            className="btn-primary" 
-            style={{ width: '100%' }} 
-            disabled={loadingPlan !== null}
-            onClick={() => handlePagar('pro')}
-          >
-            {loadingPlan === `pro_${ciclo}` ? 'Conectando con Mercado Pago...' : `Mejorar a PRO (${ciclo === 'mensual' ? '$3.500' : '$15.000'})`}
-          </button>
-        </div>
-
-        {/* PLAN PREMIUM */}
-        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS.premium.name}</h3>
-
-          <div style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.2rem' }}>
-            {ciclo === 'mensual' ? '$5.000' : '$24.000'}
-            <small style={{ fontWeight: 400, fontSize: '1rem' }}>{ciclo === 'mensual' ? ' / mes' : ' / año'}</small>
-          </div>
-
-          <p style={{ color: ciclo === 'anual' ? '#a855f7' : 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '1.5rem', fontWeight: ciclo === 'anual' ? 700 : 400 }}>
-            {ciclo === 'anual' ? '💎 ¡Ahorrás 60%! Equivale a $2.000 / mes' : 'Facturado mensualmente sin permanencia'}
-          </p>
-
-          <ul style={{ listStyle: 'none', padding: 0, flex: 1, marginBottom: '2rem' }}>
-            {SUBSCRIPTION_PLANS.premium.features.map(f => (
-              <li key={f} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--purple)" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                {f}
-              </li>
-            ))}
-          </ul>
-          <button 
-            className="btn-secondary" 
-            style={{ width: '100%', border: '1px solid var(--purple)', color: 'var(--purple)' }} 
-            disabled={loadingPlan !== null}
-            onClick={() => handlePagar('premium')}
-          >
-            {loadingPlan === `premium_${ciclo}` ? 'Conectando con Mercado Pago...' : `Ser Premium (${ciclo === 'mensual' ? '$5.000' : '$24.000'})`}
-          </button>
-        </div>
+        {PLANES_PAGOS.map(({ key, color, destacado, cta }) => {
+          const precio = getPlanPrecio(planes, key, ciclo);
+          const disponible = precio && precio.activo !== false;
+          return (
+            <div key={key} className="glass-card subscription-card" style={{ position: 'relative', border: destacado ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)', background: destacado ? 'linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(0,0,0,0))' : undefined }}>
+              {destacado && (
+                <span style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--primary)', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900, whiteSpace: 'nowrap' }}>MÁS ELEGIDO</span>
+              )}
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{SUBSCRIPTION_PLANS[key].name}</h3>
+              {loadingPrecios ? (
+                <div style={{ color: 'var(--text-secondary)', margin: '0.6rem 0 1.5rem' }}>Cargando precio...</div>
+              ) : (
+                <PrecioPlan precio={disponible ? precio : null} ciclo={ciclo} />
+              )}
+              <ul className="subscription-features">
+                {SUBSCRIPTION_PLANS[key].features.map(f => (
+                  <li key={f}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <button
+                className={`subscription-button ${destacado ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ width: '100%', ...(destacado ? {} : { border: `1px solid ${color}`, color }) }}
+                disabled={loadingPlan !== null || loadingPrecios || !disponible}
+                onClick={() => handlePagar(key)}
+              >
+                {loadingPlan === `${key}_${ciclo}`
+                  ? 'Conectando con Mercado Pago...'
+                  : disponible ? `${cta} (${formatPrecio(precio.precio_vigente)})` : cta}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       <div className="glass-card" style={{ marginTop: '3rem', padding: '1.5rem', textAlign: 'center' }}>

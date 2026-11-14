@@ -40,16 +40,17 @@ export const ExportPDF = {
 
     const tableBody = alumnos.map((al, idx) => {
       const data = planillaOficial.find(p => p.alumno_id === al.id) || {};
+      const esRecursante = al.es_recursante || al.condicion_estudiante === 'recursante';
       return [
         idx + 1,
-        `${al.apellido.toUpperCase()}, ${al.nombre}`,
+        `${al.apellido.toUpperCase()}, ${al.nombre}${esRecursante ? ' [R]' : ''}`,
         // 1er Cuat (9 cols)
         data.c1_p1_sigla || '-', data.c1_p2_sigla || '-', data.c1_bim1_nota || '-', data.c1_b1_int || '-',
         data.c1_p3_sigla || '-', data.c1_p4_sigla || '-', data.c1_bim2_nota || '-', data.c1_b2_int || '-',
         data.c1_final || '-',
         // 2do Cuat (9 cols)
-        data.c1_p5_sigla || '-', data.c1_p6_sigla || '-', data.c2_bim1_nota || '-', data.c2_b3_int || '-',
-        data.c1_p7_sigla || '-', data.c1_p8_sigla || '-', data.c2_bim2_nota || '-', data.c2_b4_int || '-',
+        data.c2_p1_sigla || '-', data.c2_p2_sigla || '-', data.c2_bim1_nota || '-', data.c2_b3_int || '-',
+        data.c2_p3_sigla || '-', data.c2_p4_sigla || '-', data.c2_bim2_nota || '-', data.c2_b4_int || '-',
         data.c2_final || '-',
         // Cierres (4 cols)
         data.nota_anual || '-', data.intensif_dic || '-', data.intensif_feb || '-', data.nota_final || '-'
