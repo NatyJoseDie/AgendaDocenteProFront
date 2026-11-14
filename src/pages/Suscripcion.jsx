@@ -65,7 +65,7 @@ export default function Suscripcion({ session }) {
           const trialEndsAt = new Date(perfil?.trial_ends_at).getTime();
           const paymentExpiresAt = new Date(pago?.expira_at).getTime();
           const approved = pago?.estado === 'approved'
-            && pago?.plan === `${plan}_${cicloParam}`
+            && pago?.plan === plan
             && estado?.plan === plan
             && perfil?.plan === plan
             && Number.isFinite(trialEndsAt)
