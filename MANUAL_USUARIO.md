@@ -2,6 +2,15 @@
 
 ¡Bienvenido a tu nueva Agenda Docente Digital! Este manual te ayudará a dar tus primeros pasos en la plataforma diseñada para simplificar tu labor educativa.
 
+## 📲 0. Descarga de la app
+La aplicación también puede descargarse e instalarse en tu dispositivo para usarla como app, además de acceder desde el navegador.
+
+> **Tu agenda escolar, disponible donde estés.**
+> Descargá la app de Agenda Docente para gestionar escuelas, cursos, alumnos y asistencias desde cualquier dispositivo, con una experiencia rápida, intuitiva y pensada para acompañarte cada día en el aula.
+
+- **Desde celular:** podés abrir la web y seguir el paso para instalarla en tu pantalla de inicio o usar la versión instalada del sistema.
+- **Uso recomendado:** en aula o durante la jornada, la app instalada suele ser más práctica y rápida para registrar asistencia y consultar información de forma ágil.
+
 ---
 
 ## 🏛️ 1. Gestión de Escuelas

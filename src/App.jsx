@@ -17,6 +17,8 @@ import Calendario from './pages/Calendario';
 import Contactos from './pages/Contactos';
 import Suscripcion from './pages/Suscripcion';
 import AdminDashboard from './pages/AdminDashboard';
+import ManualUsuario from './pages/ManualUsuario';
+import TerminosCondiciones from './pages/TerminosCondiciones';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -78,6 +80,9 @@ function App() {
 
           {/* RUTA EXPLÍCITA PARA VOLVER A LA LANDING (Sin redirecciones) */}
           <Route path="/inicio" element={<Landing session={session} />} />
+
+          <Route path="/manual-usuario" element={<ManualUsuario />} />
+          <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
 
           <Route 
             path="/login" 

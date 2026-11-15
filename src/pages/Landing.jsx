@@ -722,6 +722,18 @@ export default function Landing({ session }) {
         </div>
       </section>
 
+      <section className="app-download-banner">
+        <div className="container-small">
+          <div className="app-download-copy">
+            <span className="soft-label">APP DISPONIBLE</span>
+            <h3>Tu agenda escolar, disponible donde estés.</h3>
+            <p>
+              Descargá la app de Agenda Docente para gestionar escuelas, cursos, alumnos y asistencias desde cualquier dispositivo, con una experiencia rápida, intuitiva y pensada para acompañarte cada día en el aula.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* FOOTER ELITE */}
       <footer className="footer-pro">
         <div className="container-main">
@@ -765,8 +777,8 @@ export default function Landing({ session }) {
               <ul className="f-links">
                 <li><a href="#contact">Contacto</a></li>
                 <li><a href="mailto:soporteagendadocentepro@gmail.com">soporteagendadocentepro@gmail.com</a></li>
-                <li><a href="#">Manual de Usuario</a></li>
-                <li><a href="#">Términos y condiciones</a></li>
+                <li><a href="/manual-usuario">Manual de Usuario</a></li>
+                <li><a href="/terminos-condiciones">Términos y condiciones</a></li>
               </ul>
             </div>
 
