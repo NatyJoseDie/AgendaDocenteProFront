@@ -803,7 +803,11 @@ export const FeedbackAPI = {
 };
 
 // â”€â”€â”€ OCR PROFESIONAL (BACKEND) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/+$/, '');
+const BACKEND_URL = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_URL_RENDER ||
+  'http://localhost:3000/api'
+).replace(/\/+$/, '');
 
 const getAuthHeaders = async (headers = {}, expectedUserId) => {
   const { data: { session }, error } = await supabase.auth.getSession();

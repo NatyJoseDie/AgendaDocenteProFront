@@ -205,6 +205,13 @@ export default function Dashboard({ session }) {
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#818cf8" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                   <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#c7d2fe' }}>Mi suscripción / Planes</span>
                 </Link>
+
+                <a href="mailto:soporteagendadocentepro@gmail.com" onClick={() => setShowConfig(false)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', textDecoration: 'none', color: '#fff', borderRadius: '10px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', marginBottom: '4px' }}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#4ade80" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="M22 7l-10 7L2 7" /></svg>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#bbf7d0' }}>soporteagendadocentepro@gmail.com</span>
+                </a>
+
                 <PushNotificationsSettings userId={docenteId} />
 
                 <Link to="/inicio" onClick={() => setShowConfig(false)}

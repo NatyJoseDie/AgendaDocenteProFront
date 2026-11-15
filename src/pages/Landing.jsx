@@ -121,9 +121,11 @@ export default function Landing({ session }) {
     }
   ];
 
+  const SUPPORT_EMAIL = 'soporteagendadocentepro@gmail.com';
   const [contactData, setContactData] = useState({ nombre: '', email: '', mensaje: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState('');
   const [installPrompt, setInstallPrompt] = useState(null);
 
   React.useEffect(() => {
@@ -150,18 +152,41 @@ export default function Landing({ session }) {
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
-    setSending(true);
-    const { error } = await supabase
-      .from('contact_messages')
-      .insert([contactData]);
 
-    setSending(false);
-    if (!error) {
+    const trimmedNombre = contactData.nombre.trim();
+    const trimmedEmail = contactData.email.trim();
+    const trimmedMensaje = contactData.mensaje.trim();
+
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+    if (!trimmedNombre || !trimmedEmail || !trimmedMensaje) {
+      setFormError('Completá nombre, email y mensaje para continuar.');
+      return;
+    }
+
+    if (!emailValido) {
+      setFormError('Ingresá un email válido para poder enviar tu consulta.');
+      return;
+    }
+
+    setFormError('');
+    setSending(true);
+
+    try {
+      const subject = encodeURIComponent('Consulta desde landing - Agenda Docente');
+      const body = encodeURIComponent(
+        `Nombre: ${trimmedNombre}\n` +
+        `Email: ${trimmedEmail}\n\n` +
+        `Mensaje:\n${trimmedMensaje}`
+      );
+
+      window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
       setSent(true);
       setContactData({ nombre: '', email: '', mensaje: '' });
       setTimeout(() => setSent(false), 5000);
-    } else {
-      alert("Error al enviar: " + error.message);
+    } catch (error) {
+      setFormError('Error al preparar el correo: ' + error.message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -661,7 +686,6 @@ export default function Landing({ session }) {
                       <input
                         type="text"
                         placeholder="Tu nombre"
-                        required
                         value={contactData.nombre}
                         onChange={(e) => setContactData({ ...contactData, nombre: e.target.value })}
                       />
@@ -670,7 +694,6 @@ export default function Landing({ session }) {
                       <input
                         type="email"
                         placeholder="Tu email"
-                        required
                         value={contactData.email}
                         onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
                       />
@@ -679,11 +702,15 @@ export default function Landing({ session }) {
                       <textarea
                         placeholder="Tu mensaje"
                         rows="5"
-                        required
                         value={contactData.mensaje}
                         onChange={(e) => setContactData({ ...contactData, mensaje: e.target.value })}
                       ></textarea>
                     </div>
+                    {formError && (
+                      <div style={{ color: '#b91c1c', fontSize: '0.82rem', marginBottom: '0.8rem', fontWeight: 700 }}>
+                        {formError}
+                      </div>
+                    )}
                     <button type="submit" className="btn-send-elite" disabled={sending}>
                       {sending ? 'Enviando...' : 'Enviar mensaje'}
                     </button>
@@ -737,6 +764,7 @@ export default function Landing({ session }) {
               <h4>Ayuda</h4>
               <ul className="f-links">
                 <li><a href="#contact">Contacto</a></li>
+                <li><a href="mailto:soporteagendadocentepro@gmail.com">soporteagendadocentepro@gmail.com</a></li>
                 <li><a href="#">Manual de Usuario</a></li>
                 <li><a href="#">Términos y condiciones</a></li>
               </ul>
