@@ -3,13 +3,102 @@ import { Link } from 'react-router-dom';
 import { AdminAPI } from '../services/api';
 import PreciosAdmin from '../components/PreciosAdmin';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ session }) {
   const [loading, setLoading] = useState(true);
+  const isCompactMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('docentes'); // 'docentes' | 'pagos' | 'precios'
+  const [tab, setTab] = useState('docentes'); // 'docentes' | 'pagos' | 'precios' | 'mensajes'
   const [busqueda, setBusqueda] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [mensajeForm, setMensajeForm] = useState({
+    titulo: '',
+    cuerpo: '',
+    tipo: 'aviso',
+    alcance: 'todos',
+    plan: 'gratuito',
+    docenteIds: [],
+  });
+  const [enviando, setEnviando] = useState(false);
+  const [historialMensajes, setHistorialMensajes] = useState([]);
+  const [pendientes, setPendientes] = useState([]);
+  const [detalleConversacion, setDetalleConversacion] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [docMensajes, setDocMensajes] = useState([]);
+  const [docMensajesLoading, setDocMensajesLoading] = useState(false);
+  const [docMensajesError, setDocMensajesError] = useState(null);
+  const [docNoLeidos, setDocNoLeidos] = useState(0);
+  const [docDetalle, setDocDetalle] = useState(null);
+  const [docDetalleLoading, setDocDetalleLoading] = useState(false);
+  const [docReply, setDocReply] = useState('');
+  const [docSending, setDocSending] = useState(false);
+
+  const refrescarDocNoLeidos = async () => {
+    try {
+      const res = await AdminAPI.getMensajesDeDocentesNoLeidos();
+      setDocNoLeidos(res.noLeidos);
+    } catch (err) {
+      console.warn('No se pudo actualizar el contador de mensajes de docentes:', err);
+    }
+  };
+
+  const cargarMensajesDocentes = async () => {
+    try {
+      setDocMensajesLoading(true);
+      setDocMensajesError(null);
+      const res = await AdminAPI.getMensajesDeDocentes();
+      setDocMensajes(res.mensajes);
+    } catch (err) {
+      setDocMensajesError(err.message || 'No se pudieron cargar los mensajes de docentes');
+    } finally {
+      setDocMensajesLoading(false);
+    }
+    refrescarDocNoLeidos();
+  };
+
+  const abrirMensajeDocente = async (item) => {
+    try {
+      setDocDetalleLoading(true);
+      setDocReply('');
+      setDocDetalle({ mensaje: item, respuestas: [] });
+      const res = await AdminAPI.getMensajeDeDocente(item.id);
+      setDocDetalle({
+        mensaje: { ...item, ...(res?.mensaje || {}) },
+        respuestas: Array.isArray(res?.respuestas) ? res.respuestas : []
+      });
+      refrescarDocNoLeidos();
+    } catch (err) {
+      setDocDetalle(null);
+      alert(err.message || 'No se pudo abrir el mensaje');
+    } finally {
+      setDocDetalleLoading(false);
+    }
+  };
+
+  const responderMensajeDocente = async () => {
+    const cuerpo = docReply.trim();
+    if (!cuerpo || !docDetalle?.mensaje?.id) {
+      alert('Escribí una respuesta antes de enviar.');
+      return;
+    }
+    try {
+      setDocSending(true);
+      const res = await AdminAPI.responderMensajeDeDocente(docDetalle.mensaje.id, cuerpo);
+      const nueva = res?.respuesta || { id: Date.now(), autor: 'admin', cuerpo, created_at: new Date().toISOString() };
+      setDocDetalle((prev) => ({
+        ...prev,
+        mensaje: { ...prev.mensaje, estado: 'respondido' },
+        respuestas: [...(prev?.respuestas || []), nueva],
+      }));
+      setDocMensajes((prev) => prev.map((m) => (m.id === docDetalle.mensaje.id ? { ...m, estado: 'respondido' } : m)));
+      setDocReply('');
+    } catch (err) {
+      alert(err.message || 'No se pudo enviar la respuesta');
+    } finally {
+      setDocSending(false);
+    }
+  };
 
   const cargarDatos = async () => {
     try {
@@ -19,13 +108,92 @@ export default function AdminDashboard() {
       setData(res);
     } catch (err) {
       setError(err.message || 'Error al cargar métricas de administración');
+      return;
     } finally {
       setLoading(false);
+    }
+
+    try {
+      const mensajesRes = await AdminAPI.getMensajesEnviados();
+      setHistorialMensajes(mensajesRes?.mensajes || []);
+      const pendientesRes = await AdminAPI.getRespuestasPendientes();
+      setPendientes(pendientesRes?.conversaciones || []);
+    } catch (err) {
+      console.warn('No se pudo cargar el historial de mensajes del admin:', err);
+    }
+  };
+
+  const cargarConversacion = async (id) => {
+    if (!id) return;
+    try {
+      const data = await AdminAPI.getConversacion(id);
+      setDetalleConversacion(data || { respuestas: [] });
+    } catch (err) {
+      alert(err.message || 'No se pudo cargar la conversación');
+    }
+  };
+
+  const handleEnviarMensaje = async () => {
+    const payload = {
+      titulo: mensajeForm.titulo.trim(),
+      cuerpo: mensajeForm.cuerpo.trim(),
+      tipo: mensajeForm.tipo,
+      alcance: mensajeForm.alcance,
+      ...(mensajeForm.alcance === 'plan' ? { plan: mensajeForm.plan } : {}),
+      ...(mensajeForm.alcance === 'docentes' ? { docenteIds: mensajeForm.docenteIds } : {}),
+    };
+
+    if (!payload.titulo || !payload.cuerpo) {
+      alert('Completá título y cuerpo del mensaje.');
+      return;
+    }
+
+    if (payload.alcance === 'todos' && !window.confirm('¿Seguro que querés enviar este mensaje a todos los docentes?')) {
+      return;
+    }
+
+    try {
+      setEnviando(true);
+      const result = await AdminAPI.enviarMensaje(payload);
+      setHistorialMensajes((prev) => [result?.mensaje || { ...payload, id: Date.now(), created_at: new Date().toISOString() }, ...prev]);
+      setMensajeForm({ titulo: '', cuerpo: '', tipo: 'aviso', alcance: 'todos', plan: 'gratuito', docenteIds: [] });
+      alert(`Mensaje enviado a ${result?.destinatarios ?? 0} docentes.`);
+      await cargarDatos();
+    } catch (err) {
+      alert(err.message || 'No se pudo enviar el mensaje.');
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const handleRespondToConversation = async () => {
+    if (!detalleConversacion?.id || !replyText.trim()) {
+      alert('Escribí una respuesta antes de enviar.');
+      return;
+    }
+
+    try {
+      setSendingReply(true);
+      const result = await AdminAPI.responderConversacion(detalleConversacion.id, replyText.trim());
+      setDetalleConversacion((prev) => ({
+        ...prev,
+        respuestas: [...(prev?.respuestas || []), result?.respuesta || { id: Date.now(), autor: 'admin', cuerpo: replyText.trim(), created_at: new Date().toISOString() }],
+      }));
+      setReplyText('');
+      await cargarDatos();
+    } catch (err) {
+      alert(err.message || 'No se pudo responder la conversación.');
+    } finally {
+      setSendingReply(false);
     }
   };
 
   useEffect(() => {
     cargarDatos();
+    cargarMensajesDocentes();
+    const interval = window.setInterval(refrescarDocNoLeidos, 45000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleModificar = async (docenteId, nuevoPlan, diasExtra, nombre) => {
@@ -73,7 +241,7 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="app-container animate-fade-in" style={{ paddingBottom: '6rem', maxWidth: '1100px', margin: '0 auto' }}>
+    <div className="app-container animate-fade-in" style={{ paddingBottom: '6rem', maxWidth: '1100px', margin: '0 auto', width: '100%', boxSizing: 'border-box', paddingLeft: isCompactMobile ? '8px' : '0', paddingRight: isCompactMobile ? '8px' : '0' }}>
       
       {/* ── HEADER ── */}
       <header style={{ marginBottom: '2rem', marginTop: '1rem' }}>
@@ -162,21 +330,22 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── SELECTOR DE PESTAÑAS ── */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+      <div style={{ display: 'flex', gap: isCompactMobile ? '4px' : '10px', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
         <button
           onClick={() => setTab('docentes')}
           style={{
             background: tab === 'docentes' ? 'var(--primary)' : 'transparent',
             color: tab === 'docentes' ? '#fff' : 'var(--text-secondary)',
             border: 'none',
-            padding: '8px 18px',
+            padding: isCompactMobile ? '6px 12px' : '8px 18px',
             borderRadius: '20px',
             fontWeight: 800,
-            fontSize: '0.9rem',
-            cursor: 'pointer'
+            fontSize: isCompactMobile ? '0.75rem' : '0.9rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
           }}
         >
-          👥 Lista de Docentes ({docentes?.length || 0})
+          👥 Docentes ({docentes?.length || 0})
         </button>
 
         <button
@@ -185,14 +354,35 @@ export default function AdminDashboard() {
             background: tab === 'pagos' ? 'var(--primary)' : 'transparent',
             color: tab === 'pagos' ? '#fff' : 'var(--text-secondary)',
             border: 'none',
-            padding: '8px 18px',
+            padding: isCompactMobile ? '6px 12px' : '8px 18px',
             borderRadius: '20px',
             fontWeight: 800,
-            fontSize: '0.9rem',
-            cursor: 'pointer'
+            fontSize: isCompactMobile ? '0.75rem' : '0.9rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
           }}
         >
-          💳 Historial de Pagos ({pagos?.length || 0})
+          💳 Pagos ({pagos?.length || 0})
+        </button>
+
+        <button
+          onClick={() => setTab('mensajes')}
+          style={{
+            background: tab === 'mensajes' ? 'var(--primary)' : 'transparent',
+            color: tab === 'mensajes' ? '#fff' : 'var(--text-secondary)',
+            border: 'none',
+            padding: isCompactMobile ? '6px 12px' : '8px 18px',
+            borderRadius: '20px',
+            fontWeight: 800,
+            fontSize: isCompactMobile ? '0.75rem' : '0.9rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          📨 Mensajes ({pendientes?.length || 0})
+          {docNoLeidos > 0 && (
+            <span style={{ marginLeft: '6px', background: '#ef4444', color: '#fff', borderRadius: '999px', padding: '1px 5px', fontSize: '0.65rem', fontWeight: 900 }}>{docNoLeidos}</span>
+          )}
         </button>
 
         <button
@@ -201,11 +391,12 @@ export default function AdminDashboard() {
             background: tab === 'precios' ? 'var(--primary)' : 'transparent',
             color: tab === 'precios' ? '#fff' : 'var(--text-secondary)',
             border: 'none',
-            padding: '8px 18px',
+            padding: isCompactMobile ? '6px 12px' : '8px 18px',
             borderRadius: '20px',
             fontWeight: 800,
-            fontSize: '0.9rem',
-            cursor: 'pointer'
+            fontSize: isCompactMobile ? '0.75rem' : '0.9rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
           }}
         >
           💰 Precios
@@ -214,7 +405,7 @@ export default function AdminDashboard() {
 
       {/* ── TAB 1: LISTA DE DOCENTES ── */}
       {tab === 'docentes' && (
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
+        <div className="glass-card" style={{ padding: isCompactMobile ? '12px' : '1.5rem' }}>
           <div style={{ marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Docentes en la Plataforma</h3>
             <input 
@@ -227,15 +418,15 @@ export default function AdminDashboard() {
             />
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+          <div className="admin-table-wrapper" style={{ overflowX: 'auto', width: '100%', maxWidth: '100%' }}>
+            <table style={{ minWidth: '650px', width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
-                  <th style={{ padding: '10px' }}>Docente</th>
-                  <th style={{ padding: '10px' }}>Estado / Plan</th>
-                  <th style={{ padding: '10px' }}>Vigencia</th>
-                  <th style={{ padding: '10px' }}>Registro</th>
-                  <th style={{ padding: '10px', textAlign: 'right' }}>Acciones Especiales</th>
+                  <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Docente</th>
+                  <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Estado / Plan</th>
+                  <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Vigencia</th>
+                  <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Registro</th>
+                  <th style={{ padding: '10px', textAlign: 'right', whiteSpace: 'nowrap' }}>Acciones Especiales</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,22 +434,26 @@ export default function AdminDashboard() {
                   const isOwner = d.estado === 'admin';
                   return (
                     <tr key={d.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '12px 10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <img 
-                          src={d.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nombre)}&background=8b5cf6&color=fff`} 
-                          alt="" 
-                          style={{ width: '32px', height: '32px', borderRadius: '50%' }}
-                        />
-                        <div>
-                          <div style={{ fontWeight: 800, color: '#fff' }}>
-                            {d.nombre} {d.apellido} {isOwner && '👑 (Vos)'}
+                      <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img 
+                            src={d.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nombre)}&background=8b5cf6&color=fff`} 
+                            alt="" 
+                            style={{ width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0 }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                              {d.nombre} {d.apellido} {isOwner && '👑 (Vos)'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap' }}>{d.email}</div>
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{d.email}</div>
                         </div>
                       </td>
 
-                      <td style={{ padding: '10px' }}>
+                      <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
                         <span style={{
+                          display: 'inline-block',
+                          whiteSpace: 'nowrap',
                           padding: '3px 10px',
                           borderRadius: '12px',
                           fontSize: '0.75rem',
@@ -271,7 +466,7 @@ export default function AdminDashboard() {
                         </span>
                       </td>
 
-                      <td style={{ padding: '10px' }}>
+                      <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
                         {isOwner ? (
                           <span style={{ color: '#f59e0b', fontWeight: 700 }}>De por vida</span>
                         ) : d.diasRestantes !== null ? (
@@ -281,11 +476,11 @@ export default function AdminDashboard() {
                         ) : '-'}
                       </td>
 
-                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
+                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                         {d.created_at ? new Date(d.created_at).toLocaleDateString('es-AR') : '-'}
                       </td>
 
-                      <td style={{ padding: '10px', textAlign: 'right' }}>
+                      <td style={{ padding: '10px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {!isOwner && (
                           <div style={{ display: 'inline-flex', gap: '6px' }}>
                             <button
@@ -325,38 +520,38 @@ export default function AdminDashboard() {
               <p style={{ fontSize: '0.85rem' }}>Apenas un docente pague un plan mensual o de ciclo lectivo, aparecerá automáticamente aquí.</p>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+          <div className="admin-table-wrapper" style={{ overflowX: 'auto', width: '100%', maxWidth: '100%' }}>
+            <table style={{ minWidth: '650px', width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
-                    <th style={{ padding: '10px' }}>Fecha</th>
-                    <th style={{ padding: '10px' }}>Monto</th>
-                    <th style={{ padding: '10px' }}>Plan</th>
-                    <th style={{ padding: '10px' }}>Medio de Pago</th>
-                    <th style={{ padding: '10px' }}>ID Mercado Pago</th>
-                    <th style={{ padding: '10px' }}>Estado</th>
+                    <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Fecha</th>
+                    <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Monto</th>
+                    <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Plan</th>
+                    <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Medio de Pago</th>
+                    <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>ID Mercado Pago</th>
+                    <th style={{ padding: '10px', whiteSpace: 'nowrap' }}>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagos?.map(p => (
                     <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>
                         {p.fecha_pago ? new Date(p.fecha_pago).toLocaleString('es-AR') : '-'}
                       </td>
-                      <td style={{ padding: '10px', fontWeight: 900, color: '#22c55e', fontSize: '1.05rem' }}>
+                      <td style={{ padding: '10px', fontWeight: 900, color: '#22c55e', fontSize: '1.05rem', whiteSpace: 'nowrap' }}>
                         ${Number(p.monto).toLocaleString('es-AR')}
                       </td>
-                      <td style={{ padding: '10px', fontWeight: 700, color: '#fff' }}>
+                      <td style={{ padding: '10px', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
                         {p.plan?.toUpperCase()}
                       </td>
-                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.6)' }}>
+                      <td style={{ padding: '10px', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap' }}>
                         {p.metodo_pago || 'Mercado Pago'}
                       </td>
-                      <td style={{ padding: '10px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                      <td style={{ padding: '10px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap' }}>
                         {p.mp_payment_id || '-'}
                       </td>
-                      <td style={{ padding: '10px' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: '1px solid #22c55e' }}>
+                      <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
+                        <span style={{ display: 'inline-block', whiteSpace: 'nowrap', padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: '1px solid #22c55e' }}>
                           Aprobado
                         </span>
                       </td>
@@ -364,6 +559,199 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'mensajes' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          <div className="glass-card" style={{ padding: '1.5rem', gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>
+                Mensajes de docentes
+                {docNoLeidos > 0 && <span style={{ marginLeft: '10px', background: '#ef4444', color: '#fff', borderRadius: '999px', padding: '2px 9px', fontSize: '0.75rem', fontWeight: 900 }}>{docNoLeidos} sin leer</span>}
+              </h3>
+              <button type="button" onClick={cargarMensajesDocentes} disabled={docMensajesLoading} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px', padding: '6px 12px', cursor: 'pointer', fontWeight: 700 }}>
+                {docMensajesLoading ? 'Actualizando…' : 'Actualizar'}
+              </button>
+            </div>
+
+            {docMensajesLoading && !docMensajes.length ? (
+              <div style={{ color: 'var(--text-secondary)' }}>Cargando mensajes…</div>
+            ) : docMensajesError ? (
+              <div style={{ color: '#fca5a5' }}>{docMensajesError}</div>
+            ) : docMensajes.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)' }}>Todavía no recibiste mensajes de docentes.</div>
+            ) : (
+              <div style={{ display: 'grid', gap: '0.7rem' }}>
+                {docMensajes.map((item) => {
+                  const estado = String(item.estado || 'abierto').toLowerCase();
+                  const color = estado === 'respondido' ? '#fbbf24' : estado === 'cerrado' ? '#94a3b8' : '#34d399';
+                  const sinLeer = !item.leido_por_admin_at && estado === 'abierto';
+                  return (
+                    <button key={item.id} type="button" onClick={() => abrirMensajeDocente(item)} style={{ textAlign: 'left', padding: '12px', borderRadius: '12px', background: docDetalle?.mensaje?.id === item.id ? 'rgba(139,92,246,0.14)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                        <strong>{item.docente?.nombre || 'Docente'} {item.docente?.apellido || ''}</strong>
+                        <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: '999px', border: `1px solid ${color}`, background: `${color}22` }}>{estado.charAt(0).toUpperCase() + estado.slice(1)}</span>
+                      </div>
+                      {item.docente?.email && <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>{item.docente.email}</div>}
+                      <div style={{ marginTop: '6px', fontWeight: sinLeer ? 800 : 600, fontSize: '0.85rem' }}>{sinLeer && <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#ef4444', marginRight: 6 }} />}{item.titulo}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{item.created_at ? new Date(item.created_at).toLocaleString('es-AR') : ''}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {docDetalle?.mensaje && (
+              <div style={{ marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ fontWeight: 800, marginBottom: '4px' }}>{docDetalle.mensaje.titulo}</div>
+                <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)', marginBottom: '12px' }}>{docDetalle.mensaje.cuerpo}</div>
+                {docDetalleLoading ? (
+                  <div style={{ color: 'var(--text-secondary)' }}>Cargando conversación…</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '320px', overflowY: 'auto' }}>
+                    {docDetalle.respuestas.map((r) => (
+                      <div key={r.id} style={{ padding: '10px 12px', borderRadius: '12px', background: r.autor === 'admin' ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px' }}>{r.autor === 'admin' ? 'Administración' : 'Docente'}</div>
+                        <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>{r.cuerpo}</div>
+                        <div style={{ marginTop: '6px', fontSize: '0.64rem', color: 'rgba(255,255,255,0.45)' }}>{new Date(r.created_at).toLocaleString('es-AR')}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <textarea value={docReply} onChange={(e) => setDocReply(e.target.value.slice(0, 2000))} rows={3} className="input-field" style={{ width: '100%', resize: 'vertical', marginTop: '12px' }} placeholder="Responder al docente…" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{docReply.length}/2000</span>
+                  <button type="button" onClick={responderMensajeDocente} disabled={docSending} style={{ background: 'linear-gradient(135deg, #22c55e, #3b82f6)', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}>
+                    {docSending ? 'Enviando…' : 'Responder'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Enviar mensaje a docentes</h3>
+
+            <div style={{ display: 'grid', gap: '0.8rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>Titulo</label>
+                <input value={mensajeForm.titulo} maxLength={150} onChange={(e) => setMensajeForm((prev) => ({ ...prev, titulo: e.target.value }))} className="input-field" style={{ width: '100%' }} />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>Tipo</label>
+                <select value={mensajeForm.tipo} onChange={(e) => setMensajeForm((prev) => ({ ...prev, tipo: e.target.value }))} className="input-field" style={{ width: '100%' }}>
+                  <option value="aviso">Aviso</option>
+                  <option value="oferta">Oferta</option>
+                  <option value="plan">Plan</option>
+                  <option value="personal">Personal</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>Alcance</label>
+                <select value={mensajeForm.alcance} onChange={(e) => setMensajeForm((prev) => ({ ...prev, alcance: e.target.value }))} className="input-field" style={{ width: '100%' }}>
+                  <option value="todos">Todos</option>
+                  <option value="plan">Por plan</option>
+                  <option value="docentes">Docentes específicos</option>
+                </select>
+              </div>
+
+              {mensajeForm.alcance === 'plan' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>Plan</label>
+                  <select value={mensajeForm.plan} onChange={(e) => setMensajeForm((prev) => ({ ...prev, plan: e.target.value }))} className="input-field" style={{ width: '100%' }}>
+                    <option value="gratuito">Gratuito</option>
+                    <option value="basico">Básico</option>
+                    <option value="pro">Pro</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+              )}
+
+              {mensajeForm.alcance === 'docentes' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>Docentes (IDs o emails)</label>
+                  <input value={mensajeForm.docenteIds.join(', ')} onChange={(e) => setMensajeForm((prev) => ({ ...prev, docenteIds: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }))} className="input-field" style={{ width: '100%' }} placeholder="docente@example.com, otro@..." />
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>Cuerpo</label>
+                <textarea value={mensajeForm.cuerpo} maxLength={2000} onChange={(e) => setMensajeForm((prev) => ({ ...prev, cuerpo: e.target.value }))} rows={6} className="input-field" style={{ width: '100%', resize: 'vertical' }} />
+                <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', marginTop: '0.25rem' }}>{mensajeForm.cuerpo.length}/2000</div>
+              </div>
+
+              <button onClick={handleEnviarMensaje} disabled={enviando} style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', border: 'none', color: '#fff', borderRadius: '10px', padding: '10px 14px', fontWeight: 800, cursor: 'pointer' }}>
+                {enviando ? 'Enviando…' : 'Enviar mensaje'}
+              </button>
+            </div>
+          </div>
+
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Respuestas pendientes</h3>
+            {pendientes.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)' }}>No hay respuestas pendientes.</div>
+            ) : (
+              <div style={{ display: 'grid', gap: '0.8rem' }}>
+                {pendientes.map((item) => (
+                  <button key={item.id} type="button" onClick={() => cargarConversacion(item.id)} style={{ textAlign: 'left', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>
+                    <div style={{ fontWeight: 800 }}>{item.docentes?.nombre || 'Docente'} {item.docentes?.apellido || ''}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>{item.docentes?.email || ''}</div>
+                    <div style={{ fontSize: '0.8rem', marginTop: '6px' }}>{item.mensajes_admin?.titulo || 'Conversación'}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{new Date(item.ultima_actividad_at).toLocaleString('es-AR')}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="glass-card" style={{ padding: '1.5rem', gridColumn: '1 / -1' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Historial de mensajes enviados</h3>
+            {historialMensajes.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)' }}>Aún no enviaste mensajes.</div>
+            ) : (
+              <div style={{ display: 'grid', gap: '0.8rem' }}>
+                {historialMensajes.map((mensaje) => (
+                  <div key={mensaje.id} style={{ padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                      <strong>{mensaje.titulo}</strong>
+                      <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>{mensaje.tipo?.toUpperCase()}</span>
+                    </div>
+                    <div style={{ marginTop: '6px', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>{mensaje.cuerpo}</div>
+                    <div style={{ marginTop: '8px', fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)' }}>Alcance: {mensaje.alcance} · Enviado: {new Date(mensaje.created_at).toLocaleString('es-AR')}</div>
+                    <div style={{ marginTop: '4px', fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>Destinatarios: {mensaje.destinatarios ?? 0}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {detalleConversacion && (
+            <div className="glass-card" style={{ padding: '1.5rem', gridColumn: '1 / -1' }}>
+              <h3 style={{ marginTop: 0, marginBottom: '0.8rem' }}>Conversa con el docente</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '400px', overflowY: 'auto' }}>
+                {(detalleConversacion.respuestas || []).map((respuesta) => (
+                  <div key={respuesta.id} style={{ padding: '10px 12px', borderRadius: '12px', background: respuesta.autor === 'admin' ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'capitalize' }}>{respuesta.autor}</div>
+                    <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>{respuesta.cuerpo}</div>
+                    <div style={{ marginTop: '6px', fontSize: '0.64rem', color: 'rgba(255,255,255,0.45)' }}>{new Date(respuesta.created_at).toLocaleString('es-AR')}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: '1rem' }}>
+                <textarea value={replyText} onChange={(e) => setReplyText(e.target.value.slice(0, 2000))} rows={4} className="input-field" style={{ width: '100%', resize: 'vertical' }} placeholder="Responder al docente…" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{replyText.length}/2000</span>
+                  <button onClick={handleRespondToConversation} disabled={sendingReply} style={{ background: 'linear-gradient(135deg, #22c55e, #3b82f6)', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}>
+                    {sendingReply ? 'Enviando…' : 'Responder'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { PlanificacionesAPI, CursosAPI } from '../services/api';
+import { DOCUMENT_ACCEPT_ATTRIBUTE, isAllowedDocumentFile } from '../documentUpload';
 
 const TIPOS = [
   { value: 'anual',     label: 'Planificación Anual',  emoji: '📅', color: '#6366f1' },
@@ -106,16 +107,14 @@ export default function Planificaciones({ session }) {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      alert('Solo se aceptan archivos PDF.');
+
+    const validation = isAllowedDocumentFile(file);
+    if (!validation.valid) {
+      alert(validation.message);
       e.target.value = null;
       return;
     }
-    if (file.size > 20 * 1024 * 1024) {
-      alert('El archivo no puede superar los 20MB.');
-      e.target.value = null;
-      return;
-    }
+
     setSelectedFile(file);
     setFileName(file.name);
   };
@@ -246,7 +245,7 @@ export default function Planificaciones({ session }) {
                 Mis Planificaciones
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
-                {cursoId ? 'Documentos PDF de este curso' : 'Todos mis documentos PDF'}
+                {cursoId ? 'Documentos del curso' : 'Todos mis documentos'}
               </p>
             </div>
             <button
@@ -254,7 +253,7 @@ export default function Planificaciones({ session }) {
               className="btn-primary"
               style={{ minWidth: '130px', borderRadius: '14px', padding: '0.7rem 1.2rem', whiteSpace: 'nowrap' }}
             >
-              {showForm ? 'Cancelar' : cursoId ? '+ Subir PDF' : '+ Nueva Planificación'}
+              {showForm ? 'Cancelar' : cursoId ? '+ Subir documento' : '+ Nueva Planificación'}
             </button>
           </div>
         )}
@@ -345,7 +344,7 @@ export default function Planificaciones({ session }) {
             position: 'relative', cursor: 'pointer'
           }}>
             <input
-              type="file" accept=".pdf"
+              type="file" accept={DOCUMENT_ACCEPT_ATTRIBUTE}
               onChange={handleFileChange}
               style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
             />
@@ -361,10 +360,10 @@ export default function Planificaciones({ session }) {
               <>
                 <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📄</div>
                 <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                  Hacé clic para seleccionar el PDF
+                  Hacé clic para seleccionar el documento
                 </p>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px' }}>
-                  Solo archivos PDF · Máx. 20 MB
+                  PDF, DOC, DOCX, JPG, PNG o WEBP · Máx. 20 MB
                 </p>
               </>
             )}
@@ -600,20 +599,106 @@ export default function Planificaciones({ session }) {
                     </button>
 
                     {showEmailMenu === plan.id && (
-                      <div className="glass-card animate-scale-in" style={{
-                        position: 'absolute', bottom: '110%', right: 0, zIndex: 100,
-                        width: '180px', padding: '8px', border: '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
-                      }}>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '8px', paddingLeft: '8px' }}>Elegir correo:</p>
-                        <button onClick={() => handleEmailAction(plan, 'gmail')} style={{ width: '100%', textAlign: 'left', padding: '8px', background: 'none', border: 'none', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '6px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="16" alt="Gmail" /> Gmail
+                      <div
+                        data-email-menu="true"
+                        className="glass-card animate-scale-in"
+                        style={{
+                          position: 'absolute',
+                          bottom: 'calc(100% + 10px)',
+                          right: 0,
+                          zIndex: 120,
+                          width: '210px',
+                          padding: '10px',
+                          borderRadius: '16px',
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          background: 'rgba(15, 23, 42, 0.96)',
+                          boxShadow: '0 18px 42px rgba(15, 23, 42, 0.42)',
+                          backdropFilter: 'blur(14px)'
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '8px',
+                          padding: '2px 4px'
+                        }}>
+                          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', letterSpacing: '0.04em', fontWeight: 700 }}>Abrir por:</span>
+                          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>Email</span>
+                        </div>
+
+                        <button
+                          onClick={() => handleEmailAction(plan, 'gmail')}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 10px',
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid transparent',
+                            color: '#fff',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            borderRadius: '10px',
+                            marginBottom: '6px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                        >
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="16" alt="Gmail" />
+                          <span>Gmail</span>
                         </button>
-                        <button onClick={() => handleEmailAction(plan, 'outlook')} style={{ width: '100%', textAlign: 'left', padding: '8px', background: 'none', border: 'none', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '6px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" width="16" alt="Outlook" /> Outlook Web
+
+                        <button
+                          onClick={() => handleEmailAction(plan, 'outlook')}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 10px',
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid transparent',
+                            color: '#fff',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            borderRadius: '10px',
+                            marginBottom: '6px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                        >
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" width="16" alt="Outlook" />
+                          <span>Outlook Web</span>
                         </button>
-                        <button onClick={() => handleEmailAction(plan, 'system')} style={{ width: '100%', textAlign: 'left', padding: '8px', background: 'none', border: 'none', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '6px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                           📧 Predeterminado
+
+                        <button
+                          onClick={() => handleEmailAction(plan, 'system')}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 10px',
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid transparent',
+                            color: '#fff',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            borderRadius: '10px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                        >
+                          <span style={{ fontSize: '0.9rem' }}>📧</span>
+                          <span>Predeterminado</span>
                         </button>
                       </div>
                     )}

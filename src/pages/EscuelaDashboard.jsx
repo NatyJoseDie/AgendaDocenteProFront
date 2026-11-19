@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { EscuelasAPI, CursosAPI, PerfilAPI } from '../services/api';
-import { checkPlanLimit, isPlanLimitError } from '../constants/plans';
+import { checkPlanLimit, getFriendlyPlanLimitMessage, isPlanLimitError } from '../constants/plans';
 import PlanLimitModal from '../components/PlanLimitModal';
 import { useParams, Link } from 'react-router-dom';
 import '../components/Modal.css';
@@ -9,7 +9,7 @@ import OnboardingTour from '../components/OnboardingTour';
 const DIAS_SEMANA = {
   1: 'Lunes',
   2: 'Martes',
-  3: 'MiÃ©rcoles',
+  3: 'Miércoles',
   4: 'Jueves',
   5: 'Viernes'
 };
@@ -29,19 +29,19 @@ export default function EscuelaDashboard({ session }) {
   const escuelaDashTourSteps = [
     {
       target: '#tour-escuela-info',
-      title: 'Panel de la Escuela ðŸ›ï¸',
-      content: 'AquÃ­ administras los cursos, mÃ³dulos y cargos especÃ­ficos de esta instituciÃ³n educativa.',
+      title: 'Panel de la Escuela 🏛️',
+      content: 'Aquí administras los cursos, módulos y cargos específicos de esta institución educativa.',
       position: 'bottom'
     },
     {
       target: '#tour-curso-agregar',
-      title: 'Crear Curso o Cargo ðŸ“',
-      content: 'Presiona en "+ Agregar" para registrar tus roles (Ej: Profesor, Preceptor) especificando el aÃ±o, divisiÃ³n, materia y los dÃ­as y horarios que dictas clase.',
+      title: 'Crear Curso o Cargo 📝',
+      content: 'Presiona en "+ Agregar" para registrar tus roles (Ej: Profesor, Preceptor) especificando el año, división, materia y los días y horarios que dictas clase.',
       position: 'bottom'
     },
     {
       target: '#tour-cursos-lista',
-      title: 'Entrar a las Planillas ðŸ“Š',
+      title: 'Entrar a las Planillas 📊',
       content: 'Toca sobre la tarjeta de cualquiera de tus cursos creados para ingresar a tomar asistencia, cargar calificaciones y llevar el libro de temas.',
       position: 'top'
     }
@@ -52,7 +52,7 @@ export default function EscuelaDashboard({ session }) {
     anio_o_grado: '',
     division: '',
     materia: '',
-    turno: 'maÃ±ana'
+    turno: 'mañana'
   });
 
   const [horarios, setHorarios] = useState([]);
@@ -145,13 +145,13 @@ export default function EscuelaDashboard({ session }) {
       
       setShowCursoModal(false);
       setEditingId(null);
-      setCursoData({ nombre: '', anio_o_grado: '', division: '', materia: '', turno: 'maÃ±ana' });
+      setCursoData({ nombre: '', anio_o_grado: '', division: '', materia: '', turno: 'mañana' });
       setHorarios([]);
     } catch (error) {
       console.error('Error:', error);
       if (isPlanLimitError(error)) {
         setShowCursoModal(false);
-        setPlanLimitMsg(error.message);
+        setPlanLimitMsg(getFriendlyPlanLimitMessage(error));
         return;
       }
       alert('Error al procesar el curso o cargo');
@@ -176,7 +176,7 @@ export default function EscuelaDashboard({ session }) {
   const handleDelete = async (e, cursoId) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm('Â¿Seguro quieres eliminar este curso/cargo? Se ocultarÃ¡ de la lista.')) {
+    if (window.confirm('¿Seguro quieres eliminar este curso/cargo? Se ocultará de la lista.')) {
       try {
         await CursosAPI.delete(cursoId);
         setCursos(cursos.filter(c => c.id !== cursoId));
@@ -186,8 +186,8 @@ export default function EscuelaDashboard({ session }) {
 
   if (loading || !escuela) return <p className="animate-pulse" style={{ marginTop: '2rem', textAlign: 'center' }}>Cargando colegio...</p>;
 
-  // Filtrar el nÃºmero doble NÂ°
-  const tieneNum = escuela.numero ? (escuela.numero.includes('N') || escuela.nombre.includes('N') ? ` ${escuela.numero}` : ` NÂº ${escuela.numero}`) : '';
+  // Filtrar el número doble N°
+  const tieneNum = escuela.numero ? (escuela.numero.includes('N') || escuela.nombre.includes('N') ? ` ${escuela.numero}` : ` Nº ${escuela.numero}`) : '';
 
   return (
     <div className="app-container animate-fade-in">
@@ -200,19 +200,19 @@ export default function EscuelaDashboard({ session }) {
           <div>
             <h2 style={{ fontSize: '1.8rem', lineHeight: 1.1, textTransform: 'capitalize', margin: 0 }}>{(escuela.nombre + tieneNum).toLowerCase()}</h2>
             <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.95rem', textTransform: 'capitalize' }}>
-              {escuela.nivel} {escuela.direccion ? `â€¢ ${escuela.direccion}` : ''}
+              {escuela.nivel} {escuela.direccion ? `• ${escuela.direccion}` : ''}
             </p>
           </div>
           <button
             onClick={() => setForceStartTour(true)}
             style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', borderRadius: '12px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
           >
-            â“ GuÃ­a
+            Guía
           </button>
         </div>
       </header>
  
-      {/* Botones de GestiÃ³n de Escuela */}
+      {/* Botones de Gestión de Escuela */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         <Link to={`/planificacion?escuela=${id}`} style={{ textDecoration: 'none' }}>
            <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
@@ -242,7 +242,7 @@ export default function EscuelaDashboard({ session }) {
 
       {cursos.length === 0 ? (
         <div id="tour-cursos-lista" style={{ padding: '3rem 1rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border)', borderRadius: '16px' }}>
-          <p style={{ color: 'var(--text-secondary)' }}>AÃºn no diste de alta ningÃºn rol ni horario acÃ¡.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Aún no diste de alta ningún rol ni horario acá.</p>
         </div>
       ) : (
         <div id="tour-cursos-lista" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -254,7 +254,7 @@ export default function EscuelaDashboard({ session }) {
                   <h4 style={{ fontSize: '1.15rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.8rem', color: 'var(--text-primary)', paddingRight: '85px', textTransform: 'capitalize' }}>
                     {(c.nombre || 'CURSO').toLowerCase()}
                     <span style={{ fontSize: '0.9rem', color: 'var(--primary)', letterSpacing: '3px' }}>
-                      {(c.anio_o_grado + (c.division ? ` ${c.division}` : '')).toLowerCase().replace(/([ÂºÂ°oa])([0-9])/gi, '$1 $2')}
+                      {(c.anio_o_grado + (c.division ? ` ${c.division}` : '')).toLowerCase().replace(/([º°oa])([0-9])/gi, '$1 $2')}
                     </span>
                     <span style={{ fontWeight: 600, background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', padding: '0.2rem 0.6rem', borderRadius: '10px', fontSize: '0.65rem' }}>
                       {(c.turno || '').toLowerCase()}
@@ -297,52 +297,52 @@ export default function EscuelaDashboard({ session }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingId ? 'Editar Curso / Cargo' : 'Agregar Curso / Cargo'}</h3>
-              <button className="btn-close" onClick={() => { setShowCursoModal(false); setEditingId(null); setCursoData({ nombre: '', anio_o_grado: '', division: '', materia: '', turno: 'maÃ±ana' }); setHorarios([]); }}>âœ•</button>
+              <button className="btn-close" onClick={() => { setShowCursoModal(false); setEditingId(null); setCursoData({ nombre: '', anio_o_grado: '', division: '', materia: '', turno: 'mañana' }); setHorarios([]); }}>✕</button>
             </div>
             
             <form onSubmit={handleSubmitCurso}>
               <div className="form-group">
                 <label>Rol (Ej: PROFESOR, PRECEPTOR) (*)</label>
-                <input required type="text" name="nombre" className="input-field" placeholder="CÃ³mo figurÃ¡s en este cargo" value={cursoData.nombre} onChange={handleInputChange} />
+                <input required type="text" name="nombre" className="input-field" placeholder="Cómo figurás en este cargo" value={cursoData.nombre} onChange={handleInputChange} />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>AÃ±o / Grado (*)</label>
-                  <input required type="text" name="anio_o_grado" className="input-field" placeholder="Ej: 1Âº, 3ro" value={cursoData.anio_o_grado} onChange={handleInputChange} />
+                  <label>Año / Grado (*)</label>
+                  <input required type="text" name="anio_o_grado" className="input-field" placeholder="Ej: 1º, 3ro" value={cursoData.anio_o_grado} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
-                  <label>DivisiÃ³n (*)</label>
-                  <input required type="text" name="division" className="input-field" placeholder="Ej: 3Âª, B" value={cursoData.division} onChange={handleInputChange} />
+                  <label>División (*)</label>
+                  <input required type="text" name="division" className="input-field" placeholder="Ej: 3ª, B" value={cursoData.division} onChange={handleInputChange} />
                 </div>
               </div>
               
               <div className="form-row">
                 <div className="form-group">
                   <label>Materia (Opcional)</label>
-                  <input type="text" name="materia" className="input-field" placeholder="Ej: BiologÃ­a" value={cursoData.materia} onChange={handleInputChange} />
+                  <input type="text" name="materia" className="input-field" placeholder="Ej: Biología" value={cursoData.materia} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Turno</label>
                   <select name="turno" className="input-field" value={cursoData.turno} onChange={handleInputChange}>
-                    <option value="maÃ±ana">MaÃ±ana</option>
+                    <option value="mañana">Mañana</option>
                     <option value="tarde">Tarde</option>
                     <option value="noche">Noche</option>
                   </select>
                 </div>
               </div>
 
-              {/* SecciÃ³n de Horarios */}
+              {/* Sección de Horarios */}
               <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>DÃ­as y Horarios (*)</label>
+                  <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Días y Horarios (*)</label>
                   <button type="button" onClick={addHorario} style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)', border: '1px dashed var(--success)', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>
-                    + Sumar dÃ­a
+                    + Sumar día
                   </button>
                 </div>
 
                 {horarios.length === 0 ? (
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '1rem' }}>No asignaste ningÃºn dÃ­a todavÃ­a.</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '1rem' }}>No asignaste ningún día todavía.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.5rem' }}>
                     {horarios.map((h, index) => (
@@ -381,9 +381,9 @@ export default function EscuelaDashboard({ session }) {
       <OnboardingTour
         steps={escuelaDashTourSteps}
         storageKey="tour_escueladash_completed"
-        welcomeTitle="Â¡Cursos y Cargos! ðŸ“"
+        welcomeTitle="¡Cursos y Cargos! 📝"
         welcomeText="Te guiamos paso a paso para dar de alta tus materias, cargos y asignaciones horarias."
-        welcomeIcon="ðŸ“"
+        welcomeIcon="📝"
         forceStart={forceStartTour}
         onTourEnd={() => setForceStartTour(false)}
       />

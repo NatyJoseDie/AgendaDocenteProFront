@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { PlanificacionesAPI } from '../services/api';
+import { DOCUMENT_ACCEPT_ATTRIBUTE, isAllowedDocumentFile } from '../documentUpload';
 
 export default function Planificacion({ session }) {
   const query = new URLSearchParams(useLocation().search);
@@ -37,12 +38,16 @@ export default function Planificacion({ session }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-       setSelectedFile(file);
-    } else {
-       alert("Por favor, selecciona solo archivos PDF.");
-       e.target.value = null;
+    if (!file) return;
+
+    const validation = isAllowedDocumentFile(file);
+    if (!validation.valid) {
+      alert(validation.message);
+      e.target.value = null;
+      return;
     }
+
+    setSelectedFile(file);
   };
 
   const handleSubmit = async (e) => {
@@ -116,7 +121,7 @@ export default function Planificacion({ session }) {
               Volver al Curso
            </Link>
            <h2 className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0 }}>Planificaciones</h2>
-           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>Gestión de Documentación Académica PDF</p>
+           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>Gestión de Documentación Académica</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary" style={{ borderRadius: '15px', padding: '0.8rem 1.5rem', fontWeight: 800 }}>
           {showForm ? 'Cerrar' : '+ Nueva Planificación'}
@@ -144,14 +149,14 @@ export default function Planificacion({ session }) {
            </div>
 
            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label style={{ color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Archivo PDF (Obligatorio)</label>
+              <label style={{ color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Archivo (PDF, DOC, DOCX, JPG, PNG o WEBP)</label>
               <div style={{ 
                 border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', position: 'relative'
               }}>
-                <input type="file" required accept=".pdf" onChange={handleFileChange} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }} />
+                <input type="file" required accept={DOCUMENT_ACCEPT_ATTRIBUTE} onChange={handleFileChange} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }} />
                 <div style={{ color: selectedFile ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: 700 }}>
                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: '10px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>
-                   <p>{selectedFile ? `Archivo seleccionado: ${selectedFile.name}` : 'Haz clic o arrastra tu PDF aquí'}</p>
+                   <p>{selectedFile ? `Archivo seleccionado: ${selectedFile.name}` : 'Haz clic o arrastra tu documento aquí'}</p>
                 </div>
               </div>
            </div>

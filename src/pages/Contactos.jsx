@@ -37,6 +37,7 @@ export default function Contactos({ session }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEscuela, setSelectedEscuela] = useState('todas');
   const [showEmailMenu, setShowEmailMenu] = useState(null);
+  const [emailMenuAnchor, setEmailMenuAnchor] = useState({ x: 0, y: 0 });
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -54,6 +55,29 @@ export default function Contactos({ session }) {
       loadData();
     }
   }, [session]);
+
+  useEffect(() => {
+    if (!showEmailMenu) return;
+
+    const handlePointerDown = (event) => {
+      const menu = document.querySelector('[data-email-menu="true"]');
+      if (menu && !menu.contains(event.target)) {
+        setShowEmailMenu(null);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setShowEmailMenu(null);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showEmailMenu]);
 
   const loadData = async () => {
     try {
@@ -101,15 +125,23 @@ export default function Contactos({ session }) {
   const handleEmailAction = (contacto, type) => {
     const subject = encodeURIComponent('Contacto Docente: ' + (session?.user?.email || ''));
     const mail = contacto.email;
-    
+
     const links = {
       gmail: `https://mail.google.com/mail/?view=cm&fs=1&to=${mail}&su=${subject}`,
       outlook: `https://outlook.office.com/mail/deeplink/compose?to=${mail}&subject=${subject}`,
       system: `mailto:${mail}?subject=${subject}`
     };
-    
+
     window.open(links[type], '_blank');
     setShowEmailMenu(null);
+  };
+
+  const toggleEmailMenu = (id, event) => {
+    if (event?.currentTarget) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setEmailMenuAnchor({ x: rect.left, y: rect.top });
+    }
+    setShowEmailMenu(showEmailMenu === id ? null : id);
   };
 
   const filteredContactos = contactos.filter(c => {
@@ -331,9 +363,10 @@ export default function Contactos({ session }) {
 
                   {/* Email con Menú */}
                   <div style={{ position: 'relative' }}>
-                    <button 
-                      onClick={() => setShowEmailMenu(showEmailMenu === c.id ? null : c.id)}
-                      style={{ 
+                    <button
+                      type="button"
+                      onClick={(event) => toggleEmailMenu(c.id, event)}
+                      style={{
                         width: '42px', height: '42px', borderRadius: '12px', border: 'none',
                         background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -344,20 +377,31 @@ export default function Contactos({ session }) {
                     </button>
 
                     {showEmailMenu === c.id && (
-                      <div className="glass-card animate-scale-in" style={{
-                        position: 'absolute', bottom: '110%', right: 0, zIndex: 100,
-                        width: '180px', padding: '8px', border: '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.3)', background: 'rgb(24, 30, 41)'
-                      }}>
-                        <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', paddingLeft: '8px' }}>Enviar email por:</p>
-                        <button onClick={() => handleEmailAction(c, 'gmail')} style={{ width: '100%', textAlign: 'left', padding: '10px', background: 'none', border: 'none', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="16" alt="Gmail" /> Gmail Web
+                      <div
+                        data-email-menu="true"
+                        className="glass-card animate-scale-in"
+                        style={{
+                          position: 'fixed',
+                          top: Math.max(18, emailMenuAnchor.y + 36),
+                          left: Math.min(window.innerWidth - 220, emailMenuAnchor.x - 12),
+                          zIndex: 1050,
+                          width: '220px',
+                          padding: '10px 8px',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          boxShadow: '0 18px 40px rgba(15, 23, 42, 0.35)',
+                          background: 'rgba(19, 25, 38, 0.98)',
+                          borderRadius: '14px'
+                        }}
+                      >
+                        <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)', marginBottom: '8px', paddingLeft: '8px', textTransform: 'uppercase', letterSpacing: '0.7px', fontWeight: 800 }}>Elegir cliente</div>
+                        <button type="button" onClick={() => handleEmailAction(c, 'gmail')} style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid transparent', color: '#fff', fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px', marginBottom: '6px' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'transparent'; }}>
+                           <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="16" alt="Gmail" /> Gmail
                         </button>
-                        <button onClick={() => handleEmailAction(c, 'outlook')} style={{ width: '100%', textAlign: 'left', padding: '10px', background: 'none', border: 'none', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" width="16" alt="Outlook" /> Outlook Web
+                        <button type="button" onClick={() => handleEmailAction(c, 'outlook')} style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid transparent', color: '#fff', fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px', marginBottom: '6px' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'transparent'; }}>
+                           <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" width="16" alt="Outlook" /> Outlook
                         </button>
-                        <button onClick={() => handleEmailAction(c, 'system')} style={{ width: '100%', textAlign: 'left', padding: '10px', background: 'none', border: 'none', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                           📧 App del Sistema
+                        <button type="button" onClick={() => handleEmailAction(c, 'system')} style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid transparent', color: '#fff', fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'transparent'; }}>
+                           📧 Sistema
                         </button>
                       </div>
                     )}

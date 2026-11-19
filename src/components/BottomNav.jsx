@@ -133,6 +133,8 @@ export default function BottomNav({ session }) {
                   : '';
                 const unread = !notification.leida_at;
 
+                const tipo = notification.tipo === 'evento_calendario' ? '📅' : '🔔';
+
                 return (
                   <li key={notification.id}>
                     <button
@@ -142,7 +144,7 @@ export default function BottomNav({ session }) {
                       disabled={!unread || markingId !== null}
                     >
                       <span className="notification-item-heading">
-                        <strong>{notification.titulo}</strong>
+                        <strong>{tipo} {notification.titulo}</strong>
                         {unread && <span className="notification-unread-dot" aria-label="Sin leer" />}
                       </span>
                       <span className="notification-item-message">{notification.mensaje}</span>

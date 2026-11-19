@@ -39,56 +39,56 @@ export default function CursoDashboard({ session }) {
   const cursoPlanillasTourSteps = [
     {
       target: '#tour-curso-header',
-      title: 'Panel del Curso ðŸ“š',
-      content: 'Este es el centro de control de tu curso. Desde aquÃ­ administras la lista de alumnos y todas las planillas docentes.',
+      title: 'Panel del Curso 📚',
+      content: 'Este es el centro de control de tu curso. Desde aquí administras la lista de alumnos y todas las planillas docentes.',
       position: 'bottom'
     },
     {
       target: '#tour-planilla-asistencia',
-      title: 'Planilla de Asistencia â±ï¸',
-      content: 'Registra el presente, ausente o tardanza diaria de tus alumnos con un solo clic de forma rÃ¡pida y sencilla.',
+      title: 'Planilla de Asistencia',
+      content: 'Registra el presente, ausente o tardanza diaria de tus alumnos con un solo clic de forma rápida y sencilla.',
       position: 'bottom'
     },
     {
       target: '#tour-planilla-nomina',
-      title: 'NÃ³mina y Escaneo OCR ðŸ“·',
-      content: 'Gestiona la lista de tus estudiantes. Â¡Puedes escanear listas impresas sacÃ¡ndoles una foto con la cÃ¡mara usando IA!',
+      title: 'Nómina y Escaneo OCR 📷',
+      content: 'Gestiona la lista de tus estudiantes. ¡Puedes escanear listas impresas sacándoles una foto con la cámara usando IA!',
       position: 'bottom'
     },
     {
       target: '#tour-planilla-seguimiento',
-      title: 'Seguimiento Continuo ðŸ“',
-      content: 'Lleva el registro continuo de Trabajos PrÃ¡cticos, evaluaciones parciales y valoraciones conceptuales de cada alumno.',
+      title: 'Seguimiento Continuo 📝',
+      content: 'Lleva el registro continuo de Trabajos Prácticos, evaluaciones parciales y valoraciones conceptuales de cada alumno.',
       position: 'bottom'
     },
     {
       target: '#tour-planilla-libro',
-      title: 'Libro de Temas ðŸ“–',
-      content: 'Firma y registra los contenidos dictados en cada mÃ³dulo o clase para tener tu libro de temas al dÃ­a.',
+      title: 'Libro de Temas 📖',
+      content: 'Firma y registra los contenidos dictados en cada módulo o clase para tener tu libro de temas al día.',
       position: 'top'
     },
     {
       target: '#tour-planilla-planificaciones',
-      title: 'Planificaciones PDF ðŸ“',
-      content: 'Sube y consulta las planificaciones anuales y secuencias didÃ¡cticas de esta materia en formato PDF.',
+      title: 'Planificaciones PDF 📝',
+      content: 'Sube y consulta las planificaciones anuales y secuencias didácticas de esta materia en formato PDF.',
       position: 'top'
     },
     {
       target: '#tour-planilla-sabana',
-      title: 'SÃ¡bana de Notas y Actas ðŸ“Š',
-      content: 'Planilla de calificaciones oficiales. Carga valoraciones pedagÃ³gicas (TEA, TEP, TED) o notas numÃ©ricas por trimestre/cuatrimestre.',
+      title: 'Sábana de Notas y Actas 📊',
+      content: 'Planilla de calificaciones oficiales. Carga valoraciones pedagógicas (TEA, TEP, TED) o notas numéricas por trimestre/cuatrimestre.',
       position: 'top'
     },
     {
       target: '#tour-planilla-intensificacion',
-      title: 'IntensificaciÃ³n de Saberes ðŸ”„',
-      content: 'SecciÃ³n para hacer el seguimiento y cierre de alumnos en perÃ­odo de intensificaciÃ³n o recuperaciÃ³n.',
+      title: 'Intensificación de Saberes 🔄',
+      content: 'Sección para hacer el seguimiento y cierre de alumnos en período de intensificación o recuperación.',
       position: 'top'
     },
     {
       target: '#tour-planilla-fechas',
-      title: 'Fechas Importantes ðŸ“†',
-      content: 'Agenda exÃ¡menes, salidas o actos escolares asociados directamente a este curso para que figuren en tu almanaque.',
+      title: 'Fechas Importantes 📆',
+      content: 'Agenda exámenes, salidas o actos escolares asociados directamente a este curso para que figuren en tu almanaque.',
       position: 'top'
     }
   ];
@@ -120,10 +120,10 @@ export default function CursoDashboard({ session }) {
       };
       await CalendarioAPI.createAcademic(payload);
       setShowEventoModal(false);
-      alert("Â¡Fecha agendada con Ã©xito! La verÃ¡s en tu Almanaque.");
+      triggerToast('¡Fecha agendada con éxito! La verás en tu Almanaque.');
     } catch (error) {
       console.error(error);
-      alert("Error al agendar.");
+      triggerToast('Error al agendar.', 'error');
     }
   };
   const [activePeriodoInt, setActivePeriodoInt] = useState('M-A');
@@ -137,9 +137,11 @@ export default function CursoDashboard({ session }) {
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrResults, setOcrResults] = useState([]); // Alumnos detectados temporalmente
   const [ocrError, setOcrError] = useState(null); // { message, upgrade }
+  const [appToast, setAppToast] = useState(null);
   const fileInputRef = useRef(null);
+  const toastTimerRef = useRef(null);
   const [editingAlumno, setEditingAlumno] = useState(null);
-  const [editingCondicionId, setEditingCondicionId] = useState(null); // ID de la condiciÃ³n si existe
+  const [editingCondicionId, setEditingCondicionId] = useState(null); // ID de la condición si existe
   const [activeActividadIdx, setActiveActividadIdx] = useState(0);
   const [tieneInclusion, setTieneInclusion] = useState(false);
   const [alumnoEdicion, setAlumnoEdicion] = useState(null);
@@ -168,7 +170,7 @@ export default function CursoDashboard({ session }) {
   });
 
   useEffect(() => {
-    // Si no hay un ID de curso vÃ¡lido o es la palabra "null" (error de navegaciÃ³n), no cargar nada
+    // Si no hay un ID de curso válido o es la palabra "null" (error de navegación), no cargar nada
     if (id && id !== 'null' && docenteId) {
       loadData();
     } else {
@@ -220,16 +222,24 @@ export default function CursoDashboard({ session }) {
           activo: true
         });
       }
-      alert(`Â¡${toSave.length} alumnos agregados con Ã©xito!`);
+      triggerToast(`¡${toSave.length} alumnos agregados con éxito!`);
       setShowOCRModal(false);
       setOcrResults([]);
       loadData(); // Recargar la lista
     } catch (error) {
       console.error("Error al guardar masivamente:", error);
-      alert("Hubo un error al guardar algunos alumnos.");
+      triggerToast('Hubo un error al guardar algunos alumnos.', 'error');
     } finally {
       setIsProcessingOCR(false);
     }
+  };
+
+  const triggerToast = (message, type = 'success') => {
+    setAppToast({ message, type });
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = setTimeout(() => setAppToast(null), 2600);
   };
 
   const loadData = async () => {
@@ -268,7 +278,7 @@ export default function CursoDashboard({ session }) {
       setLoadErrors(errors.filter(Boolean));
 
     } catch (error) {
-      console.error('Error crÃ­tico al cargar datos:', error);
+      console.error('Error crítico al cargar datos:', error);
     } finally {
       setLoading(false);
     }
@@ -292,7 +302,7 @@ export default function CursoDashboard({ session }) {
         es_recursante: alumno.es_recursante || false
       });
 
-      // Intentar cargar condiciÃ³n especial si existe
+      // Intentar cargar condición especial si existe
       AlumnosAPI.getCondicionesEspeciales(alumno.id).then(condiciones => {
         if (condiciones && condiciones.length > 0) {
           setTieneInclusion(true);
@@ -340,13 +350,13 @@ export default function CursoDashboard({ session }) {
         // 1. ACTUALIZAR ALUMNO (PATCH)
         const updated = await AlumnosAPI.update(editingAlumno.id, alumnoToUpsert);
 
-        // 2. MANEJAR CONDICIÃ“N ESPECIAL
+        // 2. MANEJAR CONDICIÓN ESPECIAL
         if (tieneInclusion) {
           if (editingCondicionId) {
-            // Ya tenÃ­a una, ACTUALIZAMOS
+            // Ya tenía una, ACTUALIZAMOS
             await AlumnosAPI.updateCondicion(editingCondicionId, condicionData);
           } else {
-            // No tenÃ­a, CREAMOS con la nueva funciÃ³n dedicada
+            // No tenía, CREAMOS con la nueva función dedicada
             await AlumnosAPI.createCondicion({
               ...condicionData,
               alumno_id: editingAlumno.id,
@@ -354,7 +364,7 @@ export default function CursoDashboard({ session }) {
             });
           }
         } else if (editingCondicionId) {
-          // El usuario desmarcÃ³ el checkbox y tenÃ­a condiciÃ³n: ELIMINAR
+          // El usuario desmarcó el checkbox y tenía condición: ELIMINAR
           await AlumnosAPI.deleteCondicion(editingCondicionId);
         }
 
@@ -369,7 +379,7 @@ export default function CursoDashboard({ session }) {
       resetForm();
     } catch (error) {
       console.error("Error:", error);
-      alert("OcurriÃ³ un error.");
+      triggerToast('Ocurrió un error al guardar el alumno.', 'error');
     }
   };
 
@@ -389,7 +399,7 @@ export default function CursoDashboard({ session }) {
   };
 
   const handleDelete = async (alumnoId) => {
-    if (window.confirm("Â¿EstÃ¡s seguro de que querÃ©s dar de baja a este alumno?")) {
+    if (window.confirm("¿Estás seguro de que querés dar de baja a este alumno?")) {
       try {
         await AlumnosAPI.delete(alumnoId);
         setAlumnos(alumnos.filter(a => a.id !== alumnoId));
@@ -421,7 +431,7 @@ export default function CursoDashboard({ session }) {
       });
     } catch (error) {
       console.error("Error guardando nota:", error);
-      alert(`No se pudo guardar la calificaciÃ³n: ${error.message || 'error de conexiÃ³n'}`);
+      triggerToast(`No se pudo guardar la calificación: ${error.message || 'error de conexión'}`, 'error');
     }
   };
 
@@ -429,28 +439,29 @@ export default function CursoDashboard({ session }) {
     try {
       const currentDocenteId = docenteId || (await supabase.auth.getUser())?.data?.user?.id;
       const valorNormalizado = typeof valor === 'string' ? valor.toUpperCase() : valor;
+      const payload = {
+        alumno_id: alumnoId,
+        curso_id: id,
+        docente_id: currentDocenteId,
+        [campo]: valorNormalizado,
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('planilla_oficial')
-        .upsert(
-          {
-            alumno_id: alumnoId,
-            curso_id: id,
-            docente_id: currentDocenteId, // ðŸ‘ˆ Se asegura que coincida exactamente con auth.uid()
-            [campo]: valorNormalizado,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: 'alumno_id, curso_id' }
-        )
+        .upsert(payload, { onConflict: 'alumno_id, curso_id' })
         .select()
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return;
-
-      const row = {
+      const row = data ? {
         ...data,
         observaciones: data.observaciones ?? data.observaciones_manuales ?? ''
+      } : {
+        ...payload,
+        observaciones: ''
       };
+
       setPlanillaOficial(prev => {
         const existe = prev.find(p => p.alumno_id === alumnoId);
         if (existe) {
@@ -460,7 +471,7 @@ export default function CursoDashboard({ session }) {
       });
     } catch (error) {
       console.error("Error guardando planilla oficial:", error);
-      alert(`No se pudo guardar en la planilla: ${error.message || 'error de conexiÃ³n'}`);
+      triggerToast(`No se pudo guardar en la planilla: ${error.message || 'error de conexión'}`, 'error');
     }
   };
 
@@ -468,15 +479,15 @@ export default function CursoDashboard({ session }) {
     if (!nota) return 'transparent';
     const n = nota.toUpperCase();
 
-    // Siglas Oficiales (LÃ³gica Natalia)
+    // Siglas Oficiales (Lógica Natalia)
     if (n === 'TEA') return 'rgba(79, 70, 229, 0.4)';  // AZUL INSTITUCIONAL (Intenso)
     if (n === 'TEP') return 'rgba(16, 185, 129, 0.4)';  // VERDE CLAVE (Vivid)
     if (n === 'TED' || n === 'A') return 'rgba(239, 68, 68, 0.4)'; // ROJO FURIOSO (Alerta)
 
-    // Notas NumÃ©ricas
+    // Notas Numéricas
     const num = parseFloat(n);
     if (!isNaN(num)) {
-      if (num <= 5) return 'rgba(239, 68, 68, 0.5)'; // Rojo mÃ¡s fuerte para insuficientes
+      if (num <= 5) return 'rgba(239, 68, 68, 0.5)'; // Rojo más fuerte para insuficientes
       if (num === 6) return 'rgba(16, 185, 129, 0.3)'; // Verde suave para el 6
       return 'rgba(79, 70, 229, 0.3)'; // Azul para el resto
     }
@@ -498,8 +509,7 @@ export default function CursoDashboard({ session }) {
         nota: entregado ? valor : 'NO',
         fecha: new Date().toISOString().split('T')[0],
         tipo_evaluacion: tipoEv,
-        entregado: entregado,
-        updated_at: new Date().toISOString()
+        entregado: entregado
       };
 
       const { data: saved, error } = await supabase
@@ -520,7 +530,7 @@ export default function CursoDashboard({ session }) {
       });
     } catch (error) {
       console.error("Error guardando seguimiento:", error);
-      alert(`No se pudo guardar el seguimiento: ${error.message || 'error de conexiÃ³n'}`);
+      triggerToast(`No se pudo guardar el seguimiento: ${error.message || 'error de conexión'}`, 'error');
     }
   };
 
@@ -560,7 +570,7 @@ export default function CursoDashboard({ session }) {
   const periodos = ['1er Trim', '2do Trim', '3er Trim', 'Final'];
 
   const alumnosFiltrados = filterRecursantes
-    ? alumnos.filter(a => a.condicion_estudiante === 'recursante')
+    ? alumnos.filter((a) => a.es_recursante === true)
     : alumnos;
 
   const renderModalInputField = (field, alumnoId) => {
@@ -630,15 +640,15 @@ export default function CursoDashboard({ session }) {
 
   return (
     <div className="app-container dashboard-full animate-fade-in">
-      {/* CABECERA (ESTILO PREMIUM DINÃMICO) */}
+      {/* CABECERA (ESTILO PREMIUM DINÁMICO) */}
       <header style={{ maxWidth: '1000px', margin: '0 auto 2rem auto', padding: '1rem' }}>
         <button
           onClick={() => {
             if (activeTab === 'menu') {
-              // Si estamos en el menÃº principal del curso, volvemos a la escuela
+              // Si estamos en el menú principal del curso, volvemos a la escuela
               navigate(`/escuelas/${curso.escuela_id}`);
             } else {
-              // Si estamos dentro de una secciÃ³n (Notas, Asistencia, etc), volvemos al menÃº del curso
+              // Si estamos dentro de una sección (Notas, Asistencia, etc), volvemos al menú del curso
               setActiveTab('menu');
             }
           }}
@@ -657,7 +667,7 @@ export default function CursoDashboard({ session }) {
         <div id="tour-curso-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '2.5rem', color: '#fff', textTransform: 'capitalize', letterSpacing: '3px' }}>
-              {(curso.anio_o_grado + (curso.division ? ` ${curso.division}` : '')).toLowerCase().replace(/([ÂºÂ°oa])([0-9])/gi, '$1 $2')}
+              {(curso.anio_o_grado + (curso.division ? ` ${curso.division}` : '')).toLowerCase().replace(/([º°oa])([0-9])/gi, '$1 $2')}
             </h1>
             <p style={{ margin: '0.5rem 0 0 0', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)', fontWeight: 800 }}>
               {curso.materia || 'Rol General'}
@@ -667,12 +677,12 @@ export default function CursoDashboard({ session }) {
             onClick={() => setForceStartTour(true)}
             style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', borderRadius: '12px', padding: '6px 12px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
           >
-            â“ GuÃ­a de Planillas
+            Guía de Planillas
           </button>
         </div>
       </header>
 
-      {/* NAVEGACIÃ“N SUPERIOR (ESTILO PREMIUM CENTRADO) */}
+      {/* NAVEGACIÓN SUPERIOR (ESTILO PREMIUM CENTRADO) */}
       <div style={{ maxWidth: '1000px', margin: '0 auto 2.5rem auto', padding: '0 1rem' }}>
         <div style={{
           display: 'grid',
@@ -779,7 +789,7 @@ export default function CursoDashboard({ session }) {
               <div style={{ background: '#6366f1', width: '55px', height: '55px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(99, 102, 241, 0.4)' }}>
                 <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
               </div>
-              <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>NÃ³mina</h4>
+              <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Nómina</h4>
             </div>
 
             <div id="tour-planilla-seguimiento" onClick={() => setActiveTab('seguimiento')} className="glass-card animate-slide-up" style={{
@@ -793,7 +803,7 @@ export default function CursoDashboard({ session }) {
               <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Seguimiento</h4>
             </div>
 
-            {/* FILA 2: GESTIÃ“N Y CIERRES */}
+            {/* FILA 2: GESTIÓN Y CIERRES */}
             <Link id="tour-planilla-libro" to={`/libro-temas?curso=${id}`} style={{ textDecoration: 'none' }}>
               <div className="glass-card animate-slide-up" style={{
                 padding: '1.2rem 0.8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', height: '170px',
@@ -828,7 +838,7 @@ export default function CursoDashboard({ session }) {
               <div style={{ background: '#f59e0b', width: '55px', height: '55px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(245, 158, 11, 0.4)' }}>
                 <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
               </div>
-              <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>SÃ¡bana de Notas</h4>
+              <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Sábana de Notas</h4>
             </div>
 
             {/* FILA 3: CIERRES */}
@@ -840,7 +850,7 @@ export default function CursoDashboard({ session }) {
               <div style={{ background: 'var(--danger)', width: '55px', height: '55px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.4)' }}>
                 <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
               </div>
-              <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>IntensificaciÃ³n</h4>
+              <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Intensificación</h4>
             </div>
             {/* FILA FINAL: FECHAS IMPORTANTES (ESTRELLA DEL SHOW - ANCHO COMPLETO) */}
             <div id="tour-planilla-fechas" onClick={() => setShowEventoModal(true)} className="glass-card animate-slide-up" style={{
@@ -863,7 +873,7 @@ export default function CursoDashboard({ session }) {
             <div style={{ background: '#f59e0b', width: '80px', height: '80px', borderRadius: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', margin: '0 auto 2rem auto', boxShadow: '0 15px 30px rgba(245, 158, 11, 0.4)' }}>
               <svg viewBox="0 0 24 24" width="45" height="45" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             </div>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#fff' }}>SÃ¡bana de Notas</h2>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#fff' }}>Sábana de Notas</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>Cargando planilla oficial del curso desde el servidor... Por favor, espere.</p>
           </div>
         </div>
@@ -876,14 +886,14 @@ export default function CursoDashboard({ session }) {
               <svg viewBox="0 0 24 24" width="45" height="45" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
             </div>
             <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '1rem', color: '#fff' }}>NOTAS / ACTAS</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>SecciÃ³n de gestiÃ³n de documentaciÃ³n oficial y actas de examen. PrÃ³ximamente disponible.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>Sección de gestión de documentación oficial y actas de examen. Próximamente disponible.</p>
           </div>
         </div>
       )}
 
       {activeTab === 'nomina' && (
         <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem' }}>
-          {/* BOTÃ“N OCR ESCANEAR */}
+          {/* BOTÓN OCR ESCANEAR */}
           <button
             onClick={() => { setOcrError(null); setShowOCRModal(true); }}
             style={{
@@ -893,7 +903,7 @@ export default function CursoDashboard({ session }) {
             }}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            ðŸ“· ESCANEAR PLANILLA (OCR)
+            📷 ESCANEAR PLANILLA (OCR)
           </button>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', gap: '1rem' }}>
@@ -916,7 +926,7 @@ export default function CursoDashboard({ session }) {
             </button>
           </div>
 
-          {/* ESTILO RESPONSIVE BLINDADO (Directo en el componente para evitar cachÃ©) */}
+          {/* ESTILO RESPONSIVE BLINDADO (Directo en el componente para evitar caché) */}
           <style>{`
             .student-list-container {
               display: flex;
@@ -931,7 +941,7 @@ export default function CursoDashboard({ session }) {
               display: flex;
               align-items: center;
               gap: 15px;
-              padding: 1.2rem 2rem; /* TamaÃ±o PC Premium */
+              padding: 1.2rem 2rem; /* Tamaño PC Premium */
               border-bottom: 1px solid rgba(255,255,255,0.05);
               transition: background 0.2s;
             }
@@ -957,10 +967,10 @@ export default function CursoDashboard({ session }) {
               text-align: center;
             }
 
-            /* --- AJUSTES PARA CELULAR (MÃ“VIL) --- */
+            /* --- AJUSTES PARA CELULAR (MÓVIL) --- */
             @media (max-width: 480px) {
               .student-row {
-                padding: 8px 12px !important; /* Super compacto en mÃ³vil */
+                padding: 8px 12px !important; /* Super compacto en móvil */
                 gap: 10px !important;
               }
               .student-name {
@@ -1036,13 +1046,13 @@ export default function CursoDashboard({ session }) {
           <div style={{ background: 'var(--card-bg)', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--primary)' }}>SÃ¡bana de Seguimiento Profesional</h3>
+                <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--primary)' }}>Sábana de Seguimiento Profesional</h3>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Esta planilla se expande al total de tu pantalla en PC.</p>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   onClick={async () => {
-                    const nombre = prompt('Â¿QuÃ© nombre le ponÃ©s a la columna? (Ej: TP 1, EvaluaciÃ³n, Oral...)');
+                    const nombre = prompt('¿Qué nombre le ponés a la columna? (Ej: TP 1, Evaluación, Oral...)');
                     if (nombre) {
                       try {
                         const nueva = await SeguimientoAPI.createActividad({
@@ -1059,10 +1069,10 @@ export default function CursoDashboard({ session }) {
                           } catch (err) {}
                           return updated;
                         });
-                        setActiveActividadIdx(actividades.length); // Ir a la nueva en mÃ³vil
+                        setActiveActividadIdx(actividades.length); // Ir a la nueva en móvil
                       } catch (e) {
                         console.error(e);
-                        alert("Error al crear columna.");
+                        triggerToast('No se pudo crear la columna.', 'error');
                       }
                     }
                   }}
@@ -1074,7 +1084,7 @@ export default function CursoDashboard({ session }) {
               </div>
             </div>
 
-            {/* VISTA MÃ“VIL: CARGA RÃPIDA POR ACTIVIDAD (CARRUSEL) */}
+            {/* VISTA MÓVIL: CARGA RÁPIDA POR ACTIVIDAD (CARRUSEL) */}
             <div className="show-mobile-only" style={{ padding: '1rem', background: 'rgba(255,255,255,0.01)' }}>
               {actividades.length > 0 ? (
                 <>
@@ -1084,7 +1094,7 @@ export default function CursoDashboard({ session }) {
                         onClick={() => setActiveActividadIdx(prev => Math.max(0, prev - 1))}
                         disabled={activeActividadIdx === 0}
                         style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '1.2rem', opacity: activeActividadIdx === 0 ? 0.3 : 1 }}
-                      >â®</button>
+                      >‹</button>
 
                       <select
                         value={['TP 1', 'TP 2', 'TP 3', 'Eva. 1', 'Eva. 2', 'Oral', 'Carpeta'].includes(actividades[activeActividadIdx].nombre) ? actividades[activeActividadIdx].nombre : 'OTRO'}
@@ -1092,7 +1102,7 @@ export default function CursoDashboard({ session }) {
                           let nuevoNombre = e.target.value;
                           const act = actividades[activeActividadIdx];
                           if (nuevoNombre === 'BORRAR') {
-                            if (window.confirm('Â¿Borrar esta columna?')) {
+                            if (window.confirm('¿Borrar esta columna?')) {
                               deleteActividad(act.id);
                               await SeguimientoAPI.deleteActividad(act.id);
                               setActiveActividadIdx(0);
@@ -1100,7 +1110,7 @@ export default function CursoDashboard({ session }) {
                             return;
                           }
                           if (nuevoNombre === 'OTRO') {
-                            nuevoNombre = prompt('IngresÃ¡ el nombre personalizado:', act.nombre);
+                            nuevoNombre = prompt('Ingresá el nombre personalizado:', act.nombre);
                           }
                           if (nuevoNombre && nuevoNombre !== act.nombre) {
                             updateActividad(act.id, { nombre: nuevoNombre });
@@ -1127,14 +1137,14 @@ export default function CursoDashboard({ session }) {
                         <option style={{ background: '#1E293B', color: '#fff' }} value="Oral">Oral</option>
                         <option style={{ background: '#1E293B', color: '#fff' }} value="Carpeta">Carpeta</option>
                         <option style={{ background: '#1E293B', color: '#fff' }} value="OTRO">Otro...</option>
-                        <option style={{ background: '#1E293B', color: 'var(--danger)' }} value="BORRAR">ðŸ—‘ï¸ Borrar</option>
+                        <option style={{ background: '#1E293B', color: 'var(--danger)' }} value="BORRAR">🗑ï¸ Borrar</option>
                       </select>
 
                       <button
                         onClick={() => setActiveActividadIdx(prev => Math.min(actividades.length - 1, prev + 1))}
                         disabled={activeActividadIdx === actividades.length - 1}
                         style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '1.2rem', opacity: activeActividadIdx === actividades.length - 1 ? 0.3 : 1 }}
-                      >â¯</button>
+                      >›</button>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <input
@@ -1159,7 +1169,7 @@ export default function CursoDashboard({ session }) {
                       const seg = segsAlumno.find(s => s.tema_id === act.id);
                       const valor = seg?.nota ?? '';
 
-                      // CÃ¡lculo de promedio para el celular
+                      // Cálculo de promedio para el celular
                       const notasNum = segsAlumno.map(s => parseFloat(s.nota)).filter(n => !isNaN(n));
                       const promedio = notasNum.length > 0
                         ? (notasNum.reduce((a, b) => a + b, 0) / notasNum.length).toFixed(1)
@@ -1186,7 +1196,7 @@ export default function CursoDashboard({ session }) {
                               )}
                               <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', background: 'rgba(79, 70, 229, 0.1)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>PROM: {promedio}</span>
                             </div>
-                            <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>Nota Actual: {valor || 'â€”'}</span>
+                            <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>Nota Actual: {valor || '—'}</span>
                           </div>
                           <input
                             key={`${alumno.id}-${activeActividadIdx}`}
@@ -1208,7 +1218,7 @@ export default function CursoDashboard({ session }) {
                                   tipo_evaluacion: tipoEv
                                 };
 
-                                // Actualizamos localmente INSTANTÃNEO
+                                // Actualizamos localmente INSTANTÁNEO
                                 setSeguimiento(prev => {
                                   const newSeg = [...prev];
                                   const idxSeg = newSeg.findIndex(s => s.alumno_id === alumno.id && s.tema_id === act.id);
@@ -1217,12 +1227,12 @@ export default function CursoDashboard({ session }) {
                                   return newSeg;
                                 });
 
-                                // Guardamos en la base de datos "por atrÃ¡s"
+                                // Guardamos en la base de datos "por atrás"
                                 try {
                                   await SeguimientoAPI.saveMasivo([nuevoDato]);
                                 } catch (err) {
                                   console.error("Error al guardar en la DB:", err);
-                                  alert("No se pudo guardar la nota en la base de datos. RevisÃ¡ tu conexiÃ³n.");
+                                  triggerToast('No se pudo guardar la nota en la base de datos. Revisá tu conexión.', 'error');
                                 }
                               }
                             }}
@@ -1245,12 +1255,12 @@ export default function CursoDashboard({ session }) {
                 </>
               ) : (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  AgregÃ¡ una actividad para empezar a cargar notas.
+                  Agregá una actividad para empezar a cargar notas.
                 </div>
               )}
             </div>
 
-            {/* VISTA PC: TABLA COMPLETA (SÃBANA) */}
+            {/* VISTA PC: TABLA COMPLETA (SÁBANA) */}
             <div className="hide-mobile" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px', maxHeight: '75vh' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', tableLayout: 'fixed' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 100 }}>
@@ -1264,14 +1274,14 @@ export default function CursoDashboard({ session }) {
                             onChange={async (e) => {
                               let nuevoNombre = e.target.value;
                               if (nuevoNombre === 'BORRAR') {
-                                if (window.confirm('Â¿Borrar esta columna?')) {
+                                if (window.confirm('¿Borrar esta columna?')) {
                                   deleteActividad(act.id);
                                   await SeguimientoAPI.deleteActividad(act.id);
                                 }
                                 return;
                               }
                               if (nuevoNombre === 'OTRO') {
-                                nuevoNombre = prompt('IngresÃ¡ el nombre personalizado:', act.nombre);
+                                nuevoNombre = prompt('Ingresá el nombre personalizado:', act.nombre);
                               }
                               if (nuevoNombre && nuevoNombre !== act.nombre) {
                                 updateActividad(act.id, { nombre: nuevoNombre });
@@ -1288,7 +1298,7 @@ export default function CursoDashboard({ session }) {
                             <option style={{ background: '#1E293B', color: '#fff' }} value="Oral">Oral</option>
                             <option style={{ background: '#1E293B', color: '#fff' }} value="Carpeta">Carpeta</option>
                             <option style={{ background: '#1E293B', color: '#fff' }} value="OTRO">Otro...</option>
-                            <option style={{ background: '#1E293B', color: 'var(--danger)' }} value="BORRAR">ðŸ—‘ï¸ Borrar</option>
+                            <option style={{ background: '#1E293B', color: 'var(--danger)' }} value="BORRAR">🗑ï¸ Borrar</option>
                           </select>
                           <input
                             type="date"
@@ -1328,8 +1338,10 @@ export default function CursoDashboard({ session }) {
                                   });
                                   return newSeg;
                                 });
-                                alert(`Â¡Guardado! Notas de ${act.nombre} listas.`);
-                              } catch (e) { alert("Error al guardar."); }
+                                triggerToast(`¡Guardado! Notas de ${act.nombre} listas.`);
+                              } catch (e) {
+                                triggerToast('Error al guardar las notas.', 'error');
+                              }
                             }}
                             style={{ background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.55rem', fontWeight: 900, cursor: 'pointer', padding: '1px 3px' }}
                           >
@@ -1438,13 +1450,13 @@ export default function CursoDashboard({ session }) {
           </div>
 
           {isMobile ? (
-            /* VISTA MOBILE: CARDS PEDAGÃ“GICAS DINÃMICAS Y INTERACTIVAS */
+            /* VISTA MOBILE: CARDS PEDAGÓGICAS DINÁMICAS Y INTERACTIVAS */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-              {/* Selector Deslizante de Carga RÃ¡pida */}
+              {/* Selector Deslizante de Carga Rápida */}
               <div style={{ padding: '0 1rem', marginBottom: '4px' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-                  Columna / PerÃ­odo a Cargar RÃ¡pido:
+                  Columna / Período a Cargar Rápido:
                 </div>
                 <div className="no-scrollbar" style={{
                   display: 'flex',
@@ -1454,13 +1466,13 @@ export default function CursoDashboard({ session }) {
                   WebkitOverflowScrolling: 'touch'
                 }}>
                   {[
-                    { id: 'resumen', label: 'ðŸ“Š Vista General' },
-                    { id: 'c1_val', label: 'ðŸŸ£ 1Â° Cuatri (Val)' },
-                    { id: 'c1_notas', label: 'ðŸ”¢ 1Â° Cuatri (Notas)' },
-                    { id: 'c2_val', label: 'ðŸŸ£ 2Â° Cuatri (Val)' },
-                    { id: 'c2_notas', label: 'ðŸ”¢ 2Â° Cuatri (Notas)' },
-                    { id: 'cierres', label: 'ðŸ† Cierres Anuales' },
-                    { id: 'observaciones', label: 'ðŸ“ Observaciones' }
+                    { id: 'resumen', label: '📊 Vista General' },
+                    { id: 'c1_val', label: '🟣 1° Cuatri (Val)' },
+                    { id: 'c1_notas', label: '🔢 1° Cuatri (Notas)' },
+                    { id: 'c2_val', label: '🟣 2° Cuatri (Val)' },
+                    { id: 'c2_notas', label: '🔢 2° Cuatri (Notas)' },
+                    { id: 'cierres', label: '🏆 Cierres Anuales' },
+                    { id: 'observaciones', label: '📝 Observaciones' }
                   ].map(tab => (
                     <button
                       key={tab.id}
@@ -1552,9 +1564,9 @@ export default function CursoDashboard({ session }) {
                         </div>
                       </div>
 
-                      {/* CONTENIDO SEGÃšN LA SUB-SOLAPA SELECCIONADA */}
+                      {/* CONTENIDO SEGÚN LA SUB-SOLAPA SELECCIONADA */}
 
-                      {/* 1. VISTA GENERAL (RESUMEN DE SÃBANA) */}
+                      {/* 1. VISTA GENERAL (RESUMEN DE SÁBANA) */}
                       {mobileCargaTab === 'resumen' && (
                         <>
                           <div style={{
@@ -1563,7 +1575,7 @@ export default function CursoDashboard({ session }) {
                             gap: '8px',
                             marginTop: '4px'
                           }}>
-                            {/* Columna 1Â° Cuatrimestre */}
+                            {/* Columna 1° Cuatrimestre */}
                             <div style={{
                               background: 'rgba(255, 255, 255, 0.01)',
                               border: '1px solid rgba(255,255,255,0.03)',
@@ -1574,7 +1586,7 @@ export default function CursoDashboard({ session }) {
                               gap: '6px'
                             }}>
                               <div style={{ fontSize: '0.55rem', color: '#a78bfa', fontWeight: 900, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '3px', marginBottom: '2px', letterSpacing: '0.5px' }}>
-                                1Â° CUATRI
+                                1° CUATRI
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 4px', fontSize: '0.65rem' }}>
                                 <div style={{ textAlign: 'center' }}>
@@ -1623,7 +1635,7 @@ export default function CursoDashboard({ session }) {
                               </div>
                             </div>
 
-                            {/* Columna 2Â° Cuatrimestre */}
+                            {/* Columna 2° Cuatrimestre */}
                             <div style={{
                               background: 'rgba(255, 255, 255, 0.01)',
                               border: '1px solid rgba(255,255,255,0.03)',
@@ -1634,7 +1646,7 @@ export default function CursoDashboard({ session }) {
                               gap: '6px'
                             }}>
                               <div style={{ fontSize: '0.55rem', color: '#a78bfa', fontWeight: 900, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '3px', marginBottom: '2px', letterSpacing: '0.5px' }}>
-                                2Â° CUATRI
+                                2° CUATRI
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 4px', fontSize: '0.65rem' }}>
                                 <div style={{ textAlign: 'center' }}>
@@ -1735,22 +1747,22 @@ export default function CursoDashboard({ session }) {
                           }}>
                             <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {(() => {
-                                if (dataOficial.observaciones) return `ðŸ“ ${dataOficial.observaciones}`;
+                                if (dataOficial.observaciones) return `📝 ${dataOficial.observaciones}`;
                                 const segsAlumno = seguimiento.filter(s => s.alumno_id === alumno.id);
                                 if (segsAlumno.length > 0) {
-                                  return `ðŸ“‹ ${segsAlumno.map(s => `${s.tema_id}: ${s.nota || 'NO'}`).join(' | ')}`;
+                                  return `📋 ${segsAlumno.map(s => `${s.tema_id}: ${s.nota || 'NO'}`).join(' | ')}`;
                                 }
                                 return 'Sin observaciones cargadas';
                               })()}
                             </span>
                             <span style={{ color: 'var(--primary)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              Editar Ficha âž”
+                              Editar Ficha ➔
                             </span>
                           </div>
                         </>
                       )}
 
-                      {/* 2. CARGA RÃPIDA: 1Â° CUATRI VALORACIONES */}
+                      {/* 2. CARGA RÁPIDA: 1° CUATRI VALORACIONES */}
                       {mobileCargaTab === 'c1_val' && (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
                           {[
@@ -1790,7 +1802,7 @@ export default function CursoDashboard({ session }) {
                         </div>
                       )}
 
-                      {/* 3. CARGA RÃPIDA: 1Â° CUATRI NOTAS */}
+                      {/* 3. CARGA RÁPIDA: 1° CUATRI NOTAS */}
                       {mobileCargaTab === 'c1_notas' && (
                         <div style={{ display: 'flex', gap: '8px', padding: '4px 0', alignItems: 'center' }}>
                           {[
@@ -1838,7 +1850,7 @@ export default function CursoDashboard({ session }) {
                         </div>
                       )}
 
-                      {/* 4. CARGA RÃPIDA: 2Â° CUATRI VALORACIONES */}
+                      {/* 4. CARGA RÁPIDA: 2° CUATRI VALORACIONES */}
                       {mobileCargaTab === 'c2_val' && (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
                           {[
@@ -1878,7 +1890,7 @@ export default function CursoDashboard({ session }) {
                         </div>
                       )}
 
-                      {/* 5. CARGA RÃPIDA: 2Â° CUATRI NOTAS */}
+                      {/* 5. CARGA RÁPIDA: 2° CUATRI NOTAS */}
                       {mobileCargaTab === 'c2_notes' || mobileCargaTab === 'c2_notas' ? (
                         <div style={{ display: 'flex', gap: '8px', padding: '4px 0', alignItems: 'center' }}>
                           {[
@@ -1926,7 +1938,7 @@ export default function CursoDashboard({ session }) {
                         </div>
                       ) : null}
 
-                      {/* 6. CARGA RÃPIDA: CIERRES ANUALES */}
+                      {/* 6. CARGA RÁPIDA: CIERRES ANUALES */}
                       {mobileCargaTab === 'cierres' && (
                         <div style={{ display: 'flex', gap: '8px', padding: '4px 0', alignItems: 'center' }}>
                           {[
@@ -1973,7 +1985,7 @@ export default function CursoDashboard({ session }) {
                         </div>
                       )}
 
-                      {/* 7. CARGA RÃPIDA: OBSERVACIONES Y TRAYECTORIA */}
+                      {/* 7. CARGA RÁPIDA: OBSERVACIONES Y TRAYECTORIA */}
                       {mobileCargaTab === 'observaciones' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                           <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 800 }}>Notas de Seguimiento (Trabajos, Carpetas, etc.)</span>
@@ -2035,7 +2047,7 @@ export default function CursoDashboard({ session }) {
                           <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 800, marginTop: '4px' }}>Observaciones / Informe de Trayectoria</span>
                           <textarea
                             value={dataOficial.observaciones || ''}
-                            placeholder="Escriba aquÃ­ observaciones de trayectoria..."
+                            placeholder="Escriba aquí observaciones de trayectoria..."
                             onChange={(e) => {
                               const v = e.target.value;
                               setPlanillaOficial(prev => prev.map(p => p.alumno_id === alumno.id ? { ...p, observaciones: v } : p));
@@ -2056,7 +2068,7 @@ export default function CursoDashboard({ session }) {
               </div>
             </div>
           ) : (
-            /* VISTA DESKTOP: TABLA HORIZONTAL (SÃBANA DE NOTAS) */
+            /* VISTA DESKTOP: TABLA HORIZONTAL (SÁBANA DE NOTAS) */
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.6rem', minWidth: '1800px', tableLayout: 'fixed' }}>
                 <thead>
@@ -2073,8 +2085,8 @@ export default function CursoDashboard({ session }) {
                       boxShadow: '3px 0 5px rgba(0,0,0,0.3)',
                       fontSize: '0.6rem'
                     }}>APELLIDO Y NOMBRES</th>
-                    <th colSpan="9" style={{ padding: '0.4rem', textAlign: 'center', borderRight: '2px solid var(--border)', background: 'rgba(79, 70, 229, 0.05)' }}>1Â° CUATRIMESTRE</th>
-                    <th colSpan="9" style={{ padding: '0.4rem', textAlign: 'center', borderRight: '2px solid var(--border)', background: 'rgba(79, 70, 229, 0.05)' }}>2Â° CUATRIMESTRE</th>
+                    <th colSpan="9" style={{ padding: '0.4rem', textAlign: 'center', borderRight: '2px solid var(--border)', background: 'rgba(79, 70, 229, 0.05)' }}>1° CUATRIMESTRE</th>
+                    <th colSpan="9" style={{ padding: '0.4rem', textAlign: 'center', borderRight: '2px solid var(--border)', background: 'rgba(79, 70, 229, 0.05)' }}>2° CUATRIMESTRE</th>
                     <th colSpan="3" style={{ padding: '0.4rem', textAlign: 'center', borderRight: '1px solid var(--border)', background: 'rgba(16, 185, 129, 0.05)' }}>CIERRES ANUALES</th>
                     <th rowSpan="2" style={{ padding: '0.4rem', textAlign: 'center', width: '55px', borderRight: '1px solid var(--border)' }}>NOTA FINAL</th>
                     <th rowSpan="2" style={{ padding: '0.4rem', textAlign: 'center', minWidth: '350px', color: '#10b981' }}>OBSERVACIONES DE TRAYECTORIA</th>
@@ -2175,15 +2187,27 @@ export default function CursoDashboard({ session }) {
                               placeholder="-"
                               onChange={(e) => {
                                 const val = e.target.value.toUpperCase();
-                                setPlanillaOficial(prev => prev.map(p =>
-                                  p.alumno_id === alumno.id ? { ...p, [col.key]: val } : p
-                                ));
+                                setPlanillaOficial(prev => {
+                                  const existe = prev.find(p => p.alumno_id === alumno.id);
+                                  if (existe) {
+                                    return prev.map(p =>
+                                      p.alumno_id === alumno.id ? { ...p, [col.key]: val } : p
+                                    );
+                                  }
+                                  return [...prev, {
+                                    alumno_id: alumno.id,
+                                    curso_id: id,
+                                    docente_id: docenteId,
+                                    [col.key]: val,
+                                    observaciones: ''
+                                  }];
+                                });
                               }}
                               onBlur={(e) => {
                                 const val = e.target.value.toUpperCase();
                                 if (!val || val === '-') return;
 
-                                // LÃ³gica de ValidaciÃ³n Estricta
+                                // Lógica de Validación Estricta
                                 const esSigla = col.key.includes('sigla');
                                 const esBim = col.key.includes('bim') || col.key.includes('final') || col.key.includes('nota') || col.key.includes('intensif') || col.key.includes('int');
 
@@ -2263,7 +2287,7 @@ export default function CursoDashboard({ session }) {
         </div>
       )}
 
-      {/* MODAL FULLSCREEN DE EDICIÃ“N MÃ“VIL POR ALUMNO */}
+      {/* MODAL FULLSCREEN DE EDICIÓN MÓVIL POR ALUMNO */}
       {isMobile && alumnoEdicion && (
         <div style={{
           position: 'fixed',
@@ -2293,13 +2317,13 @@ export default function CursoDashboard({ session }) {
               onClick={() => setAlumnoEdicion(null)}
               style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer', padding: '0 8px' }}
             >
-              âœ•
+              ✕
             </button>
             <div style={{ textAlign: 'center', flex: 1, padding: '0 10px' }}>
               <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif", color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {alumnoEdicion.apellido}, {alumnoEdicion.nombre}
               </h3>
-              <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)' }}>EdiciÃ³n de Ficha PedagÃ³gica</p>
+              <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Edición de Ficha Pedagógica</p>
             </div>
             <button
               onClick={() => setAlumnoEdicion(null)}
@@ -2309,7 +2333,7 @@ export default function CursoDashboard({ session }) {
             </button>
           </div>
 
-          {/* Selector de PestaÃ±as (Tabs) */}
+          {/* Selector de Pestañas (Tabs) */}
           <div style={{
             display: 'flex',
             background: '#121625',
@@ -2349,11 +2373,11 @@ export default function CursoDashboard({ session }) {
             {modalTab === 'valoraciones' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                 <h4 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Valoraciones PedagÃ³gicas (TEA / TEP / TED / A)
+                  Valoraciones Pedagógicas (TEA / TEP / TED / A)
                 </h4>
 
                 <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '12px', border: '1px solid var(--border)', padding: '1rem' }}>
-                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>1Â° Cuatrimestre</p>
+                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>1° Cuatrimestre</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     {[
                       { key: 'c1_p1_sigla', label: 'P1 (M-A)' },
@@ -2365,7 +2389,7 @@ export default function CursoDashboard({ session }) {
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '12px', border: '1px solid var(--border)', padding: '1rem' }}>
-                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>2Â° Cuatrimestre</p>
+                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>2° Cuatrimestre</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     {[
                       { key: 'c2_p1_sigla', label: 'P5 (A-S)' },
@@ -2385,7 +2409,7 @@ export default function CursoDashboard({ session }) {
                 </h4>
 
                 <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '12px', border: '1px solid var(--border)', padding: '1rem' }}>
-                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>1Â° Cuatrimestre</p>
+                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>1° Cuatrimestre</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     {[
                       { key: 'c1_bim1_nota', label: 'BIM 1' },
@@ -2400,7 +2424,7 @@ export default function CursoDashboard({ session }) {
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '12px', border: '1px solid var(--border)', padding: '1rem' }}>
-                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>2Â° Cuatrimestre</p>
+                  <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>2° Cuatrimestre</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     {[
                       { key: 'c2_bim1_nota', label: 'BIM 3' },
@@ -2431,7 +2455,7 @@ export default function CursoDashboard({ session }) {
             {modalTab === 'observaciones' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', flex: 1 }}>
                 <h4 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Trayectoria PedagÃ³gica & Observaciones
+                  Trayectoria Pedagógica & Observaciones
                 </h4>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -2544,7 +2568,7 @@ export default function CursoDashboard({ session }) {
               <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, letterSpacing: '1px', fontSize: '1.2rem', textTransform: 'uppercase' }}>
                 Escanear Planilla de Papel
               </h3>
-              <button className="btn-close" disabled={isProcessingOCR} onClick={() => setShowOCRModal(false)}>âœ•</button>
+              <button className="btn-close" disabled={isProcessingOCR} onClick={() => setShowOCRModal(false)}>✕</button>
             </div>
 
             <div style={{ padding: '1.5rem 1rem' }}>
@@ -2581,7 +2605,7 @@ export default function CursoDashboard({ session }) {
                       </div>
                       <div style={{ textAlign: 'center', fontFamily: "'Outfit', sans-serif" }}>
                         <p style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 5px 0' }}>Cargar Foto de Planilla</p>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>HacÃ© clic aquÃ­ para elegir una foto o PDF</p>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Hacé clic aquí para elegir una foto o PDF</p>
                       </div>
                     </>
                   )}
@@ -2597,7 +2621,7 @@ export default function CursoDashboard({ session }) {
                 <div className="animate-fade-in" style={{ fontFamily: "'Outfit', sans-serif" }}>
                   <p style={{ fontWeight: 800, marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
                     Alumnos Detectados:
-                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'none', letterSpacing: 0 }}>ConfirmÃ¡ los nombres antes de guardar</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'none', letterSpacing: 0 }}>Confirmá los nombres antes de guardar</span>
                   </p>
                   <div style={{ maxHeight: '350px', overflowY: 'auto', background: 'rgba(0,0,0,0.4)', borderRadius: '20px', padding: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
                     {ocrResults.map((al, idx) => (
@@ -2639,15 +2663,15 @@ export default function CursoDashboard({ session }) {
                     onClick={() => setOcrResults([])}
                     style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', marginTop: '10px', cursor: 'pointer', fontWeight: 700 }}
                   >
-                    â† Volver a cargar otra foto
+                    ← Volver a cargar otra foto
                   </button>
                 </div>
               )}
 
               {!ocrResults.length && (
                 <div style={{ marginTop: '1.5rem', textAlign: 'left', background: 'rgba(79, 70, 229, 0.05)', padding: '1rem', borderRadius: '15px', border: '1px solid rgba(79, 70, 229, 0.2)' }}>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '0.4rem' }}>ðŸ’¡ Tip para profes:</p>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>Asegurate de que haya buena luz. La App buscarÃ¡ nombres con formato "Apellido, Nombre". PodrÃ¡s editarlos si lee algo mal.</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '0.4rem' }}>💡 Tip para profes:</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>Asegurate de que haya buena luz. La App buscará nombres con formato "Apellido, Nombre". Podrás editarlos si lee algo mal.</p>
                 </div>
               )}
             </div>
@@ -2669,7 +2693,7 @@ export default function CursoDashboard({ session }) {
         </div>
       )}
 
-      {/* MÃ“DULO INTENSIFICACIÃ“N (BÃšMERAN) */}
+      {/* MÓDULO INTENSIFICACIÓN (BÚMERAN) */}
       {activeTab === 'intensificacion' && (
         <div className="animate-fade-in" style={{ background: 'var(--card-bg)', borderRadius: '20px', border: '1px solid var(--border)', overflow: 'hidden' }}>
           <div style={{ padding: '1.2rem', borderBottom: '1px solid var(--border)', background: 'rgba(239, 68, 68, 0.05)' }}>
@@ -2681,11 +2705,11 @@ export default function CursoDashboard({ session }) {
               gap: isMobile ? '6px' : '0',
               marginBottom: '1.2rem'
             }}>
-              <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--danger)', fontWeight: 800 }}>IntensificaciÃ³n</h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>RecuperaciÃ³n de Procesos Pendientes</span>
+              <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--danger)', fontWeight: 800 }}>Intensificación</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Recuperación de Procesos Pendientes</span>
             </div>
 
-            {/* ðŸŽ¯ SELECTORES DE PERIODO NATALIA STYLE */}
+            {/* 🎯 SELECTORES DE PERIODO NATALIA STYLE */}
             <div style={{
               display: 'flex',
               gap: isMobile ? '4px' : '8px',
@@ -2761,7 +2785,7 @@ export default function CursoDashboard({ session }) {
                   }
                   if (activePeriodoInt === 'O-N') {
                     const riesgoActual = esRiesgo(dataO.c2_p3_sigla) || esRiesgo(dataO.c2_p4_sigla);
-                    // Acumulativo de todo el aÃ±o no acreditado
+                    // Acumulativo de todo el año no acreditado
                     return riesgoActual || debeMA || debeMJJ || debeAS;
                   }
                   return false;
@@ -2770,7 +2794,7 @@ export default function CursoDashboard({ session }) {
                 if (deudores.length === 0) {
                   return (
                     <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', opacity: 0.5, fontSize: '0.85rem' }}>
-                      ðŸŽ‰ No hay alumnos detectados con TED o TEP para el periodo {activePeriodoInt}.
+                      🎉 No hay alumnos detectados con TED o TEP para el periodo {activePeriodoInt}.
                     </div>
                   );
                 }
@@ -2820,12 +2844,12 @@ export default function CursoDashboard({ session }) {
                         </div>
                         {tieneArrastre && (
                           <span style={{ fontSize: '0.65rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '2px 8px', borderRadius: '4px', width: 'fit-content', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: 800 }}>
-                            ðŸš© PENDIENTE: {pendientes.join(', ')}
+                            🚩 PENDIENTE: {pendientes.join(', ')}
                           </span>
                         )}
                       </div>
 
-                      {/* Fila 2: Estado trayectoria y Nota de recuperaciÃ³n */}
+                      {/* Fila 2: Estado trayectoria y Nota de recuperación */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
                         {/* Estado */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -2841,7 +2865,7 @@ export default function CursoDashboard({ session }) {
                               letterSpacing: '0.5px',
                               display: 'inline-block'
                             }}>
-                              {esAprobado ? 'âœ“ Aprobado' : 'âš¡ En Proceso'}
+                              {esAprobado ? '✓ Aprobado' : '⚡ En Proceso'}
                             </span>
                           </div>
                           {alumno.periodos_pendientes && (
@@ -2900,16 +2924,16 @@ export default function CursoDashboard({ session }) {
                   <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
                     <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Alumno</th>
                     <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Estado Trayectoria</th>
-                    <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Nota RecuperaciÃ³n (1-10 o A)</th>
+                    <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Nota Recuperación (1-10 o A)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(() => {
-                    // Funciones de Ayuda (Globales al MÃ³dulo)
+                    // Funciones de Ayuda (Globales al Módulo)
                     const esRiesgo = (s) => s === 'TED' || s === 'TEP';
                     const noAcredito = (n) => !n || n === 'A' || parseFloat(n) < 7;
 
-                    // Mapeo dinÃ¡mico segÃºn periodo Natalia
+                    // Mapeo dinámico según periodo Natalia
                     const mapeo = { 'M-A': 'c1_b1_int', 'M-J-J': 'c1_b2_int', 'A-S': 'c2_b3_int', 'O-N': 'c2_b4_int' };
                     const colDestino = mapeo[activePeriodoInt];
 
@@ -2925,7 +2949,7 @@ export default function CursoDashboard({ session }) {
                       const dataO = planillaOficial.find(p => p.alumno_id === alumno.id) || {};
                       const { debeMA, debeMJJ, debeAS } = getDebeInfo(dataO);
 
-                      // LÃ³gica de Arrastre Natalia: Aparece si tiene riesgo ACTUAL o si DEBE perÃ­odos anteriores
+                      // Lógica de Arrastre Natalia: Aparece si tiene riesgo ACTUAL o si DEBE períodos anteriores
                       if (activePeriodoInt === 'M-A') {
                         return esRiesgo(dataO.c1_p1_sigla) || esRiesgo(dataO.c1_p2_sigla);
                       }
@@ -2940,7 +2964,7 @@ export default function CursoDashboard({ session }) {
                       }
                       if (activePeriodoInt === 'O-N') {
                         const riesgoActual = esRiesgo(dataO.c2_p3_sigla) || esRiesgo(dataO.c2_p4_sigla);
-                        // Acumulativo de todo el aÃ±o no acreditado
+                        // Acumulativo de todo el año no acreditado
                         return riesgoActual || debeMA || debeMJJ || debeAS;
                       }
                       return false;
@@ -2950,7 +2974,7 @@ export default function CursoDashboard({ session }) {
                       return (
                         <tr>
                           <td colSpan="3" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)', opacity: 0.5 }}>
-                            ðŸŽ‰ No hay alumnos detectados con TED o TEP para el periodo {activePeriodoInt}.
+                            🎉 No hay alumnos detectados con TED o TEP para el periodo {activePeriodoInt}.
                           </td>
                         </tr>
                       );
@@ -2990,7 +3014,7 @@ export default function CursoDashboard({ session }) {
                               </div>
                               {tieneArrastre && (
                                 <span style={{ fontSize: '0.65rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '2px 8px', borderRadius: '4px', width: 'fit-content', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: 800 }}>
-                                  ðŸš© PENDIENTE: {pendientes.join(', ')}
+                                  🚩 PENDIENTE: {pendientes.join(', ')}
                                 </span>
                               )}
                             </div>
@@ -3012,7 +3036,7 @@ export default function CursoDashboard({ session }) {
                                       textTransform: 'uppercase',
                                       letterSpacing: '0.5px'
                                     }}>
-                                      {esAprobado ? 'âœ“ Aprobado' : 'âš¡ En Proceso'}
+                                      {esAprobado ? '✓ Aprobado' : '⚡ En Proceso'}
                                     </span>
                                     {alumno.periodos_pendientes && (
                                       <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
@@ -3037,7 +3061,7 @@ export default function CursoDashboard({ session }) {
                               onBlur={async (e) => {
                                 const v = e.target.value.toUpperCase();
                                 if (!v) return;
-                                // ValidaciÃ³n Natalia: NÃºmero 1-10 o 'A'
+                                // Validación Natalia: Número 1-10 o 'A'
                                 if (v !== 'A' && (isNaN(v) || v < 1 || v > 10)) {
                                   e.target.style.border = '2px solid var(--danger)';
                                   return;
@@ -3065,7 +3089,7 @@ export default function CursoDashboard({ session }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingAlumno ? 'Editar Alumno' : 'Registrar Alumno'}</h3>
-              <button className="btn-close" onClick={() => setShowModal(false)}>âœ•</button>
+              <button className="btn-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-row">
@@ -3085,7 +3109,7 @@ export default function CursoDashboard({ session }) {
                 </div>
                 <div className="form-group">
                   <label>Legajo</label>
-                  <input type="text" name="legajo" className="input-field" placeholder="NÂ° de Legajo" value={formData.legajo} onChange={handleInputChange} />
+                  <input type="text" name="legajo" className="input-field" placeholder="N° de Legajo" value={formData.legajo} onChange={handleInputChange} />
                 </div>
               </div>
               <div className="form-row">
@@ -3094,7 +3118,7 @@ export default function CursoDashboard({ session }) {
                   <input type="date" name="fecha_nacimiento" className="input-field" value={formData.fecha_nacimiento} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
-                  <label>TelÃ©fono</label>
+                  <label>Teléfono</label>
                   <input type="text" name="telefono_contacto" className="input-field" value={formData.telefono_contacto} onChange={handleInputChange} />
                 </div>
               </div>
@@ -3109,15 +3133,15 @@ export default function CursoDashboard({ session }) {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Estado InscripciÃ³n</label>
+                  <label>Estado Inscripción</label>
                   <select name="estado_inscripcion" className="input-field" value={formData.estado_inscripcion} onChange={handleInputChange}>
                     <option value="regular">Regular / Cursa</option>
-                    <option value="no_cursa">No cursa mÃ¡s (Baja)</option>
+                    <option value="no_cursa">No cursa más (Baja)</option>
                     <option value="cambio_colegio">Cambio de Colegio</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>CondiciÃ³n Estudiante</label>
+                  <label>Condición Estudiante</label>
                   <select name="condicion_estudiante" className="input-field" value={formData.condicion_estudiante} onChange={handleInputChange}>
                     <option value="regular">Regular</option>
                     <option value="recursante">Recursante (Muestra R)</option>
@@ -3125,7 +3149,7 @@ export default function CursoDashboard({ session }) {
                 </div>
               </div>
 
-              {/* CHECKBOX ES_RECURSANTE â€” campo del backend */}
+              {/* CHECKBOX ES_RECURSANTE — campo del backend */}
               <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.5rem 0.8rem', background: formData.es_recursante ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.03)', borderRadius: '12px', border: formData.es_recursante ? '1px solid rgba(239,68,68,0.3)' : '1px solid var(--border)', cursor: 'pointer', marginBottom: '0.5rem' }}>
                 <input
                   type="checkbox"
@@ -3139,13 +3163,13 @@ export default function CursoDashboard({ session }) {
               <div style={{ marginTop: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.8rem', borderRadius: '12px', border: tieneInclusion ? '1px solid var(--primary)' : '1px solid var(--border)' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer' }}>
                   <input type="checkbox" checked={tieneInclusion} onChange={(e) => setTieneInclusion(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{editingAlumno ? 'Editar PPI / InclusiÃ³n' : 'Â¿Tiene PPI / InclusiÃ³n?'}</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{editingAlumno ? 'Editar PPI / Inclusión' : '¿Tiene PPI / Inclusión?'}</span>
                 </label>
 
                 {tieneInclusion && (
                   <div className="animate-slide-up" style={{ marginTop: '0.6rem', paddingTop: '0.6rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                     <div className="form-group" style={{ marginBottom: '0.8rem' }}>
-                      <label style={{ color: 'var(--primary)', fontSize: '0.75rem' }}>Tipo de CondiciÃ³n</label>
+                      <label style={{ color: 'var(--primary)', fontSize: '0.75rem' }}>Tipo de Condición</label>
                       <select name="tipo_condicion" className="input-field" style={{ padding: '0.5rem' }} value={condicionData.tipo_condicion} onChange={handleCondicionChange}>
                         <option value="discapacidad">Discapacidad</option>
                         <option value="dificultad_aprendizaje">Dificultad de Aprendizaje</option>
@@ -3155,7 +3179,7 @@ export default function CursoDashboard({ session }) {
                       </select>
                     </div>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label style={{ color: 'var(--primary)', fontSize: '0.75rem' }}>DescripciÃ³n PPI</label>
+                      <label style={{ color: 'var(--primary)', fontSize: '0.75rem' }}>Descripción PPI</label>
                       <textarea name="descripcion" className="input-field" rows="2" style={{ padding: '0.5rem' }} value={condicionData.descripcion} onChange={handleCondicionChange}></textarea>
                     </div>
                   </div>
@@ -3170,7 +3194,7 @@ export default function CursoDashboard({ session }) {
           </div>
         </div>
       )}
-      {/* MODAL DE EVENTOS ACADÃ‰MICOS (PROTOCOLO NATALIA) */}
+      {/* MODAL DE EVENTOS ACADÉMICOS (PROTOCOLO NATALIA) */}
       <EventoAcademicoModal
         isOpen={showEventoModal}
         onClose={() => setShowEventoModal(false)}
@@ -3178,12 +3202,42 @@ export default function CursoDashboard({ session }) {
         docenteId={docenteId}
         cursoNombre={`${curso?.anio_o_grado || ''} ${curso?.division || ''}`}
       />
+      {appToast && (
+        <div
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            left: '50%',
+            top: '1rem',
+            transform: 'translateX(-50%)',
+            zIndex: 2000,
+            maxWidth: '380px',
+            width: 'min(380px, calc(100vw - 2rem))',
+            background: appToast.type === 'error' ? 'rgba(239, 68, 68, 0.16)' : 'rgba(16, 185, 129, 0.18)',
+            border: `1px solid ${appToast.type === 'error' ? 'rgba(239, 68, 68, 0.7)' : 'rgba(16, 185, 129, 0.7)'}`,
+            borderRadius: '18px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(12px)',
+            padding: '0.95rem 1rem',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            lineHeight: 1.4,
+            pointerEvents: 'none'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+            <span style={{ fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px' }}>{appToast.type === 'error' ? '⚠️' : '✅'}</span>
+            <span>{appToast.message}</span>
+          </div>
+        </div>
+      )}
       <OnboardingTour
         steps={cursoPlanillasTourSteps}
         storageKey="tour_curso_planillas_completed"
-        welcomeTitle="Â¡GuÃ­a de Planillas Docentes! ðŸ“Š"
-        welcomeText="Te acompaÃ±amos a recorrer cada una de las planillas del curso para que sepas exactamente cÃ³mo utilizarlas."
-        welcomeIcon="ðŸ“Š"
+        welcomeTitle="¡Guía de Planillas Docentes! 📊"
+        welcomeText="Te acompañamos a recorrer cada una de las planillas del curso para que sepas exactamente cómo utilizarlas."
+        welcomeIcon="📊"
         forceStart={forceStartTour}
         onTourEnd={() => setForceStartTour(false)}
       />

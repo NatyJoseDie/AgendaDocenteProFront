@@ -39,6 +39,7 @@ Gestionar a tus estudiantes es simple y potente:
 - **Carga Manual:** Usá el botón `+ Agregar Manual` para registrar datos personales (DNI, Legajo, Fecha de Nacimiento) y del tutor (Email/Teléfono).
 - **📷 Escaneo OCR con IA:** Tocá el botón `📷 ESCANEAR PLANILLA`. Sacale una foto a tu planilla de papel y el sistema extrae los nombres y apellidos para precargarlos. Disponible en PRO (hasta 5 cursos distintos) y Premium (sin límite); no está incluido en el Plan Gratuito.
 - **Situación Especial (PPI/CUD):** Si un alumno tiene un proyecto de inclusión, marcá el checkbox. Podrás detallar el tipo de condición y observaciones pedagógicas.
+- **Avisos claros del sistema:** Cuando ocurre un error o un límite del plan, la app muestra mensajes amigables en vez de alertas del navegador para que la experiencia sea más clara y profesional.
 
 ---
 
@@ -82,10 +83,20 @@ La agenda utiliza un modelo inteligente para asegurar que siempre tengas lo que 
 
 ---
 
+### 🔔 7. Avisos de prueba, plan y acceso
+La app te informa de tu estado de uso para que sepas exactamente qué podés hacer:
+
+- **Prueba gratuita:** si ingresás con una cuenta nueva, podés ver un aviso de que tenés **14 días de uso gratis** o el tiempo de acceso especial correspondiente si sos usuario VIP beta.
+- **Límite del plan alcanzado:** cuando superás la cantidad de escuelas o cursos permitidos, el sistema te muestra un modal claro con el botón para actualizar el plan, en lugar de un error técnico.
+- **Solo lectura:** si tu acceso vence o no podés seguir ampliando la cuenta, la app comunica que los datos quedan en modo lectura para que no te tomes un error de la plataforma como una pérdida de información.
+
+> **Importante:** Los mensajes se muestran con un estilo integrado a la app para que sean más claros, menos invasivos y más fáciles de entender para el docente.
+
 ### 💡 Tips Pro:
 - Usá el **Selector de Fecha** en Asistencia para cargar días pasados o corregir errores.
 - **Ciclo lectivo:** Pagá una sola vez y olvidate de las cuotas mensuales hasta el 31/12.
 - Recordá que la Agenda es **Mobile-First**, usala desde el navegador de tu celular para mayor comodidad en el aula.
+- Si necesitás operar con varias escuelas o cursos, revisá tu estado de plan desde **💳 Planes / Mi suscripción** para evitar bloqueos sorpresa.
 
 ---
 **¿Necesitás ayuda extra?** Contactanos a través del soporte en la app. ¡Éxitos en este ciclo lectivo!

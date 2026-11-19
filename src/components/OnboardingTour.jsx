@@ -5,7 +5,7 @@ export default function OnboardingTour({
   steps: customSteps,
   storageKey = 'onboarding_completed',
   welcomeTitle = '¡Te damos la bienvenida! 👋',
-  welcomeText = '¿Te gustaría realizar un recorrido rápido e interactivo de 1 minuto para conocer tu nueva agenda?',
+  welcomeText = 'Te acompañamos con una guía premium para que empieces a usar la app sin perder tiempo.',
   welcomeIcon = '🚀',
   forceStart,
   onTourEnd
@@ -17,33 +17,59 @@ export default function OnboardingTour({
   const defaultSteps = [
     {
       target: '#tour-profile',
-      title: 'Tu Perfil Docente 🎒',
-      content: 'Aquí puedes ver de un vistazo tu foto de perfil, tu plan actual (FREE o PREMIUM) y los días restantes de prueba.',
-      position: 'bottom'
+      title: 'Bienvenida',
+      icon: '👋',
+      content: 'Tu agenda docente ya está lista para acompañarte en clase, en la gestión escolar y en el día a día.',
+      points: ['Acceso rápido a tu cuenta', 'Vista general del plan y cronograma', 'Todo pensado para usar desde móvil o PC']
     },
     {
-      target: '#tour-horarios',
-      title: 'Horario Semanal 📅',
-      content: 'Accede rápidamente a tu cronograma semanal de clases. Ideal para saber qué curso te toca hoy y en qué aula.',
-      position: 'bottom'
+      target: '#tour-escuelas',
+      title: 'Crear escuela',
+      icon: '🏫',
+      content: 'Comenzá cargando tu escuela con nombre, número, dirección y datos básicos para organizar todo en un solo lugar.',
+      points: ['Alta de escuela rápida', 'Agrupación por institución', 'Acceso con una sola vista']
     },
     {
-      target: '#tour-iniciar-clase',
-      title: 'Iniciar Clase 🚀',
-      content: 'Este es tu botón de acción rápida. Te llevará directo a registrar asistencias, notas o el libro de temas.',
-      position: 'top'
+      target: '#tour-curso',
+      title: 'Crear curso',
+      icon: '📚',
+      content: 'Armá cada curso con grado, división, turno, materia y horarios para tener la base del año listo.',
+      points: ['Curso por materia', 'Horarios visibles', 'Organización del ciclo lectivo']
     },
     {
-      target: '#tour-modulos',
-      title: 'Acceso a Módulos 🛠️',
-      content: 'Administra tus Escuelas, Planificaciones, Calendario de eventos y Contactos de familias en un solo lugar.',
-      position: 'top'
+      target: '#tour-alumnos',
+      title: 'Agregar alumnos',
+      icon: '👥',
+      content: 'Registrá a tus estudiantes y usá OCR para cargar nombres desde una foto de planilla en segundos.',
+      points: ['Carga manual o por imagen', 'Datos familiares y contacto', 'PPI / condiciones especiales']
     },
     {
-      target: '#tour-config',
-      title: 'Configuración y Respaldos ⚙️',
-      content: 'Exporta tus datos en JSON, restaura copias de seguridad de la nube o envíanos comentarios para seguir mejorando.',
-      position: 'bottom'
+      target: '#tour-asistencia',
+      title: 'Usar asistencia',
+      icon: '✅',
+      content: 'Marcá presentes, ausentes y justificaciones de forma rápida para que la administración diaria sea mucho más ágil.',
+      points: ['Modo visual y rápido', 'Indicadores de inasistencias', 'Guardado seguro de la jornada']
+    },
+    {
+      target: '#tour-planes',
+      title: 'Ver plan y suscripción',
+      icon: '💳',
+      content: 'Revisá tu plan, renovaciones y acceso premium para mantener tus escuelas, cursos y funciones activas.',
+      points: ['Estado de suscripción', 'Avisos de prueba y límites', 'Actualización del plan']
+    },
+    {
+      target: '#tour-calendario',
+      title: 'Calendario, fechas y recordatorios',
+      icon: '📅',
+      content: 'Agendá exámenes, fechas importantes, efemérides y actividades para no perder ningún evento clave.',
+      points: ['Eventos académicos', 'Recordatorios visibles', 'Organización escolar']
+    },
+    {
+      target: '#tour-planificaciones',
+      title: 'Planificaciones, licencias y contactos',
+      icon: '🗂️',
+      content: 'Subí documentos, gestioná licencias y mantené a mano los contactos de familias y referentes.',
+      points: ['Documentos PDF', 'Licencias y trámites', 'Contactos y comunicación']
     }
   ];
 
@@ -198,23 +224,32 @@ export default function OnboardingTour({
       {currentStep && (
         <div className="tour-tooltip-card glass-card" style={getTooltipStyle()}>
           <button className="tour-btn-close" onClick={handleSkip}>&times;</button>
-          
+
           <div className="tour-tooltip-header">
             <span className="tour-tooltip-badge">Paso {stepIndex + 1} de {steps.length}</span>
           </div>
 
+          <div className="tour-feature-icon">{currentStep.icon || '✨'}</div>
           <h3 className="tour-tooltip-title">{currentStep.title}</h3>
           <p className="tour-tooltip-content">{currentStep.content}</p>
+
+          {currentStep.points && (
+            <ul className="tour-feature-list">
+              {currentStep.points.map((point, i) => (
+                <li key={i}>{point}</li>
+              ))}
+            </ul>
+          )}
 
           <div className="tour-tooltip-footer">
             <button className="tour-btn-back" onClick={handlePrev}>
               Atrás
             </button>
-            
+
             <div className="tour-dot-indicators">
               {steps.map((_, i) => (
-                <span 
-                  key={i} 
+                <span
+                  key={i}
                   className={`tour-dot ${i === stepIndex ? 'active' : ''}`}
                   onClick={() => setStepIndex(i)}
                 />

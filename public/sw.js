@@ -65,13 +65,16 @@ self.addEventListener('push', event => {
   const title = typeof payload.title === 'string'
     ? payload.title
     : 'Tenés una novedad en Agenda Docente';
+  const body = typeof payload.body === 'string'
+    ? payload.body
+    : 'Abrí Agenda Docente para consultar la notificación.';
+
   const options = {
-    body: typeof payload.body === 'string'
-      ? payload.body
-      : 'Abrí Agenda Docente para consultar la notificación.',
+    body,
     icon: '/logo_agenda_3d_final.png',
     badge: '/logo_agenda_3d_final.png',
-    data: { requestedUrl: payload.data?.url },
+    vibrate: [200, 100, 200],
+    data: { requestedUrl: payload.data?.url || '/dashboard?notificaciones=1' },
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -83,14 +86,17 @@ self.addEventListener('notificationclick', event => {
   const fallbackUrl = new URL('/dashboard?notificaciones=1', self.location.origin);
   let requestedUrl = fallbackUrl;
   try {
-    const candidate = new URL(event.notification.data?.requestedUrl, self.location.origin);
+    const candidate = new URL(event.notification.data?.requestedUrl || '/dashboard?notificaciones=1', self.location.origin);
     if (candidate.origin === self.location.origin) requestedUrl = candidate;
   } catch {
     requestedUrl = fallbackUrl;
   }
 
-  const targetUrl = new URL('/dashboard?notificaciones=1', self.location.origin);
-  if (requestedUrl.origin !== self.location.origin) return;
+  const targetUrl = requestedUrl.origin === self.location.origin ? requestedUrl : fallbackUrl;
+
+  if (targetUrl.pathname === '/calendario' || targetUrl.pathname === '/dashboard') {
+    targetUrl.searchParams.set('notificaciones', '1');
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })

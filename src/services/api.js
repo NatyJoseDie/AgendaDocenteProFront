@@ -18,7 +18,7 @@ const saveByNaturalKey = async (table, record, keyFields) => {
   return data;
 };
 
-// â”€â”€â”€ ESCUELAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ESCUELAS ──────────────────────────────────────────────
 export const EscuelasAPI = {
   getByDocente: async (docenteId) => {
     const { data, error } = await supabase
@@ -46,14 +46,14 @@ export const EscuelasAPI = {
     return data[0];
   },
   delete: async (id) => {
-    // Borrado lÃ³gico
+    // Borrado lógico
     const { error } = await supabase.from('escuelas').update({ activo: false }).eq('id', id);
     if (error) throw error;
     return true;
   }
 };
 
-// â”€â”€â”€ CURSOS & HORARIOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CURSOS & HORARIOS ─────────────────────────────────────
 export const CursosAPI = {
   getAll: async (docenteId) => {
     // Alias para compatibilidad con Calendario y otras vistas maestras
@@ -119,14 +119,14 @@ export const CursosAPI = {
     return curso;
   },
   delete: async (id) => {
-    // Borrado lÃ³gico
+    // Borrado lógico
     const { error } = await supabase.from('cursos').update({ activo: false }).eq('id', id);
     if (error) throw error;
     return true;
   }
 };
 
-// â”€â”€â”€ ALUMNOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ALUMNOS ───────────────────────────────────────────────
 export const AlumnosAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -163,7 +163,7 @@ export const AlumnosAPI = {
         docente_id: alumnoData.docente_id
       };
       const { error: condError } = await supabase.from('condiciones_especiales').insert([condicionToInsert]);
-      if (condError) console.error("Error al guardar condiciÃ³n especial:", condError);
+      if (condError) console.error("Error al guardar condición especial:", condError);
     }
 
     return alumno;
@@ -226,7 +226,7 @@ export const AsistenciasAPI = {
     return data;
   },
   getEstadisticas: async (cursoId) => {
-    // Simulamos el endpoint de estadÃ­sticas sumando las faltas 'A'
+    // Simulamos el endpoint de estadísticas sumando las faltas 'A'
     const { data, error } = await supabase
       .from('asistencias')
       .select('alumno_id, estado')
@@ -249,7 +249,7 @@ export const AsistenciasAPI = {
   },
   getResumenMensual: async (cursoId, mes, anio) => {
     // Simulamos el endpoint del backend /api/asistencias/resumen-mensual
-    // En una implementaciÃ³n real con Supabase esto podrÃ­a ser un RPC o una consulta filtrada
+    // En una implementación real con Supabase esto podría ser un RPC o una consulta filtrada
     const lastDay = new Date(anio, mes, 0).getDate(); 
     const endDate = `${anio}-${String(mes).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
@@ -279,7 +279,7 @@ export const AsistenciasAPI = {
   }
 };
 
-// â”€â”€â”€ CALIFICACIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CALIFICACIONES ────────────────────────────────────────
 export const CalificacionesAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -299,7 +299,7 @@ export const CalificacionesAPI = {
   }
 };
 
-// â”€â”€â”€ INTENSIFICACIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── INTENSIFICACIONES ──────────────────────────────────────
 export const IntensificacionesAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -319,7 +319,7 @@ export const IntensificacionesAPI = {
   }
 };
 
-// â”€â”€â”€ PLANILLA OFICIAL (PROVINCIA) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  
+// ─── PLANILLA OFICIAL (PROVINCIA) ──────────────────────────  
 export const PlanillaOficialAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -343,7 +343,7 @@ export const PlanillaOficialAPI = {
   }
 };
 
-// â”€â”€â”€ SEGUIMIENTO DIARIO (TPs y NOTAS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SEGUIMIENTO DIARIO (TPs y NOTAS) ──────────────────────
 export const SeguimientoAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -354,16 +354,19 @@ export const SeguimientoAPI = {
     return data;
   },
   upsert: async (seguimientoData) => {
+    const payload = { ...seguimientoData };
+    delete payload.updated_at;
+
     const { data, error } = await supabase
       .from('seguimiento_diario')
-      .upsert(seguimientoData, { onConflict: 'alumno_id, tema_id' })
+      .upsert(payload, { onConflict: 'alumno_id, tema_id' })
       .select()
       .maybeSingle();
     if (error) throw error;
     return data;
   },
   update: async (actividadId, patch) => {
-    // Si la actividad tiene id numÃ©rico o existe en seguimiento_diario
+    // Si la actividad tiene id numérico o existe en seguimiento_diario
     const { data, error } = await supabase
       .from('seguimiento_diario')
       .update(patch)
@@ -392,16 +395,22 @@ export const SeguimientoAPI = {
     return true;
   },
   saveMasivo: async (seguimientoArray) => {
+    const payload = (seguimientoArray || []).map((row) => {
+      const cleanRow = { ...row };
+      delete cleanRow.updated_at;
+      return cleanRow;
+    });
+
     const { data, error } = await supabase
       .from('seguimiento_diario')
-      .upsert(seguimientoArray, { onConflict: 'alumno_id, tema_id' })
+      .upsert(payload, { onConflict: 'alumno_id, tema_id' })
       .select();
     if (error) throw error;
     return data;
   }
 };
 
-// â”€â”€â”€ LIBRO DE TEMAS (PLAN DE CLASE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── LIBRO DE TEMAS (PLAN DE CLASE) ────────────────────────
 export const LibroTemasAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -438,7 +447,7 @@ export const LibroTemasAPI = {
   }
 };
 
-// â”€â”€â”€ LICENCIAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── LICENCIAS ─────────────────────────────────────────────
 export const LicenciasAPI = {
   getByDocente: async (docenteId) => {
     const { data, error } = await supabase
@@ -488,7 +497,7 @@ export const LicenciasAPI = {
   }
 };
 
-// â”€â”€â”€ EVENTOS CALENDARIO (Feriados y Eventos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── EVENTOS CALENDARIO (Feriados y Eventos) ────────────────
 export const CalendarioAPI = {
   getCurrentUserId: async () => {
     return (await supabase.auth.getUser())?.data?.user?.id;
@@ -570,7 +579,7 @@ export const CalendarioAPI = {
   }
 };
 
-// â”€â”€â”€ SALIDAS EDUCATIVAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SALIDAS EDUCATIVAS ─────────────────────────────────────
 export const SalidasAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -598,7 +607,7 @@ export const SalidasAPI = {
 };
 
 
-// â”€â”€â”€ CONTACTOS & COMUNICACIONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CONTACTOS & COMUNICACIONES ─────────────────────────────
 export const ContactosAPI = {
   getByDocente: async (docenteId) => {
     const { data, error } = await supabase
@@ -638,7 +647,7 @@ export const ContactosAPI = {
   }
 };
 
-// â”€â”€â”€ PERFIL DOCENTE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PERFIL DOCENTE ────────────────────────────────────────
 export const PerfilAPI = {
   getProfile: async () => {
     const response = await fetch(`${BACKEND_URL}/docentes/me`, {
@@ -664,7 +673,7 @@ export const PerfilAPI = {
   }
 };
 
-// â”€â”€â”€ PLANIFICACIONES (PDF) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PLANIFICACIONES (PDF) ─────────────────────────────────
 export const PlanificacionesAPI = {
   getByCurso: async (cursoId) => {
     const { data, error } = await supabase
@@ -718,7 +727,7 @@ export const PlanificacionesAPI = {
 export const BackupAPI = {
   createSnapshot: async (docenteId) => {
     try {
-      // RecopilaciÃ³n masiva de TODO
+      // Recopilación masiva de TODO
       const [resEsc, resCur, resAlu, resAsis, resTemas, resNotas, resPlan, resCont] = await Promise.all([
         EscuelasAPI.getByDocente(docenteId),
         CursosAPI.getByDocente(docenteId),
@@ -745,11 +754,11 @@ export const BackupAPI = {
       const { error } = await supabase.from('copias_seguridad').insert({ docente_id: docenteId, datos: totalBackup });
 
       if (error) {
-        console.error('âŒ Error de Supabase:', error.message);
+        console.error('Error de Supabase:', error.message);
         return;
       }
 
-      console.log('ðŸ“¦ Backup Total (JSON) guardado en la nube');
+      console.log('📦 Backup Total (JSON) guardado en la nube');
     } catch (e) {
       console.error('Error backup inesperado:', e);
     }
@@ -767,7 +776,7 @@ export const BackupAPI = {
     if (!copia) throw new Error('No hay copias disponibles');
     const b = copia.datos;
 
-    // RestauraciÃ³n Masiva (Upsert inteligente)
+    // Restauración Masiva (Upsert inteligente)
     if (b.escuelas) await supabase.from('escuelas').upsert(b.escuelas.map(x => ({ ...x, docente_id: docenteId })));
     if (b.cursos) await supabase.from('cursos').upsert(b.cursos.map(x => ({ ...x, docente_id: docenteId })));
     if (b.alumnos) await supabase.from('alumnos').upsert(b.alumnos.map(x => ({ ...x, docente_id: docenteId })));
@@ -802,7 +811,7 @@ export const FeedbackAPI = {
   }
 };
 
-// â”€â”€â”€ OCR PROFESIONAL (BACKEND) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── OCR PROFESIONAL (BACKEND) ─────────────────────────────
 const BACKEND_URL = (
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_URL_RENDER ||
@@ -814,9 +823,9 @@ const getAuthHeaders = async (headers = {}, expectedUserId) => {
   if (error) throw error;
 
   const token = session?.access_token;
-  if (!token) throw new Error('Tu sesiÃ³n expirÃ³. IniciÃ¡ sesiÃ³n nuevamente.');
+  if (!token) throw new Error('Tu sesión expiró. Iniciá sesión nuevamente.');
   if (expectedUserId && session.user.id !== expectedUserId) {
-    throw new Error('La sesiÃ³n cambiÃ³. VolvÃ© a intentar la operaciÃ³n con la cuenta actual.');
+    throw new Error('La sesión cambió. Volvé a intentar la operación con la cuenta actual.');
   }
 
   return {
@@ -830,6 +839,13 @@ const buildApiError = async (response, fallback) => {
   const error = new Error(body.error || body.details || fallback);
   error.status = response.status;
   error.code = body.code;
+  return error;
+};
+
+const buildAdminMensajesError = async (response, fallback) => {
+  const error = await buildApiError(response, fallback);
+  if (response.status === 403) error.message = 'No tenés permisos de administrador.';
+  else if (response.status >= 500) error.message = 'Ocurrió un error en el servidor. Probá de nuevo en unos minutos.';
   return error;
 };
 
@@ -865,7 +881,7 @@ export const PlanesAPI = {
   }
 };
 
-// ðŸ’³ PAGOS & MERCADO PAGO ðŸ’³
+// 💳 PAGOS & MERCADO PAGO 💳
 export const PagosAPI = {
   crearPreferencia: async (plan, ciclo = 'ciclo_lectivo') => {
     if (!PAID_PLAN_KEYS.includes(plan) || !PLAN_CICLOS.includes(ciclo)) {
@@ -910,9 +926,7 @@ export const PagosAPI = {
     return await response.json();
   }
 };
-
-
-// ðŸ‘‘ PANEL ADMINISTRATIVO (DUEÃ‘A) ðŸ‘‘
+// 👑 PANEL ADMINISTRATIVO (DUEÑA) 👑
 export const AdminAPI = {
   getMetricas: async () => {
     const response = await fetch(`${BACKEND_URL}/admin/metricas`, {
@@ -1001,7 +1015,25 @@ export const AdminAPI = {
     }
 
     return await response.json();
-  }
+  },
+
+  getMensajesEnviados: async () => MensajesAPI.adminEnviados(),
+
+  getRespuestasPendientes: async () => MensajesAPI.adminRespuestasPendientes(),
+
+  getMensajesDeDocentes: async () => MensajesAPI.adminDocenteAdminLista(),
+
+  getMensajesDeDocentesNoLeidos: async () => MensajesAPI.adminDocenteAdminNoLeidos(),
+
+  getMensajeDeDocente: async (id) => MensajesAPI.adminDocenteAdminDetalle(id),
+
+  responderMensajeDeDocente: async (id, cuerpo) => MensajesAPI.adminDocenteAdminResponder(id, cuerpo),
+
+  getConversacion: async (id) => MensajesAPI.adminDetalleConversacion(id),
+
+  enviarMensaje: async (payload) => MensajesAPI.adminEnviar(payload),
+
+  responderConversacion: async (id, cuerpo) => MensajesAPI.adminResponderConversacion(id, cuerpo),
 };
 
 export const NotificacionesAPI = {
@@ -1038,6 +1070,351 @@ export const NotificacionesAPI = {
   markAsRead: async (id) => NotificacionesAPI.marcarLeida(id),
 };
 
+export const MensajesAPI = {
+  getNoLeidos: async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/mensajes/no-leidos`, {
+        headers: await getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { noLeidos: Number(data?.noLeidos ?? data?.no_leidos ?? 0) || 0 };
+      }
+
+      if ([401, 403, 404].includes(response.status) || response.status >= 500) {
+        return { noLeidos: 0 };
+      }
+
+      throw await buildApiError(response, 'No se pudieron obtener tus mensajes sin leer');
+    } catch (error) {
+      if (error?.message?.includes('sesión') || error?.message?.includes('Token')) {
+        return { noLeidos: 0 };
+      }
+      try {
+        const response = await fetch(`${BACKEND_URL}/mensajes/docente-admin`, {
+          headers: await getAuthHeaders(),
+        });
+        if (!response.ok) return { noLeidos: 0 };
+        const data = await response.json();
+        const mensajes = Array.isArray(data?.mensajes) ? data.mensajes : [];
+        return { noLeidos: mensajes.filter((m) => !m.leido_por_admin_at && !m.leida_at).length };
+      } catch {
+        return { noLeidos: 0 };
+      }
+    }
+  },
+
+  getBandeja: async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/mensajes`, {
+        headers: await getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const mensajes = Array.isArray(data?.mensajes) ? data.mensajes : [];
+        return {
+          mensajes,
+          noLeidos: Number(data?.noLeidos ?? data?.no_leidos ?? 0) || 0,
+        };
+      }
+
+      if ([401, 403, 404].includes(response.status)) {
+        try {
+          const legacyResponse = await fetch(`${BACKEND_URL}/mensajes/docente-admin`, {
+            headers: await getAuthHeaders(),
+          });
+          if (!legacyResponse.ok) return { mensajes: [], noLeidos: 0 };
+          const legacyData = await legacyResponse.json();
+          const mensajes = Array.isArray(legacyData?.mensajes) ? legacyData.mensajes : [];
+          return { mensajes, noLeidos: 0 };
+        } catch {
+          return { mensajes: [], noLeidos: 0 };
+        }
+      }
+
+      if (response.status >= 500) {
+        throw new Error('Los mensajes no están disponibles por el momento. Probá de nuevo más tarde.');
+      }
+      throw await buildApiError(response, 'No se pudo cargar la bandeja de mensajes');
+    } catch (error) {
+      if (error?.message?.includes('sesión') || error?.message?.includes('Token')) {
+        return { mensajes: [], noLeidos: 0 };
+      }
+      throw error;
+    }
+  },
+
+  getDetalle: async (id) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/mensajes/${encodeURIComponent(id)}`, {
+        headers: await getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      if ([401, 403, 404].includes(response.status)) {
+        try {
+          const legacyResponse = await fetch(`${BACKEND_URL}/mensajes/docente-admin/${encodeURIComponent(id)}`, {
+            headers: await getAuthHeaders(),
+          });
+          if (!legacyResponse.ok) return { mensaje: null, respuestas: [] };
+          const legacyData = await legacyResponse.json();
+          return legacyData?.mensaje ? legacyData : { mensaje: legacyData?.mensaje || legacyData, respuestas: legacyData?.respuestas || [] };
+        } catch {
+          return { mensaje: null, respuestas: [] };
+        }
+      }
+
+      throw await buildApiError(response, 'No se pudo abrir este mensaje');
+    } catch (error) {
+      if (error?.message?.includes('sesión') || error?.message?.includes('Token')) {
+        return { mensaje: null, respuestas: [] };
+      }
+      throw error;
+    }
+  },
+
+  responder: async (id, cuerpo) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/mensajes/${encodeURIComponent(id)}/responder`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(await getAuthHeaders()),
+        },
+        body: JSON.stringify({ cuerpo }),
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      if ([401, 403, 404].includes(response.status)) {
+        const legacyResponse = await fetch(`${BACKEND_URL}/mensajes/docente-admin/${encodeURIComponent(id)}/responder`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(await getAuthHeaders()),
+          },
+          body: JSON.stringify({ cuerpo }),
+        });
+
+        if (!legacyResponse.ok) {
+          throw await buildApiError(legacyResponse, 'No se pudo enviar la respuesta');
+        }
+        return await legacyResponse.json();
+      }
+
+      throw await buildApiError(response, 'No se pudo enviar la respuesta');
+    } catch (error) {
+      if (error?.message?.includes('sesión') || error?.message?.includes('Token')) {
+        throw new Error('Tu sesión expiró. Volvé a iniciar sesión para seguir.');
+      }
+      throw error;
+    }
+  },
+
+  adminEnviar: async (payload) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/enviar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudo enviar el mensaje');
+    }
+
+    return await response.json();
+  },
+
+  adminEnviados: async () => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/enviados`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudo cargar el historial de mensajes');
+    }
+
+    const data = await response.json();
+    return { mensajes: Array.isArray(data?.mensajes) ? data.mensajes : [] };
+  },
+
+  adminRespuestasPendientes: async () => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/respuestas-pendientes`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudieron obtener las respuestas pendientes');
+    }
+
+    const data = await response.json();
+    return { conversaciones: Array.isArray(data?.conversaciones) ? data.conversaciones : [] };
+  },
+
+  adminDetalleConversacion: async (id) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/conversacion/${encodeURIComponent(id)}`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudo abrir la conversación');
+    }
+
+    return await response.json();
+  },
+
+  adminResponderConversacion: async (id, cuerpo) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/conversacion/${encodeURIComponent(id)}/responder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
+      body: JSON.stringify({ cuerpo }),
+    });
+
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudo responder la conversación');
+    }
+
+    return await response.json();
+  },
+
+  adminDocenteAdminLista: async () => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/docente-admin`, {
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw await buildAdminMensajesError(response, 'No se pudieron cargar los mensajes de docentes');
+    }
+    const data = await response.json();
+    return { mensajes: Array.isArray(data?.mensajes) ? data.mensajes : [] };
+  },
+
+  adminDocenteAdminNoLeidos: async () => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/docente-admin-no-leidos`, {
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw await buildAdminMensajesError(response, 'No se pudo obtener el contador de mensajes');
+    }
+    const data = await response.json();
+    return { noLeidos: Number(data?.noLeidos ?? data?.no_leidos ?? 0) || 0 };
+  },
+
+  adminDocenteAdminDetalle: async (id) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/docente-admin/${encodeURIComponent(id)}`, {
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw await buildAdminMensajesError(response, 'No se pudo abrir el mensaje');
+    }
+    const data = await response.json();
+    return { mensaje: data?.mensaje || null, respuestas: Array.isArray(data?.respuestas) ? data.respuestas : [] };
+  },
+
+  adminDocenteAdminResponder: async (id, cuerpo) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/admin/docente-admin/${encodeURIComponent(id)}/responder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
+      body: JSON.stringify({ cuerpo }),
+    });
+    if (!response.ok) {
+      throw await buildAdminMensajesError(response, 'No se pudo enviar la respuesta');
+    }
+    return await response.json();
+  },
+
+  docenteAdminResponder: async (id, cuerpo) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/docente-admin/${encodeURIComponent(id)}/responder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
+      body: JSON.stringify({ cuerpo }),
+    });
+    if (!response.ok) {
+      throw await buildApiError(response, 'No se pudo enviar la respuesta');
+    }
+    return await response.json();
+  },
+
+  getDocenteAdminMensajes: async () => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/docente-admin`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if ([400, 403, 404, 500].includes(response.status)) {
+        return { mensajes: [] };
+      }
+      throw await buildApiError(response, 'No se pudieron cargar tus mensajes al administrador');
+    }
+
+    const data = await response.json();
+    return {
+      mensajes: Array.isArray(data?.mensajes)
+        ? data.mensajes
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [],
+    };
+  },
+
+  createDocenteAdminMensaje: async ({ titulo, cuerpo }) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/docente-admin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
+      body: JSON.stringify({ titulo, cuerpo }),
+    });
+
+    if (!response.ok) {
+      if ([400, 403, 404, 500].includes(response.status)) {
+        throw new Error('El servicio de mensajes de administración no está disponible en este momento. Intentá nuevamente más tarde.');
+      }
+      throw await buildApiError(response, 'No se pudo enviar tu mensaje');
+    }
+
+    const data = await response.json();
+    return data?.mensaje || data;
+  },
+
+  getDocenteAdminDetalle: async (id) => {
+    const response = await fetch(`${BACKEND_URL}/mensajes/docente-admin/${encodeURIComponent(id)}`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if ([400, 403, 404, 500].includes(response.status)) {
+        return { mensaje: null, respuestas: [] };
+      }
+      throw await buildApiError(response, 'No se pudo abrir este mensaje');
+    }
+
+    const data = await response.json();
+    return data?.mensaje ? data : { mensaje: data?.mensaje || data, respuestas: data?.respuestas || [] };
+  },
+};
+
 const PUSH_OWNERS_STORAGE_KEY = 'agenda-docente-push-owners';
 
 const readPushOwners = () => {
@@ -1048,7 +1425,7 @@ const readPushOwners = () => {
   if (!Array.isArray(owners) || owners.some(owner => (
     typeof owner?.endpoint !== 'string' || typeof owner?.userId !== 'string'
   ))) {
-    throw new Error('No se pudo verificar a quÃ© cuenta pertenece esta suscripciÃ³n Push.');
+    throw new Error('No se pudo verificar a qué cuenta pertenece esta suscripción Push.');
   }
   return owners;
 };
@@ -1057,7 +1434,7 @@ const savePushOwners = (owners) => {
   try {
     window.localStorage.setItem(PUSH_OWNERS_STORAGE_KEY, JSON.stringify(owners));
   } catch (error) {
-    throw new Error(`No se pudo guardar el estado local de la suscripciÃ³n Push: ${error.message}`);
+    throw new Error(`No se pudo guardar el estado local de la suscripción Push: ${error.message}`);
   }
 };
 
@@ -1080,7 +1457,7 @@ export const PushNotificationsAPI = {
     const response = await fetch(`${BACKEND_URL}/notificaciones/push/vapid-public-key`);
 
     if (!response.ok) {
-      let errorMessage = `No se pudo obtener la clave pÃºblica de notificaciones (HTTP ${response.status}).`;
+      let errorMessage = `No se pudo obtener la clave pública de notificaciones (HTTP ${response.status}).`;
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorData.message || errorMessage;
@@ -1092,7 +1469,7 @@ export const PushNotificationsAPI = {
 
     const data = await response.json();
     if (typeof data?.publicKey !== 'string' || !data.publicKey) {
-      throw new Error('El backend no devolviÃ³ una clave pÃºblica VAPID vÃ¡lida.');
+      throw new Error('El backend no devolvió una clave pública VAPID válida.');
     }
     return data.publicKey;
   },
@@ -1109,7 +1486,7 @@ export const PushNotificationsAPI = {
 
     const result = await response.json();
     if (result?.registered !== true) {
-      throw new Error('El backend no confirmÃ³ el registro de este dispositivo.');
+      throw new Error('El backend no confirmó el registro de este dispositivo.');
     }
     const owners = readPushOwners().filter(owner => owner.endpoint !== subscription.endpoint);
     owners.push({ endpoint: subscription.endpoint, userId });
@@ -1119,7 +1496,7 @@ export const PushNotificationsAPI = {
       try {
         await PushNotificationsAPI.removeSubscription(subscription.endpoint, userId);
       } catch (cleanupError) {
-        throw new Error(`${storageError.message} AdemÃ¡s, no se pudo revertir el registro del servidor: ${cleanupError.message}`);
+        throw new Error(`${storageError.message} Además, no se pudo revertir el registro del servidor: ${cleanupError.message}`);
       }
       throw storageError;
     }
@@ -1137,7 +1514,7 @@ export const PushNotificationsAPI = {
     if (!response.ok) throw await pushResponseError(response, 'No se pudo dar de baja este dispositivo');
     const result = await response.json();
     if (typeof result?.deleted !== 'boolean') {
-      throw new Error('El backend no confirmÃ³ la baja de este dispositivo.');
+      throw new Error('El backend no confirmó la baja de este dispositivo.');
     }
     return result;
   },

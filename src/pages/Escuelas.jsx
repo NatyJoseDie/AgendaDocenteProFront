@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { EscuelasAPI, PerfilAPI } from '../services/api';
-import { checkPlanLimit, isPlanLimitError } from '../constants/plans';
+import { checkPlanLimit, getFriendlyPlanLimitMessage, isPlanLimitError } from '../constants/plans';
 import PlanLimitModal from '../components/PlanLimitModal';
 import { Link } from 'react-router-dom';
 import '../components/Modal.css';
@@ -18,20 +18,20 @@ export default function Escuelas({ session }) {
   const escuelasTourSteps = [
     {
       target: '#tour-escuela-header',
-      title: 'GestiÃ³n de Instituciones ðŸ«',
-      content: 'AquÃ­ administras todas las escuelas o colegios en los que das clase. Cada escuela agruparÃ¡ tus cursos y cargos.',
+      title: 'Gestión de Instituciones 🏫',
+      content: 'Aquí administras todas las escuelas o colegios en los que das clase. Cada escuela agrupará tus cursos y cargos.',
       position: 'bottom'
     },
     {
       target: '#tour-escuela-agregar',
-      title: 'Alta de Colegio âž•',
-      content: 'Toca en "+ Agregar" para registrar una nueva instituciÃ³n con su nombre, nivel (Inicial, Primaria, Secundaria, etc.) y direcciÃ³n.',
+      title: 'Alta de Colegio ➕',
+      content: 'Toca en "+ Agregar" para registrar una nueva institución con su nombre, nivel (Inicial, Primaria, Secundaria, etc.) y dirección.',
       position: 'bottom'
     },
     {
       target: '#tour-escuelas-lista',
-      title: 'Ingreso a tus Cursos ðŸšª',
-      content: 'Al hacer clic en cualquier escuela registrada, ingresarÃ¡s a su panel para ver y agregar tus cursos o roles.',
+      title: 'Ingreso a tus Cursos 🚪',
+      content: 'Al hacer clic en cualquier escuela registrada, ingresarás a su panel para ver y agregar tus cursos o roles.',
       position: 'top'
     }
   ];
@@ -97,7 +97,7 @@ export default function Escuelas({ session }) {
       console.error('Error al crear escuela:', error);
       if (isPlanLimitError(error)) {
         setShowModal(false);
-        setPlanLimitMsg(error.message);
+        setPlanLimitMsg(getFriendlyPlanLimitMessage(error));
         return;
       }
       alert('Hubo un error al guardar. Verifica la consola.');
@@ -120,7 +120,7 @@ export default function Escuelas({ session }) {
   const handleDelete = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm('Â¿Seguro quieres eliminar este colegio?')) {
+    if (window.confirm('¿Seguro quieres eliminar este colegio?')) {
       try {
         await EscuelasAPI.delete(id);
         setEscuelas(escuelas.filter(e => e.id !== id));
@@ -142,7 +142,7 @@ export default function Escuelas({ session }) {
               onClick={() => setForceStartTour(true)}
               style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', borderRadius: '12px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
             >
-              â“ GuÃ­a
+              Guía
             </button>
           </div>
         </div>
@@ -155,14 +155,14 @@ export default function Escuelas({ session }) {
         <p className="animate-pulse" style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '3rem' }}>Cargando escuelas...</p>
       ) : escuelas.length === 0 ? (
         <div id="tour-escuelas-lista" className="glass-card" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-          <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>AÃºn no agregaste escuelas</h3>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Aún no agregaste escuelas</h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Da de alta tu primer colegio para empezar a organizar tus cursos.</p>
         </div>
       ) : (
         <div id="tour-escuelas-lista" className="modules-grid" style={{ gridTemplateColumns: '1fr' }}>
           {escuelas.map((escuela) => {
-            // LÃ³gica para no duplicar el "NÂº" si el usuario ya lo escribiÃ³ en el nombre o en el nÃºmero
-            const tieneNum = escuela.numero ? (escuela.numero.includes('N') || escuela.nombre.includes('N') ? ` ${escuela.numero}` : ` NÂº ${escuela.numero}`) : '';
+            // Lógica para no duplicar el "Nº" si el usuario ya lo escribió en el nombre o en el número
+            const tieneNum = escuela.numero ? (escuela.numero.includes('N') || escuela.nombre.includes('N') ? ` ${escuela.numero}` : ` Nº ${escuela.numero}`) : '';
             
             return (
             <Link key={escuela.id} to={`/escuelas/${escuela.id}`} className="module-card glass-card color-blue" style={{ flexDirection: 'row', alignItems: 'center', padding: '1.2rem', gap: '1rem', position: 'relative' }}>
@@ -193,18 +193,18 @@ export default function Escuelas({ session }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingId ? 'Editar Escuela' : 'Agregar Escuela'}</h3>
-              <button className="btn-close" onClick={() => { setShowModal(false); setEditingId(null); setFormData({ nombre:'', numero:'', nivel:'primaria', direccion:'' }) }}>âœ•</button>
+              <button className="btn-close" onClick={() => { setShowModal(false); setEditingId(null); setFormData({ nombre:'', numero:'', nivel:'primaria', direccion:'' }) }}>✕</button>
             </div>
             
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Nombre de la InstituciÃ³n (*)</label>
+                <label>Nombre de la Institución (*)</label>
                 <input required type="text" name="nombre" className="input-field" placeholder="Ej: E.E.S Domingo Faustino Sarmiento" value={formData.nombre} onChange={handleInputChange} />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>NÃºmero</label>
+                  <label>Número</label>
                   <input type="text" name="numero" className="input-field" placeholder="Ej: 5" value={formData.numero} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
@@ -220,8 +220,8 @@ export default function Escuelas({ session }) {
               </div>
 
               <div className="form-group">
-                <label>DirecciÃ³n (Opcional)</label>
-                <input type="text" name="direccion" className="input-field" placeholder="Calle y nÃºmero" value={formData.direccion} onChange={handleInputChange} />
+                <label>Dirección (Opcional)</label>
+                <input type="text" name="direccion" className="input-field" placeholder="Calle y número" value={formData.direccion} onChange={handleInputChange} />
               </div>
 
               <div className="form-actions">
@@ -236,9 +236,9 @@ export default function Escuelas({ session }) {
       <OnboardingTour
         steps={escuelasTourSteps}
         storageKey="tour_escuelas_completed"
-        welcomeTitle="Â¡GuÃ­a de Escuelas! ðŸ«"
-        welcomeText="Aprende rÃ¡pidamente cÃ³mo dar de alta tus colegios e instituciones."
-        welcomeIcon="ðŸ«"
+        welcomeTitle="¡Guía de Escuelas! 🏫"
+        welcomeText="Aprende rápidamente cómo dar de alta tus colegios e instituciones."
+        welcomeIcon="🏫"
         forceStart={forceStartTour}
         onTourEnd={() => setForceStartTour(false)}
       />

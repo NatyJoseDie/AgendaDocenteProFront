@@ -259,5 +259,27 @@ export const checkPlanLimit = (docente, currentCount, type = 'cursos') => {
   return { limited: false };
 };
 
-/** Error de Supabase por límite de plan (trigger con code 42501). */
-export const isPlanLimitError = (error) => error?.code === '42501';
+/** Error de Supabase por límite de plan (trigger con code 42501 o funcion SQL P0001). */
+export const isPlanLimitError = (error) => {
+  const code = error?.code ?? error?.details?.code;
+  return code === '42501' || code === 'P0001' || code === '23514';
+};
+
+export const getFriendlyPlanLimitMessage = (error, fallback = 'Llegaste al límite permitido por tu plan. Mejorá tu plan para seguir agregando más elementos.') => {
+  const raw = error?.message || '';
+  const lower = raw.toLowerCase();
+
+  if (lower.includes('escuela') || lower.includes('institucion')) {
+    return 'Llegaste al máximo de escuelas permitido por tu plan. Actualiza tu plan para seguir agregando instituciones y organizar tus cursos.';
+  }
+
+  if (lower.includes('curso') || lower.includes('cargo')) {
+    return 'Llegaste al máximo de cursos permitido por tu plan. Mejora tu plan para seguir creando nuevos cursos y cargos.';
+  }
+
+  if (lower.includes('límite') || lower.includes('limite') || lower.includes('límite de')) {
+    return 'Llegaste al límite permitido por tu plan. Mejorá tu plan para seguir creciendo sin restricciones.';
+  }
+
+  return fallback;
+};
